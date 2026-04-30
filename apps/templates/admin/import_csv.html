@@ -1,0 +1,99 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Import {{ model_name }} — ENF Admin Console{% endblock %}
+
+{% block content %}
+<div style="max-width:720px;margin:0 auto;">
+  <div style="background:rgba(17,24,39,0.85);border:1px solid rgba(99,102,241,0.15);border-radius:16px;padding:32px;margin-bottom:24px;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+      <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;">
+        <i class="fas fa-file-import" style="color:#fff;font-size:1.1rem;"></i>
+      </div>
+      <div>
+        <h2 style="margin:0;color:#fff;font-size:1.2rem;font-weight:700;">Import {{ model_name }}</h2>
+        <p style="margin:0;color:#94a3b8;font-size:0.82rem;">Upload a CSV file to bulk import records</p>
+      </div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      <div style="margin-bottom:20px;">
+        <label style="display:block;color:#94a3b8;font-size:0.82rem;font-weight:600;margin-bottom:8px;">
+          <i class="fas fa-info-circle" style="color:#6366f1;margin-right:6px;"></i>CSV File Requirements
+        </label>
+        <div style="background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.1);border-radius:10px;padding:14px;font-size:0.82rem;color:#94a3b8;">
+          <ul style="margin:0;padding-left:18px;list-style-type:none;">
+            <li style="margin-bottom:6px;">📄 File must be UTF-8 encoded CSV format</li>
+            <li style="margin-bottom:6px;">📋 First row must contain column headers matching model field names</li>
+            <li style="margin-bottom:6px;">🔑 ID/UUID/created_at/updated_at columns are auto-skipped</li>
+            <li>⚠️ Invalid rows will be skipped with error count reported</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="enf-file-drop" style="border:2px dashed rgba(99,102,241,0.3);border-radius:12px;padding:40px 20px;text-align:center;cursor:pointer;transition:all 0.3s;margin-bottom:20px;" id="drop-zone">
+        <i class="fas fa-cloud-upload-alt" style="font-size:2.5rem;color:#6366f1;margin-bottom:12px;display:block;"></i>
+        <p style="color:#e2e8f0;font-size:0.9rem;font-weight:600;margin-bottom:4px;">Drag & Drop CSV file here</p>
+        <p style="color:#64748b;font-size:0.78rem;margin-bottom:12px;">or click to browse</p>
+        <input type="file" name="csv_file" accept=".csv" required id="csv-input" style="display:none;">
+        <button type="button" onclick="document.getElementById('csv-input').click()" style="padding:8px 20px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;border-radius:8px;font-size:0.82rem;font-weight:600;cursor:pointer;">
+          Choose File
+        </button>
+        <p id="file-name" style="color:#10b981;margin-top:12px;font-size:0.82rem;display:none;"></p>
+      </div>
+
+      <div style="display:flex;gap:12px;">
+        <button type="submit" style="flex:1;padding:12px 24px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;border-radius:10px;font-size:0.88rem;font-weight:700;cursor:pointer;transition:all 0.3s;">
+          <i class="fas fa-upload" style="margin-right:6px;"></i> Start Import
+        </button>
+        <a href="../" style="flex:1;padding:12px 24px;background:rgba(99,102,241,0.08);color:#94a3b8;border:1px solid rgba(99,102,241,0.15);border-radius:10px;font-size:0.88rem;font-weight:600;text-decoration:none;text-align:center;display:flex;align-items:center;justify-content:center;">
+          <i class="fas fa-arrow-left" style="margin-right:6px;"></i> Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+(function() {
+  const dropZone = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('csv-input');
+  const fileName = document.getElementById('file-name');
+
+  dropZone.addEventListener('click', function() { fileInput.click(); });
+
+  dropZone.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    dropZone.style.borderColor = '#6366f1';
+    dropZone.style.background = 'rgba(99,102,241,0.08)';
+  });
+
+  dropZone.addEventListener('dragleave', function(e) {
+    e.preventDefault();
+    dropZone.style.borderColor = 'rgba(99,102,241,0.3)';
+    dropZone.style.background = 'transparent';
+  });
+
+  dropZone.addEventListener('drop', function(e) {
+    e.preventDefault();
+    dropZone.style.borderColor = 'rgba(99,102,241,0.3)';
+    dropZone.style.background = 'transparent';
+    if (e.dataTransfer.files.length) {
+      fileInput.files = e.dataTransfer.files;
+      showFileName(e.dataTransfer.files[0]);
+    }
+  });
+
+  fileInput.addEventListener('change', function() {
+    if (fileInput.files.length) showFileName(fileInput.files[0]);
+  });
+
+  function showFileName(f) {
+    fileName.textContent = '✓ ' + f.name + ' (' + (f.size / 1024).toFixed(1) + ' KB)';
+    fileName.style.display = 'block';
+  }
+})();
+</script>
+{% endblock %}

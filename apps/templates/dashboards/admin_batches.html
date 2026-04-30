@@ -1,0 +1,43 @@
+{% extends 'dashboards/admin_base.html' %}
+
+{% block admin_content %}
+<div class="page-header">
+  <div><h2>Batches</h2><p>Manage student batches and enrollment</p></div>
+</div>
+
+<div class="stat-row">
+  <div class="stat-card"><div class="stat-icon amber"><i class="fas fa-layer-group"></i></div><div class="stat-info"><div class="stat-value">{{ total_batches }}</div><div class="stat-label">Total Batches</div></div></div>
+  <div class="stat-card"><div class="stat-icon green"><i class="fas fa-check-circle"></i></div><div class="stat-info"><div class="stat-value">{{ active_batches }}</div><div class="stat-label">Active Batches</div></div></div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fas fa-layer-group"></i> All Batches</h3>
+    <span class="card-badge info">{{ total_batches }} Total</span>
+  </div>
+  {% if batches %}
+  <div style="overflow-x:auto">
+    <table class="adm-table">
+      <thead><tr><th>Batch Name</th><th>Code</th><th>Class Level</th><th>Enrolled</th><th>Capacity</th><th>Teachers</th><th>Start</th><th>End</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for b in batches %}
+        <tr>
+          <td style="font-weight:600;">{{ b.name }}</td>
+          <td><span style="font-family:monospace;font-size:0.82rem;color:#64748b;">{{ b.code }}</span></td>
+          <td>{{ b.class_level|default:"—" }}</td>
+          <td><strong>{{ b.enrolled }}</strong></td>
+          <td>{{ b.max_students }}</td>
+          <td>{{ b.teachers }}</td>
+          <td style="white-space:nowrap;">{{ b.start_date|default:"—" }}</td>
+          <td style="white-space:nowrap;">{{ b.end_date|default:"—" }}</td>
+          <td><span class="status {% if b.status == 'ACTIVE' %}active{% else %}inactive{% endif %}">{{ b.status }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><i class="fas fa-layer-group"></i><p>No batches found</p></div>
+  {% endif %}
+</div>
+{% endblock %}

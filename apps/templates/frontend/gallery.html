@@ -1,0 +1,369 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+/* Page Hero */
+.page-hero {
+  position: relative;
+  padding: 160px 0 100px;
+  background: linear-gradient(135deg, #020617 0%, #0f172a 30%, #1e3a8a 70%, #1e40af 100%);
+  overflow: hidden;
+}
+.page-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 70% 50%, rgba(59,130,246,0.15) 0%, transparent 60%),
+              radial-gradient(ellipse at 30% 80%, rgba(168,85,247,0.1) 0%, transparent 50%);
+  z-index: 1;
+}
+.page-hero::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 100px;
+  background: linear-gradient(to top, #f8fafc 0%, transparent 100%);
+  z-index: 2;
+}
+.page-hero .container { position: relative; z-index: 3; }
+.page-hero-content { text-align: center; max-width: 760px; margin: 0 auto; }
+.page-hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3);
+  color: #93c5fd; padding: 8px 20px; border-radius: 50px;
+  font-size: 0.85rem; font-weight: 600; margin-bottom: 20px; backdrop-filter: blur(8px);
+}
+.page-hero h1 {
+  font-size: clamp(2.2rem, 5vw, 3.4rem); font-weight: 900; color: white;
+  line-height: 1.15; margin-bottom: 18px;
+}
+.page-hero h1 .gradient-text {
+  background: linear-gradient(135deg, #60a5fa, #a78bfa);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.page-hero p { color: #94a3b8; font-size: 1.1rem; line-height: 1.7; max-width: 600px; margin: 0 auto 30px; }
+.breadcrumb { display: flex; align-items: center; justify-content: center; gap: 8px; color: #64748b; font-size: 0.9rem; }
+.breadcrumb a { color: #93c5fd; text-decoration: none; }
+.breadcrumb a:hover { color: #60a5fa; }
+.breadcrumb .separator { color: #475569; }
+
+/* Gallery Section */
+.gallery-page { padding: 80px 0; background: #f8fafc; }
+.filter-bar { display: flex; justify-content: center; gap: 12px; margin-bottom: 40px; flex-wrap: wrap; }
+.filter-btn {
+  padding: 10px 24px; border-radius: 50px; border: 2px solid #e2e8f0;
+  background: #fff; color: #475569; font-weight: 600; font-size: 0.9rem;
+  cursor: pointer; transition: all 0.3s; font-family: inherit;
+}
+.filter-btn:hover { border-color: #3b82f6; color: #3b82f6; }
+.filter-btn.active {
+  background: linear-gradient(135deg, #3b82f6, #1e40af); color: #fff;
+  border-color: transparent; box-shadow: 0 4px 15px rgba(59,130,246,0.3);
+}
+.gallery-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;
+}
+.gallery-item {
+  position: relative; border-radius: 16px; overflow: hidden; cursor: pointer;
+  background: white; box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+  border: 1px solid rgba(0,0,0,0.06); transition: all 0.4s;
+}
+.gallery-item:hover { transform: translateY(-6px); box-shadow: 0 16px 40px rgba(59,130,246,0.15); }
+.gallery-item.large { grid-column: span 2; grid-row: span 2; }
+.gallery-item-img { width: 100%; aspect-ratio: 1; overflow: hidden; }
+.gallery-item.large .gallery-item-img { aspect-ratio: 1; }
+.gallery-item-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s; }
+.gallery-item:hover .gallery-item-img img { transform: scale(1.08); }
+.gallery-item-caption { padding: 16px 18px; text-align: center; }
+.gallery-item-caption h4 { font-size: 0.95rem; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
+.gallery-item-caption p { font-size: 0.8rem; color: #64748b; font-weight: 500; }
+
+/* Lightbox */
+.gallery-lightbox {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92);
+  z-index: 10000; align-items: center; justify-content: center; padding: 40px;
+}
+.gallery-lightbox.active { display: flex; }
+.gallery-lightbox img { max-width: 90%; max-height: 85vh; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+.gallery-lightbox-close {
+  position: absolute; top: 20px; right: 30px; color: white; font-size: 2rem; cursor: pointer;
+  width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;
+  border-radius: 50%; background: rgba(255,255,255,0.1); backdrop-filter: blur(8px);
+  border: none; transition: all 0.3s;
+}
+.gallery-lightbox-close:hover { background: rgba(255,255,255,0.2); }
+.gallery-lightbox-nav {
+  position: absolute; top: 50%; transform: translateY(-50%); width: 50px; height: 50px;
+  border-radius: 50%; background: rgba(255,255,255,0.1); backdrop-filter: blur(8px);
+  border: none; color: white; font-size: 1.2rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: all 0.3s;
+}
+.gallery-lightbox-nav:hover { background: rgba(255,255,255,0.2); }
+.gallery-lightbox-nav.prev { left: 30px; }
+.gallery-lightbox-nav.next { right: 30px; }
+.gallery-lightbox-caption {
+  position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+  color: white; font-size: 1.1rem; font-weight: 600;
+  background: rgba(0,0,0,0.5); padding: 10px 24px; border-radius: 50px; backdrop-filter: blur(8px);
+}
+
+/* Footer reuse */
+.footer { background: #020617; color: rgba(255,255,255,0.7); padding: 80px 0 0; }
+.footer-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1.2fr; gap: 48px; padding-bottom: 48px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.footer-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+.footer-brand .logo-icon { width: 42px; height: 42px; background: linear-gradient(135deg, #3b82f6, #1e40af); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.2rem; color: white; }
+.footer-brand span { font-weight: 800; font-size: 1.2rem; color: white; }
+.footer-col p { font-size: 0.9rem; line-height: 1.7; margin-bottom: 20px; }
+.footer-social { display: flex; gap: 12px; }
+.footer-social a { width: 40px; height: 40px; border-radius: 10px; background: rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.6); text-decoration: none; transition: all 0.3s; font-size: 1rem; }
+.footer-social a:hover { background: #3b82f6; color: white; transform: translateY(-3px); }
+.footer-col h4 { font-size: 1rem; font-weight: 700; color: white; margin-bottom: 20px; }
+.footer-links { list-style: none; padding: 0; margin: 0; }
+.footer-links li { margin-bottom: 12px; }
+.footer-links a { color: rgba(255,255,255,0.6); text-decoration: none; font-size: 0.9rem; transition: all 0.3s; }
+.footer-links a:hover { color: #60a5fa; }
+.footer-contact { display: flex; flex-direction: column; gap: 16px; }
+.footer-contact-item { display: flex; align-items: flex-start; gap: 12px; font-size: 0.9rem; }
+.footer-contact-item i { color: #60a5fa; font-size: 0.9rem; margin-top: 4px; flex-shrink: 0; }
+.footer-bottom { display: flex; justify-content: space-between; align-items: center; padding: 24px 0; font-size: 0.85rem; }
+.footer-bottom a { color: #60a5fa; text-decoration: none; }
+
+@media (max-width: 1024px) { .gallery-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 768px) {
+  .page-hero { padding: 130px 0 80px; }
+  .gallery-grid { grid-template-columns: repeat(2, 1fr); }
+  .gallery-item.large { grid-column: span 1; grid-row: span 1; }
+  .footer-grid { grid-template-columns: 1fr; }
+  .footer-bottom { flex-direction: column; gap: 8px; text-align: center; }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<!-- Navbar -->
+<nav class="navbar" id="navbar">
+  <div class="container">
+    <a href="/" class="nav-brand"><div class="logo-icon">E</div><span>ENABLE PROGRAM</span></a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="/">Home</a></li>
+      <li class="nav-dropdown">
+        <a href="#">About <i class="fas fa-chevron-down" style="font-size:.625rem;margin-left:4px"></i></a>
+        <div class="dropdown-menu">
+          <a href="/about/"><i class="fas fa-building"></i> About ENF</a>
+          <a href="/founder/"><i class="fas fa-user-tie"></i> Founder &amp; Trustees</a>
+          <a href="/management/"><i class="fas fa-users-cog"></i> Management Team</a>
+        </div>
+      </li>
+      <li><a href="/programs/">Programs</a></li>
+      <li><a href="/partners/">Partners</a></li>
+      <li><a href="/scholarships/">Scholarships</a></li>
+      <li><a href="/news/">News</a></li>
+      <li><a href="/#contact">Contact</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="/login/" class="btn btn-primary btn-sm"><i class="fas fa-sign-in-alt"></i> Login</a>
+    </div>
+    <button class="mobile-menu-btn" onclick="toggleMobileMenu()"><i class="fas fa-bars"></i></button>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="page-hero">
+  <div class="container">
+    <div class="page-hero-content">
+      <div class="page-hero-badge"><i class="fas fa-images"></i> Photo Gallery</div>
+      <h1>Our Students <span class="gradient-text">in Action</span></h1>
+      <p>Capturing moments of learning, growth, and achievement across our programs</p>
+      <div class="breadcrumb">
+        <a href="/"><i class="fas fa-home"></i> Home</a>
+        <span class="separator">/</span>
+        <span>Gallery</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Gallery -->
+<section class="gallery-page">
+  <div class="container">
+    <div class="filter-bar">
+      <button class="filter-btn active" onclick="filterGallery('all', this)">All</button>
+      {% if photos %}
+        {% for cat in categories %}
+        <button class="filter-btn" onclick="filterGallery('{{ cat }}', this)">{{ cat }}</button>
+        {% endfor %}
+      {% else %}
+        <button class="filter-btn" onclick="filterGallery('classroom', this)">Classroom</button>
+        <button class="filter-btn" onclick="filterGallery('events', this)">Events</button>
+        <button class="filter-btn" onclick="filterGallery('achievements', this)">Achievements</button>
+        <button class="filter-btn" onclick="filterGallery('campus', this)">Campus Life</button>
+      {% endif %}
+    </div>
+
+    <div class="gallery-grid" id="galleryGrid">
+      {% if photos %}
+        {% for photo in photos %}
+        <div class="gallery-item" data-category="{{ photo.category }}" onclick="openLightbox({{ forloop.counter0 }})">
+          <div class="gallery-item-img">
+            <img src="{{ photo.image_url }}" alt="{{ photo.title }}" loading="lazy">
+          </div>
+          <div class="gallery-item-caption"><h4>{{ photo.title }}</h4><p>{{ photo.category }}</p></div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <!-- Default gallery items when no DB content -->
+        <div class="gallery-item large" data-category="achievements" onclick="openLightbox(0)">
+          <div class="gallery-item-img"><img src="https://images.unsplash.com/photo-1627556704302-624286467c65?w=1200&h=1200&fit=crop&q=85" alt="JEE Toppers Celebration" loading="lazy"></div>
+          <div class="gallery-item-caption"><h4>JEE Toppers Celebration 2025</h4><p>Achievements</p></div>
+        </div>
+        <div class="gallery-item" data-category="classroom" onclick="openLightbox(1)">
+          <div class="gallery-item-img"><img src="https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800&h=800&fit=crop&q=85" alt="NEET Preparation" loading="lazy"></div>
+          <div class="gallery-item-caption"><h4>NEET Preparation Class</h4><p>Classroom</p></div>
+        </div>
+        <div class="gallery-item" data-category="classroom" onclick="openLightbox(2)">
+          <div class="gallery-item-img"><img src="https://images.unsplash.com/photo-1610484826967-09c5720778c7?w=800&h=800&fit=crop&q=85" alt="Interactive Session" loading="lazy"></div>
+          <div class="gallery-item-caption"><h4>CoE Interactive Live Class</h4><p>Classroom</p></div>
+        </div>
+        <div class="gallery-item" data-category="campus" onclick="openLightbox(3)">
+          <div class="gallery-item-img"><img src="https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=800&h=800&fit=crop&q=85" alt="Library" loading="lazy"></div>
+          <div class="gallery-item-caption"><h4>Digital Library Access</h4><p>Campus Life</p></div>
+        </div>
+        <div class="gallery-item" data-category="events" onclick="openLightbox(4)">
+          <div class="gallery-item-img"><img src="https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=800&h=800&fit=crop&q=85" alt="ENABLE Launch" loading="lazy"></div>
+          <div class="gallery-item-caption"><h4>ENABLE Program Launch</h4><p>Events</p></div>
+        </div>
+        <div class="gallery-item large" data-category="classroom" onclick="openLightbox(5)">
+          <div class="gallery-item-img"><img src="https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=1200&h=1200&fit=crop&q=85" alt="Science Lab" loading="lazy"></div>
+          <div class="gallery-item-caption"><h4>Science Lab Practical Session</h4><p>Classroom</p></div>
+        </div>
+        <div class="gallery-item" data-category="achievements" onclick="openLightbox(6)">
+          <div class="gallery-item-img"><img src="https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=800&h=800&fit=crop&q=85" alt="Award Ceremony" loading="lazy"></div>
+          <div class="gallery-item-caption"><h4>Merit Award Ceremony</h4><p>Achievements</p></div>
+        </div>
+        <div class="gallery-item" data-category="events" onclick="openLightbox(7)">
+          <div class="gallery-item-img"><img src="https://images.unsplash.com/photo-1591115765373-5f9c7c8de4d3?w=800&h=800&fit=crop&q=85" alt="STEM Workshop" loading="lazy"></div>
+          <div class="gallery-item-caption"><h4>STEM Workshop &amp; Seminars</h4><p>Events</p></div>
+        </div>
+        <div class="gallery-item" data-category="campus" onclick="openLightbox(8)">
+          <div class="gallery-item-img"><img src="https://images.unsplash.com/photo-1529390079861-591de354faf5?w=800&h=800&fit=crop&q=85" alt="Study Groups" loading="lazy"></div>
+          <div class="gallery-item-caption"><h4>Collaborative Study Groups</h4><p>Campus Life</p></div>
+        </div>
+        <div class="gallery-item" data-category="events" onclick="openLightbox(9)">
+          <div class="gallery-item-img"><img src="https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&h=800&fit=crop&q=85" alt="Annual Day" loading="lazy"></div>
+          <div class="gallery-item-caption"><h4>Annual Day Celebration</h4><p>Events</p></div>
+        </div>
+        <div class="gallery-item" data-category="classroom" onclick="openLightbox(10)">
+          <div class="gallery-item-img"><img src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&h=800&fit=crop&q=85" alt="Mock Test" loading="lazy"></div>
+          <div class="gallery-item-caption"><h4>Mock Test in Progress</h4><p>Classroom</p></div>
+        </div>
+        <div class="gallery-item" data-category="achievements" onclick="openLightbox(11)">
+          <div class="gallery-item-img"><img src="https://images.unsplash.com/photo-1606761568499-6d2451b23c66?w=800&h=800&fit=crop&q=85" alt="Selection Day" loading="lazy"></div>
+          <div class="gallery-item-caption"><h4>IIT/AIIMS Selection Day</h4><p>Achievements</p></div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<!-- Lightbox -->
+<div class="gallery-lightbox" id="galleryLightbox">
+  <button class="gallery-lightbox-close" onclick="closeLightbox()"><i class="fas fa-times"></i></button>
+  <button class="gallery-lightbox-nav prev" onclick="navigateLightbox(-1)"><i class="fas fa-chevron-left"></i></button>
+  <img id="lightboxImage" src="" alt="">
+  <button class="gallery-lightbox-nav next" onclick="navigateLightbox(1)"><i class="fas fa-chevron-right"></i></button>
+  <div class="gallery-lightbox-caption" id="lightboxCaption"></div>
+</div>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <div class="footer-brand"><div class="logo-icon">E</div><span>ENABLE PROGRAM</span></div>
+        <p>Ex Navodayan Foundation (ENF) is a premier not-for-profit organization dedicated to empowering Navodaya students through quality education and technology-enabled learning programs.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Quick Links</h4>
+        <ul class="footer-links">
+          <li><a href="/about/">About Us</a></li>
+          <li><a href="/programs/">Programs</a></li>
+          <li><a href="/partners/">Partners</a></li>
+          <li><a href="/scholarships/">Scholarships</a></li>
+          <li><a href="/news/">News</a></li>
+          <li><a href="/gallery/">Gallery</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Programs</h4>
+        <ul class="footer-links">
+          <li><a href="/programs/">CoE</a></li>
+          <li><a href="/programs/">ENABLE</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Get in Touch</h4>
+        <div class="footer-contact">
+          <div class="footer-contact-item"><i class="fas fa-phone"></i><span>+91-76070 02100</span></div>
+          <div class="footer-contact-item"><i class="fas fa-envelope"></i><span>exnavodayanfoundation1@gmail.com</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 Ex Navodayan Foundation. All rights reserved.</p>
+      <p>Design by <a href="https://erpdsoft.com" target="_blank" rel="noopener">ERPDSOFT</a></p>
+    </div>
+  </div>
+</footer>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  window.addEventListener('scroll', function() {
+    document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 50);
+  });
+  function toggleMobileMenu() { document.getElementById('navLinks').classList.toggle('show'); }
+
+  function filterGallery(cat, btn) {
+    document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    document.querySelectorAll('.gallery-item').forEach(function(item) {
+      if (cat === 'all' || item.dataset.category === cat) {
+        item.style.display = '';
+        item.style.animation = 'fadeIn 0.4s ease forwards';
+      } else {
+        item.style.display = 'none';
+      }
+    });
+  }
+
+  var galleryImages = [];
+  var currentIdx = 0;
+  document.querySelectorAll('.gallery-item').forEach(function(item) {
+    var img = item.querySelector('img');
+    var cap = item.querySelector('h4');
+    if (img) galleryImages.push({ src: img.src, caption: cap ? cap.textContent : '' });
+  });
+  function openLightbox(i) {
+    currentIdx = i;
+    document.getElementById('lightboxImage').src = galleryImages[i].src;
+    document.getElementById('lightboxCaption').textContent = galleryImages[i].caption;
+    document.getElementById('galleryLightbox').classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeLightbox() {
+    document.getElementById('galleryLightbox').classList.remove('active');
+    document.body.style.overflow = '';
+  }
+  function navigateLightbox(dir) {
+    currentIdx = (currentIdx + dir + galleryImages.length) % galleryImages.length;
+    document.getElementById('lightboxImage').src = galleryImages[currentIdx].src;
+    document.getElementById('lightboxCaption').textContent = galleryImages[currentIdx].caption;
+  }
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowLeft') navigateLightbox(-1);
+    if (e.key === 'ArrowRight') navigateLightbox(1);
+  });
+</script>
+{% endblock %}

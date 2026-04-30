@@ -1,0 +1,577 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Login – ENABLE PROGRAM{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ========== Login Page Premium Styles ========== */
+.login-page {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ---------- Left Sidebar ---------- */
+.login-sidebar {
+  width: 520px;
+  padding: 48px 44px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+  color: #fff;
+}
+.login-sidebar.student {
+  background: linear-gradient(160deg, #0f172a 0%, #1e3a8a 50%, #2563eb 100%);
+}
+.login-sidebar.teacher {
+  background: linear-gradient(160deg, #042f2e 0%, #065f46 50%, #059669 100%);
+}
+.login-sidebar.admin {
+  background: linear-gradient(160deg, #1e1b4b 0%, #4c1d95 40%, #6d28d9 70%, #7c3aed 100%);
+}
+.login-sidebar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.06;
+  background-image:
+    radial-gradient(circle at 25% 25%, #fff 1px, transparent 1px),
+    radial-gradient(circle at 75% 75%, #fff 1px, transparent 1px);
+  background-size: 40px 40px;
+  z-index: 0;
+}
+.login-sidebar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.login-sidebar.student::after {
+  background: radial-gradient(ellipse at 30% 90%, rgba(59,130,246,0.25) 0%, transparent 60%),
+              radial-gradient(ellipse at 80% 20%, rgba(147,197,253,0.12) 0%, transparent 50%);
+}
+.login-sidebar.teacher::after {
+  background: radial-gradient(ellipse at 30% 90%, rgba(16,185,129,0.25) 0%, transparent 60%),
+              radial-gradient(ellipse at 80% 20%, rgba(110,231,183,0.12) 0%, transparent 50%);
+}
+.login-sidebar.admin::after {
+  background: radial-gradient(ellipse at 30% 90%, rgba(139,92,246,0.3) 0%, transparent 60%),
+              radial-gradient(ellipse at 80% 20%, rgba(196,181,253,0.15) 0%, transparent 50%);
+}
+.sidebar-inner {
+  position: relative;
+  z-index: 1;
+}
+.sidebar-brand-login {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 48px;
+}
+.sidebar-brand-login .s-logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+.sidebar-brand-login span {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.85);
+  letter-spacing: -0.2px;
+}
+.sidebar-role-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  margin-bottom: 28px;
+  border: 1px solid rgba(255,255,255,0.15);
+}
+.login-sidebar.student .sidebar-role-icon {
+  background: rgba(59,130,246,0.2);
+  color: #93c5fd;
+}
+.login-sidebar.teacher .sidebar-role-icon {
+  background: rgba(16,185,129,0.2);
+  color: #6ee7b7;
+}
+.login-sidebar.admin .sidebar-role-icon {
+  background: rgba(139,92,246,0.2);
+  color: #c4b5fd;
+}
+.sidebar-inner h2 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 12px;
+  line-height: 1.2;
+}
+.sidebar-inner .sidebar-subtitle {
+  font-size: 1.02rem;
+  color: rgba(255,255,255,0.7);
+  line-height: 1.7;
+  margin-bottom: 36px;
+}
+.sidebar-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 40px 0;
+}
+.sidebar-features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 18px;
+  color: rgba(255,255,255,0.8);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+.sidebar-features li i {
+  margin-top: 3px;
+  font-size: 0.8rem;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.login-sidebar.student .sidebar-features li i {
+  background: rgba(59,130,246,0.2);
+  color: #93c5fd;
+}
+.login-sidebar.teacher .sidebar-features li i {
+  background: rgba(16,185,129,0.2);
+  color: #6ee7b7;
+}
+.login-sidebar.admin .sidebar-features li i {
+  background: rgba(139,92,246,0.2);
+  color: #c4b5fd;
+}
+.sidebar-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding-top: 28px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+.sidebar-stat {
+  text-align: center;
+}
+.sidebar-stat .stat-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #fff;
+}
+.sidebar-stat .stat-label {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.55);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+
+/* ---------- Right Form Area ---------- */
+.login-form-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  background: #f8fafc;
+}
+.login-form-box {
+  width: 100%;
+  max-width: 440px;
+}
+.login-form-box .brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  margin-bottom: 32px;
+}
+.login-form-box .brand .logo-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+.login-form-box .brand span {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+.login-form-box h1 {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 4px;
+}
+.login-subtitle {
+  font-size: 0.92rem;
+  color: #64748b;
+  margin-bottom: 28px;
+}
+.role-selector {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 28px;
+}
+.role-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 2px solid #e2e8f0;
+  background: #fff;
+  color: #64748b;
+  transition: all 0.25s ease;
+}
+.role-btn:hover {
+  border-color: #cbd5e1;
+  color: #334155;
+}
+.role-btn.active-student {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 14px rgba(59,130,246,0.3);
+}
+.role-btn.active-teacher {
+  background: linear-gradient(135deg, #059669, #047857);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 14px rgba(5,150,105,0.3);
+}
+.role-btn.active-admin {
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 14px rgba(124,58,237,0.3);
+}
+.alert-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.alert-success {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #16a34a;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.login-form-box .form-group { margin-bottom: 20px; }
+.login-form-box .form-group label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 6px;
+}
+.login-form-box .form-control {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  background: #fff;
+  color: #0f172a;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+  box-sizing: border-box;
+}
+.login-form-box .form-control:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+}
+.login-form-box .form-control::placeholder {
+  color: #94a3b8;
+}
+.login-submit-btn {
+  width: 100%;
+  padding: 14px 24px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s;
+  margin-top: 8px;
+  color: #fff;
+}
+.login-submit-btn.student-btn {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  box-shadow: 0 6px 20px rgba(59,130,246,0.3);
+}
+.login-submit-btn.teacher-btn {
+  background: linear-gradient(135deg, #059669, #047857);
+  box-shadow: 0 6px 20px rgba(5,150,105,0.3);
+}
+.login-submit-btn.admin-btn {
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  box-shadow: 0 6px 20px rgba(124,58,237,0.3);
+}
+.login-submit-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.05);
+}
+.tenant-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: #94a3b8;
+  margin-top: 6px;
+}
+.tenant-info i { font-size: 0.7rem; }
+.login-footer { text-align: center; margin-top: 24px; }
+.login-footer p {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+.login-footer a {
+  color: #3b82f6;
+  text-decoration: none;
+  font-weight: 600;
+}
+.login-footer a:hover { text-decoration: underline; }
+.login-footer .back-link {
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .login-sidebar { width: 400px; padding: 36px 32px; }
+}
+@media (max-width: 768px) {
+  .login-page { flex-direction: column; }
+  .login-sidebar {
+    width: 100%;
+    min-height: auto;
+    padding: 40px 24px 32px;
+  }
+  .sidebar-inner h2 { font-size: 1.5rem; }
+  .sidebar-features { display: none; }
+  .sidebar-stats { grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .login-form-area { padding: 32px 20px; }
+}
+@media (max-width: 480px) {
+  .sidebar-stats { grid-template-columns: 1fr 1fr; }
+  .role-selector { flex-wrap: wrap; }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="login-page">
+
+  <!-- ========== SIDEBAR ========== -->
+  <div class="login-sidebar {{ role }}" id="loginSidebar">
+    <div class="sidebar-inner">
+      <div class="sidebar-brand-login">
+        <div class="s-logo">E</div>
+        <span>ENABLE PROGRAM</span>
+      </div>
+
+      <div class="sidebar-role-icon">
+        {% if role == 'student' %}<i class="fas fa-user-graduate"></i>
+        {% elif role == 'teacher' %}<i class="fas fa-chalkboard-teacher"></i>
+        {% else %}<i class="fas fa-shield-halved"></i>{% endif %}
+      </div>
+
+      {% if role == 'student' %}
+      <h2>Student Portal</h2>
+      <p class="sidebar-subtitle">Access your personalized learning dashboard, attend live classes, take mock tests, and track your JEE/NEET preparation journey.</p>
+      <ul class="sidebar-features">
+        <li><i class="fas fa-check"></i> Live &amp; Recorded Classes (JEE/NEET)</li>
+        <li><i class="fas fa-check"></i> AI-Powered Mock Tests &amp; Analytics</li>
+        <li><i class="fas fa-check"></i> Study Materials &amp; Video Library</li>
+        <li><i class="fas fa-check"></i> Performance Reports &amp; Rank Tracking</li>
+        <li><i class="fas fa-check"></i> Doubt Resolution &amp; Mentorship</li>
+      </ul>
+      {% elif role == 'teacher' %}
+      <h2>Teacher Portal</h2>
+      <p class="sidebar-subtitle">Manage your batches, conduct live sessions, create assessments, and track student performance with powerful teaching tools.</p>
+      <ul class="sidebar-features">
+        <li><i class="fas fa-check"></i> Batch &amp; Schedule Management</li>
+        <li><i class="fas fa-check"></i> Live Class Broadcasting Tools</li>
+        <li><i class="fas fa-check"></i> Question Bank &amp; Test Creator</li>
+        <li><i class="fas fa-check"></i> Student Performance Analytics</li>
+        <li><i class="fas fa-check"></i> Content &amp; Material Uploads</li>
+      </ul>
+      {% else %}
+      <h2>Staff Portal</h2>
+      <p class="sidebar-subtitle">Full system administration — manage tenants, users, programs, batches, academic sessions, and platform configurations with enterprise-grade control.</p>
+      <ul class="sidebar-features">
+        <li><i class="fas fa-check"></i> Multi-Tenant &amp; School Management</li>
+        <li><i class="fas fa-check"></i> User Management (Students, Teachers, Staff)</li>
+        <li><i class="fas fa-check"></i> Program &amp; Batch Configuration</li>
+        <li><i class="fas fa-check"></i> Academic Session &amp; Scheduling</li>
+        <li><i class="fas fa-check"></i> Reports, Analytics &amp; System Logs</li>
+        <li><i class="fas fa-check"></i> Platform Settings &amp; Integrations</li>
+      </ul>
+      {% endif %}
+
+      <div class="sidebar-stats">
+        <div class="sidebar-stat">
+          <div class="stat-value">15,000+</div>
+          <div class="stat-label">Students</div>
+        </div>
+        <div class="sidebar-stat">
+          <div class="stat-value">380+</div>
+          <div class="stat-label">Schools</div>
+        </div>
+        <div class="sidebar-stat">
+          <div class="stat-value">28+</div>
+          <div class="stat-label">States</div>
+        </div>
+        <div class="sidebar-stat">
+          <div class="stat-value">5</div>
+          <div class="stat-label">Programs</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== FORM AREA ========== -->
+  <div class="login-form-area">
+    <div class="login-form-box">
+      <a href="/" class="brand">
+        <div class="logo-icon">E</div>
+        <span>ENABLE PROGRAM</span>
+      </a>
+
+      <h1>Welcome Back</h1>
+      <p class="login-subtitle">Sign in to your {{ role }} account</p>
+
+      {% if error %}
+      <div class="alert-error"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+      {% endif %}
+      {% if success %}
+      <div class="alert-success"><i class="fas fa-check-circle"></i> {{ success }}</div>
+      {% endif %}
+
+      <form method="POST" action="/login/">
+        {% csrf_token %}
+        <input type="hidden" name="user_type" value="{{ role|upper }}" id="userType">
+
+        <!-- Role Selector -->
+        <div class="role-selector">
+          <button type="button" class="role-btn {% if role == 'student' %}active-student{% endif %}" onclick="switchRole('student')">
+            <i class="fas fa-user-graduate"></i> Student
+          </button>
+            {% if role != 'student' %}
+            <button type="button" class="role-btn {% if role == 'teacher' %}active-teacher{% endif %}" onclick="switchRole('teacher')">
+              <i class="fas fa-chalkboard-teacher"></i> Teacher
+            </button>
+            <button type="button" class="role-btn {% if role == 'admin' %}active-admin{% endif %}" onclick="switchRole('admin')">
+              <i class="fas fa-shield-halved"></i> Staff
+            </button>
+            {% endif %}
+          </div>
+
+          <div class="form-group">
+            {% if role == 'student' %}
+            <label>User Id</label>
+            <input type="text" name="email" class="form-control" placeholder="" value="{{ email|default:'' }}" required>
+            {% else %}
+            <label>Email Address</label>
+            <input type="text" name="email" class="form-control" placeholder="your@email.com" value="{{ email|default:'' }}" required>
+            {% endif %}
+          </div>
+
+          <div class="form-group">
+            <label>Password</label>
+          <div style="position:relative">
+              <input type="password" name="password" id="password" class="form-control" placeholder="" required>
+            <button type="button" onclick="togglePassword()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:#94a3b8;cursor:pointer">
+              <i class="fas fa-eye" id="toggleIcon"></i>
+            </button>
+          </div>
+        </div>
+
+{% if role != 'student' %}
+          <div class="form-group">
+            <label>School / Center <span style="font-size:0.75rem;color:#94a3b8;font-weight:400;">(Auto-detected if left blank)</span></label>
+            <select name="tenant_code" class="form-control">
+              <option value="">— Auto Detect —</option>
+              {% for t in tenants %}
+              <option value="{{ t.code }}" {% if t.code == tenant_code %}selected{% endif %}>{{ t.code }} - {{ t.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          {% endif %}
+
+        <button type="submit" class="login-submit-btn {{ role }}-btn">
+          <i class="fas fa-sign-in-alt"></i> Sign In
+        </button>
+
+        <div class="login-footer">
+          <p><a href="/" class="back-link"><i class="fas fa-arrow-left"></i> Back to Home</a></p>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function switchRole(role) {
+  window.location.href = '/login/?role=' + role;
+}
+function togglePassword() {
+  var pw = document.getElementById('password');
+  var icon = document.getElementById('toggleIcon');
+  if (pw.type === 'password') { pw.type = 'text'; icon.className = 'fas fa-eye-slash'; }
+  else { pw.type = 'password'; icon.className = 'fas fa-eye'; }
+}
+</script>
+{% endblock %}

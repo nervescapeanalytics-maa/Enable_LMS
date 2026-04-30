@@ -1,0 +1,43 @@
+{% extends 'dashboards/admin_base.html' %}
+
+{% block admin_content %}
+<div class="page-header">
+  <div><h2>Questions</h2><p>Manage question bank</p></div>
+</div>
+
+<div class="stat-row">
+  <div class="stat-card"><div class="stat-icon purple"><i class="fas fa-question-circle"></i></div><div class="stat-info"><div class="stat-value">{{ total_questions }}</div><div class="stat-label">Total Questions</div></div></div>
+  <div class="stat-card"><div class="stat-icon green"><i class="fas fa-check-circle"></i></div><div class="stat-info"><div class="stat-value">{{ active_questions }}</div><div class="stat-label">Active Questions</div></div></div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fas fa-question-circle"></i> Question Bank</h3>
+    <span class="card-badge info">{{ total_questions }} Total</span>
+  </div>
+  {% if questions %}
+  <div style="overflow-x:auto">
+    <table class="adm-table">
+      <thead><tr><th>Question</th><th>Code</th><th>Type</th><th>Difficulty</th><th>Subject</th><th>+Marks</th><th>-Marks</th><th>Success%</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for q in questions %}
+        <tr>
+          <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;">{{ q.text }}</td>
+          <td><span style="font-family:monospace;font-size:0.82rem;color:#64748b;">{{ q.code }}</span></td>
+          <td>{{ q.type }}</td>
+          <td><span class="status {% if q.difficulty == 'EASY' %}active{% elif q.difficulty == 'HARD' %}live{% else %}scheduled{% endif %}">{{ q.difficulty }}</span></td>
+          <td>{{ q.subject }}</td>
+          <td style="color:#22c55e;font-weight:600;">+{{ q.positive_marks }}</td>
+          <td style="color:#ef4444;font-weight:600;">-{{ q.negative_marks }}</td>
+          <td>{{ q.success_rate }}%</td>
+          <td><span class="status {% if q.status == 'Active' %}active{% else %}inactive{% endif %}">{{ q.status }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><i class="fas fa-question-circle"></i><p>No questions in the bank yet</p></div>
+  {% endif %}
+</div>
+{% endblock %}

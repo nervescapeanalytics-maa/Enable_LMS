@@ -1,0 +1,159 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}Staff Permissions Matrix | {{ site_title|default:"Enable LMS" }}{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+  .enf-perm-wrap { padding: 16px 22px; }
+  .enf-perm-head {
+    display:flex; align-items:center; gap:14px; margin-bottom:18px;
+    padding-bottom:14px; border-bottom:1px solid #e2e8f0;
+  }
+  .enf-perm-head h1 { margin:0; font-size:1.25rem; color:#1e293b; }
+  .enf-perm-head .hint { color:#64748b; font-size:0.82rem; }
+  .enf-perm-controls { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
+  .enf-perm-controls select, .enf-perm-controls a, .enf-perm-controls button {
+    padding:7px 14px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.85rem;
+    background:#fff; color:#1e293b; cursor:pointer;
+  }
+  .enf-perm-controls .primary {
+    background:linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff; border:none;
+    font-weight:600; box-shadow:0 2px 6px rgba(99,102,241,0.25);
+  }
+  .enf-perm-controls .primary:hover { box-shadow:0 4px 12px rgba(99,102,241,0.35); transform:translateY(-1px); }
+  table.enf-perm-grid {
+    width:100%; border-collapse:separate; border-spacing:0; background:#fff;
+    border:1px solid #e2e8f0; border-radius:10px; overflow:hidden;
+    font-size:0.82rem;
+  }
+  table.enf-perm-grid thead th {
+    background:linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff;
+    padding:10px 14px; text-align:left; font-weight:600;
+    position:sticky; top:0; z-index:5;
+  }
+  table.enf-perm-grid thead th.action { text-align:center; width:80px; }
+  table.enf-perm-grid tbody td {
+    padding:8px 14px; border-bottom:1px solid #f1f5f9; color:#475569;
+  }
+  table.enf-perm-grid tbody td.action { text-align:center; }
+  table.enf-perm-grid tbody tr:hover { background:#fafbfd; }
+  table.enf-perm-grid tbody tr.section-row td {
+    background:#f8fafc; font-weight:700; color:#1e293b;
+    text-transform:uppercase; font-size:0.7rem; letter-spacing:0.06em;
+    padding:6px 14px;
+  }
+  table.enf-perm-grid input[type=checkbox] {
+    width:18px; height:18px; cursor:pointer; accent-color:#6366f1;
+  }
+  .enf-perm-help {
+    background:#eef2ff; border:1px solid #c7d2fe; color:#3730a3;
+    padding:10px 14px; border-radius:8px; font-size:0.78rem; margin-bottom:14px;
+  }
+  .enf-perm-actions {
+    display:flex; gap:10px; margin-top:18px;
+  }
+  .enf-perm-actions button {
+    padding:9px 22px; border-radius:8px; border:none; font-weight:600; cursor:pointer; font-size:0.9rem;
+  }
+  .enf-perm-actions button.save {
+    background:linear-gradient(135deg,#10b981,#059669); color:#fff;
+  }
+  .enf-perm-actions button.toggle-all {
+    background:#f1f5f9; color:#475569;
+  }
+  .enf-perm-empty { padding:40px; text-align:center; color:#94a3b8; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="enf-perm-wrap">
+  <div class="enf-perm-head">
+    <h1><i class="fas fa-th"></i> Staff Permissions Matrix</h1>
+    <span class="hint">Pick a role, tick the boxes for sections that role should access, and save.</span>
+  </div>
+
+  <div class="enf-perm-help">
+    <strong>How this works:</strong>
+    A user assigned to a role can <em>only</em> see the sections you tick here. Superusers always see everything.
+    <ul style="margin:6px 0 0 18px;">
+      <li><strong>View</strong>: see the list and detail pages.</li>
+      <li><strong>Add</strong> / <strong>Change</strong> / <strong>Delete</strong>: create, edit, remove rows.</li>
+      <li><strong>Export</strong>: use CSV / Excel exports.</li>
+    </ul>
+  </div>
+
+  <form method="get" class="enf-perm-controls">
+    <label for="role-picker" style="font-weight:600;color:#1e293b;">Role:</label>
+    <select id="role-picker" name="role" onchange="this.form.submit()">
+      <option value="">— Select a role —</option>
+      {% for r in roles %}
+        <option value="{{ r.id }}" {% if selected_role and selected_role.id == r.id %}selected{% endif %}>
+          {{ r.name }} ({{ r.get_level_display }})
+        </option>
+      {% endfor %}
+    </select>
+    <a href="../../staffrole/add/">+ Create new role</a>
+    <a href="../../userstaffrole/">Assign users to roles</a>
+  </form>
+
+  {% if not selected_role %}
+    <div class="enf-perm-empty">
+      <i class="fas fa-arrow-up" style="font-size:2rem;color:#cbd5e1;"></i>
+      <p>Select a role above to edit its permissions.</p>
+    </div>
+  {% else %}
+    <form method="post" id="perm-form">
+      {% csrf_token %}
+      <input type="hidden" name="role_id" value="{{ selected_role.id }}">
+      <table class="enf-perm-grid">
+        <thead>
+          <tr>
+            <th>Section / Module</th>
+            <th class="action">View</th>
+            <th class="action">Add</th>
+            <th class="action">Change</th>
+            <th class="action">Delete</th>
+            <th class="action">Export</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for grp in grouped_rows %}
+            <tr class="section-row"><td colspan="6">{{ grp.app|title }}</td></tr>
+            {% for c in grp.cells %}
+              <tr>
+                <td>{{ c.label }}</td>
+                <td class="action"><input type="checkbox" data-action="view"   name="perm__{{ c.app }}__{{ c.model }}__view"   value="1" {% if c.view %}checked{% endif %}></td>
+                <td class="action"><input type="checkbox" data-action="add"    name="perm__{{ c.app }}__{{ c.model }}__add"    value="1" {% if c.add %}checked{% endif %}></td>
+                <td class="action"><input type="checkbox" data-action="change" name="perm__{{ c.app }}__{{ c.model }}__change" value="1" {% if c.change %}checked{% endif %}></td>
+                <td class="action"><input type="checkbox" data-action="delete" name="perm__{{ c.app }}__{{ c.model }}__delete" value="1" {% if c.delete %}checked{% endif %}></td>
+                <td class="action"><input type="checkbox" data-action="export" name="perm__{{ c.app }}__{{ c.model }}__export" value="1" {% if c.export %}checked{% endif %}></td>
+              </tr>
+            {% endfor %}
+          {% endfor %}
+        </tbody>
+      </table>
+      <div class="enf-perm-actions">
+        <button type="submit" class="save"><i class="fas fa-save"></i> Save permissions for "{{ selected_role.name }}"</button>
+        <button type="button" class="toggle-all" onclick="document.querySelectorAll('#perm-form input[type=checkbox]').forEach(cb=>cb.checked=true);">Tick all</button>
+        <button type="button" class="toggle-all" onclick="document.querySelectorAll('#perm-form input[type=checkbox]').forEach(cb=>cb.checked=false);">Untick all</button>
+        <button type="button" class="toggle-all" onclick="document.querySelectorAll('#perm-form input[data-action=view]').forEach(cb=>cb.checked=true);">Tick all View</button>
+      </div>
+    </form>
+  {% endif %}
+</div>
+
+<script>
+// Auto-tick view when add/change/delete/export is ticked (you can't act without seeing).
+document.querySelectorAll('#perm-form input[type=checkbox]').forEach(function(cb) {
+  cb.addEventListener('change', function() {
+    if (cb.checked && cb.dataset.action !== 'view') {
+      var row = cb.closest('tr');
+      var view = row.querySelector('input[data-action=view]');
+      if (view) view.checked = true;
+    }
+  });
+});
+</script>
+{% endblock %}

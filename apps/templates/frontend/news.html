@@ -1,0 +1,983 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+/* ========== News Page Styles ========== */
+
+/* Page Hero */
+.page-hero {
+  position: relative;
+  padding: 160px 0 100px;
+  background: linear-gradient(135deg, #020617 0%, #0f172a 30%, #1e3a8a 70%, #1e40af 100%);
+  overflow: hidden;
+}
+.page-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 70% 50%, rgba(59,130,246,0.15) 0%, transparent 60%),
+              radial-gradient(ellipse at 30% 80%, rgba(168,85,247,0.1) 0%, transparent 50%);
+  z-index: 1;
+}
+.page-hero::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100px;
+  background: linear-gradient(to top, var(--gray-50, #f8fafc) 0%, transparent 100%);
+  z-index: 2;
+}
+.page-hero .container {
+  position: relative;
+  z-index: 3;
+}
+.page-hero-content {
+  text-align: center;
+  max-width: 760px;
+  margin: 0 auto;
+}
+.page-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(59,130,246,0.15);
+  border: 1px solid rgba(59,130,246,0.3);
+  color: #93c5fd;
+  padding: 8px 20px;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+  backdrop-filter: blur(8px);
+}
+.page-hero h1 {
+  font-size: clamp(2.2rem, 5vw, 3.4rem);
+  font-weight: 900;
+  color: white;
+  line-height: 1.15;
+  margin-bottom: 18px;
+}
+.page-hero h1 .gradient-text {
+  background: linear-gradient(135deg, #60a5fa, #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.page-hero p {
+  color: #94a3b8;
+  font-size: 1.1rem;
+  line-height: 1.7;
+  max-width: 600px;
+  margin: 0 auto 30px;
+}
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+.breadcrumb a {
+  color: #93c5fd;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+.breadcrumb a:hover { color: #60a5fa; }
+.breadcrumb .separator { color: #475569; }
+
+/* Section Common */
+.section { padding: 100px 0; }
+.section-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(59,130,246,0.08);
+  border: 1px solid rgba(59,130,246,0.15);
+  color: #3b82f6;
+  padding: 8px 20px;
+  border-radius: 50px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 16px;
+}
+.section-header {
+  text-align: center;
+  max-width: 700px;
+  margin: 0 auto 60px;
+}
+.section-header h2 {
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 16px;
+  line-height: 1.2;
+}
+.section-header p {
+  color: #64748b;
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+.section-divider {
+  width: 60px;
+  height: 4px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  border-radius: 2px;
+  margin: 16px auto 0;
+}
+
+/* Category Filter Tabs */
+.filter-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 50px;
+}
+.filter-tab {
+  padding: 10px 22px;
+  border-radius: 50px;
+  border: 1px solid rgba(59,130,246,0.15);
+  background: white;
+  color: #64748b;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.filter-tab:hover {
+  border-color: rgba(59,130,246,0.4);
+  color: #3b82f6;
+  background: rgba(59,130,246,0.04);
+}
+.filter-tab.active {
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 4px 15px rgba(59,130,246,0.3);
+}
+
+/* Featured Article */
+.featured-article {
+  background: white;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid rgba(59,130,246,0.08);
+  box-shadow: 0 10px 50px rgba(0,0,0,0.06);
+  margin-bottom: 60px;
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.featured-article:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 25px 60px rgba(59,130,246,0.12);
+  border-color: rgba(59,130,246,0.2);
+}
+.featured-img-wrap {
+  position: relative;
+  overflow: hidden;
+  min-height: 400px;
+}
+.featured-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s ease;
+}
+.featured-article:hover .featured-img-wrap img {
+  transform: scale(1.05);
+}
+.featured-badge {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
+  color: white;
+  padding: 6px 16px;
+  border-radius: 50px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  z-index: 2;
+}
+.featured-content {
+  padding: 50px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.featured-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.featured-date {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #64748b;
+  font-size: 0.88rem;
+}
+.featured-date i { color: #3b82f6; }
+.featured-category {
+  padding: 4px 14px;
+  border-radius: 50px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.cat-technology { background: rgba(59,130,246,0.1); color: #3b82f6; }
+.cat-achievement { background: rgba(234,179,8,0.1); color: #ca8a04; }
+.cat-partnership { background: rgba(168,85,247,0.1); color: #7c3aed; }
+.cat-milestone { background: rgba(16,185,129,0.1); color: #059669; }
+.cat-event { background: rgba(244,63,94,0.1); color: #e11d48; }
+.cat-expansion { background: rgba(245,158,11,0.1); color: #d97706; }
+.cat-impact { background: rgba(6,182,212,0.1); color: #0891b2; }
+
+.featured-content h2 {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.3;
+  margin-bottom: 16px;
+}
+.featured-content p {
+  color: #64748b;
+  font-size: 1rem;
+  line-height: 1.7;
+  margin-bottom: 24px;
+}
+.read-more-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #3b82f6;
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition: all 0.3s;
+}
+.read-more-btn:hover {
+  gap: 12px;
+  color: #1e40af;
+}
+.read-more-btn i {
+  transition: transform 0.3s;
+}
+.read-more-btn:hover i {
+  transform: translateX(4px);
+}
+
+/* News Grid */
+.news-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+}
+.news-card {
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(59,130,246,0.08);
+  box-shadow: 0 4px 30px rgba(0,0,0,0.04);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+.news-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 25px 60px rgba(59,130,246,0.15);
+  border-color: rgba(59,130,246,0.2);
+}
+.news-card-img {
+  position: relative;
+  overflow: hidden;
+  height: 220px;
+}
+.news-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s ease;
+}
+.news-card:hover .news-card-img img {
+  transform: scale(1.08);
+}
+.news-card-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  padding: 4px 14px;
+  border-radius: 50px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  z-index: 2;
+  backdrop-filter: blur(6px);
+}
+.news-card-body {
+  padding: 24px;
+}
+.news-card-date {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #94a3b8;
+  font-size: 0.82rem;
+  margin-bottom: 12px;
+}
+.news-card-date i { color: #3b82f6; font-size: 0.75rem; }
+.news-card-body h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.4;
+  margin-bottom: 12px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.news-card-body p {
+  color: #64748b;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin-bottom: 16px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.news-card-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #3b82f6;
+  font-weight: 600;
+  font-size: 0.88rem;
+  text-decoration: none;
+  transition: all 0.3s;
+}
+.news-card-link:hover {
+  gap: 10px;
+  color: #1e40af;
+}
+
+/* Newsletter Section */
+.newsletter-section {
+  padding: 80px 0;
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+  position: relative;
+  overflow: hidden;
+}
+.newsletter-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 50%, rgba(59,130,246,0.12) 0%, transparent 60%);
+}
+.newsletter-card {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto;
+}
+.newsletter-card h2 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: white;
+  margin-bottom: 16px;
+}
+.newsletter-card p {
+  color: #94a3b8;
+  font-size: 1rem;
+  line-height: 1.7;
+  margin-bottom: 30px;
+}
+.newsletter-form {
+  display: flex;
+  gap: 12px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+.newsletter-form input {
+  flex: 1;
+  padding: 14px 22px;
+  border-radius: 50px;
+  border: 1px solid rgba(59,130,246,0.3);
+  background: rgba(255,255,255,0.08);
+  color: white;
+  font-size: 0.95rem;
+  outline: none;
+  transition: all 0.3s;
+  backdrop-filter: blur(8px);
+}
+.newsletter-form input::placeholder { color: #94a3b8; }
+.newsletter-form input:focus {
+  border-color: #3b82f6;
+  background: rgba(255,255,255,0.12);
+  box-shadow: 0 0 20px rgba(59,130,246,0.15);
+}
+.newsletter-form button {
+  padding: 14px 30px;
+  border-radius: 50px;
+  border: none;
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
+  color: white;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  white-space: nowrap;
+}
+.newsletter-form button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(59,130,246,0.35);
+}
+
+/* CTA Section */
+.cta-section {
+  padding: 100px 0;
+  background: #f8fafc;
+}
+.cta-card {
+  text-align: center;
+  background: white;
+  border-radius: 28px;
+  padding: 70px 50px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.06);
+  border: 1px solid rgba(59,130,246,0.08);
+  max-width: 800px;
+  margin: 0 auto;
+}
+.cta-card h2 {
+  font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 16px;
+}
+.cta-card p {
+  color: #64748b;
+  font-size: 1.05rem;
+  line-height: 1.7;
+  max-width: 550px;
+  margin: 0 auto 30px;
+}
+.cta-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.btn-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 32px;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition: all 0.3s;
+}
+.btn-cta-primary {
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
+  color: white;
+  box-shadow: 0 4px 20px rgba(59,130,246,0.3);
+}
+.btn-cta-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(59,130,246,0.4);
+}
+.btn-cta-outline {
+  border: 2px solid rgba(59,130,246,0.3);
+  color: #3b82f6;
+  background: transparent;
+}
+.btn-cta-outline:hover {
+  background: rgba(59,130,246,0.1);
+  border-color: rgba(59,130,246,0.5);
+}
+
+/* Footer */
+.footer {
+  background: linear-gradient(180deg, #020617 0%, #0f172a 100%);
+  padding: 80px 0 0;
+  color: #94a3b8;
+}
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 1.2fr;
+  gap: 50px;
+  padding-bottom: 50px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.footer-brand .logo-icon {
+  width: 42px;
+  height: 42px;
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 1.2rem;
+  color: white;
+}
+.footer-brand span {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: white;
+}
+.footer p {
+  font-size: 0.9rem;
+  line-height: 1.7;
+  margin-bottom: 20px;
+}
+.footer-social {
+  display: flex;
+  gap: 10px;
+}
+.footer-social a {
+  width: 38px;
+  height: 38px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  text-decoration: none;
+  transition: all 0.3s;
+  font-size: 0.9rem;
+}
+.footer-social a:hover {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+  transform: translateY(-3px);
+}
+.footer-col h4 {
+  color: white;
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+.footer-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.footer-links li { margin-bottom: 10px; }
+.footer-links a {
+  color: #94a3b8;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: all 0.3s;
+}
+.footer-links a:hover {
+  color: #60a5fa;
+  padding-left: 6px;
+}
+.footer-contact {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.footer-contact-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 0.88rem;
+}
+.footer-contact-item i {
+  color: #3b82f6;
+  margin-top: 3px;
+  font-size: 0.85rem;
+}
+.footer-bottom {
+  padding: 24px 0;
+  margin-top: 30px;
+  text-align: center;
+  font-size: 0.85rem;
+}
+.footer-bottom a {
+  color: #60a5fa;
+  text-decoration: none;
+}
+.footer-bottom a:hover { text-decoration: underline; }
+
+/* Animations */
+[data-aos] {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+[data-aos="fade-up"].visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+[data-aos="fade-right"] {
+  transform: translateX(-30px);
+}
+[data-aos="fade-right"].visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+[data-aos="fade-left"] {
+  transform: translateX(30px);
+}
+[data-aos="fade-left"].visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+[data-aos="zoom-in"] {
+  transform: scale(0.9);
+}
+[data-aos="zoom-in"].visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .featured-article { grid-template-columns: 1fr; }
+  .featured-img-wrap { min-height: 300px; }
+  .news-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 768px) {
+  .page-hero { padding: 130px 0 80px; }
+  .news-grid { grid-template-columns: 1fr; }
+  .featured-content { padding: 30px 24px; }
+  .featured-content h2 { font-size: 1.4rem; }
+  .newsletter-form { flex-direction: column; }
+  .newsletter-form button { width: 100%; }
+  .footer-grid {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+  .cta-card { padding: 40px 24px; }
+  .filter-tabs { gap: 8px; }
+  .filter-tab { padding: 8px 16px; font-size: 0.82rem; }
+}
+@media (max-width: 480px) {
+  .page-hero h1 { font-size: 1.8rem; }
+  .featured-img-wrap { min-height: 220px; }
+  .news-card-img { height: 180px; }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+
+<!-- Navbar -->
+<nav class="navbar" id="navbar">
+  <div class="container">
+    <a href="/" class="nav-brand">
+      <div class="logo-icon">E</div>
+      <span>ENABLE PROGRAM</span>
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="/">Home</a></li>
+      <li class="nav-dropdown">
+        <a href="#">About <i class="fas fa-chevron-down" style="font-size:.625rem;margin-left:4px"></i></a>
+        <div class="dropdown-menu">
+          <a href="/about/"><i class="fas fa-building"></i> About ENF</a>
+          <a href="/founder/"><i class="fas fa-user-tie"></i> Founder &amp; Trustees</a>
+          <a href="/management/"><i class="fas fa-users-cog"></i> Management Team</a>
+        </div>
+      </li>
+      <li><a href="/programs/">Programs</a></li>
+      <li><a href="/partners/">Partners</a></li>
+      <li><a href="/scholarships/">Scholarships</a></li>
+      <li><a href="/news/" class="active">News</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="/login/" class="btn btn-primary btn-sm"><i class="fas fa-sign-in-alt"></i> Login</a>
+    </div>
+    <button class="mobile-menu-btn" onclick="toggleMobileMenu()"><i class="fas fa-bars"></i></button>
+  </div>
+</nav>
+
+<!-- Hero Section -->
+<section class="page-hero">
+  <div class="container">
+    <div class="page-hero-content" data-aos="fade-up">
+      <div class="page-hero-badge"><i class="fas fa-newspaper"></i> Stay Informed</div>
+      <h1>Latest <span class="gradient-text">News &amp; Updates</span></h1>
+      <p>Stay up to date with the latest developments, achievements, and milestones from Ex Navodayan Foundation and its programs across India.</p>
+      <div class="breadcrumb">
+        <a href="/"><i class="fas fa-home"></i> Home</a>
+        <span class="separator">/</span>
+        <span>News</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- News Section -->
+<section class="section" style="background: #f8fafc;">
+  <div class="container">
+
+    <!-- Filter Tabs -->
+    <div class="filter-tabs" data-aos="fade-up">
+      <button class="filter-tab active" data-filter="all">All</button>
+      <button class="filter-tab" data-filter="news">News</button>
+      <button class="filter-tab" data-filter="announcement">Announcement</button>
+      <button class="filter-tab" data-filter="event">Event</button>
+      <button class="filter-tab" data-filter="update">Update</button>
+    </div>
+
+    {% if featured_item %}
+    <!-- Featured Article -->
+    <article class="featured-article" data-aos="fade-up" data-category="{{ featured_item.news_type|lower }}">
+      <div class="featured-img-wrap">
+        {% if featured_item.featured_image %}
+        <img src="{{ featured_item.featured_image }}" alt="{{ featured_item.title }}" loading="lazy">
+        {% else %}
+        <img src="https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1200&h=800&fit=crop&q=85" alt="{{ featured_item.title }}" loading="lazy">
+        {% endif %}
+        <span class="featured-badge"><i class="fas fa-star"></i> Featured</span>
+      </div>
+      <div class="featured-content">
+        <div class="featured-meta">
+          <span class="featured-date"><i class="fas fa-calendar-alt"></i> {{ featured_item.publish_date|date:"F d, Y" }}</span>
+          <span class="featured-category cat-{{ featured_item.news_type|lower }}">{{ featured_item.get_news_type_display }}</span>
+        </div>
+        <h2>{{ featured_item.title }}</h2>
+        <p>{{ featured_item.summary|default:featured_item.content|truncatewords:60 }}</p>
+        <a href="#" class="read-more-btn">Read Full Story <i class="fas fa-arrow-right"></i></a>
+      </div>
+    </article>
+    {% endif %}
+
+    <!-- News Grid -->
+    <div class="news-grid">
+      {% for item in other_items %}
+      <div class="news-card" data-aos="fade-up" data-category="{{ item.news_type|lower }}">
+        <div class="news-card-img">
+          {% if item.featured_image %}
+          <img src="{{ item.featured_image }}" alt="{{ item.title }}" loading="lazy">
+          {% else %}
+          <img src="https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=1200&h=800&fit=crop&q=85" alt="{{ item.title }}" loading="lazy">
+          {% endif %}
+          <span class="news-card-badge cat-{{ item.news_type|lower }}">{{ item.get_news_type_display }}</span>
+        </div>
+        <div class="news-card-body">
+          <div class="news-card-date"><i class="fas fa-calendar-alt"></i> {{ item.publish_date|date:"F d, Y" }}</div>
+          <h3>{{ item.title }}</h3>
+          <p>{{ item.summary|default:item.content|truncatewords:30 }}</p>
+          <a href="#" class="news-card-link">Read More <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+      {% empty %}
+      <div style="grid-column: 1/-1; text-align:center; padding:60px 20px; color:#64748b;">
+        <i class="fas fa-newspaper" style="font-size:3rem; margin-bottom:16px; display:block; color:#cbd5e1;"></i>
+        <h3 style="color:#0f172a; margin-bottom:8px;">No News Available</h3>
+        <p>News items will appear here once published from the admin panel.</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Newsletter Section -->
+<section class="newsletter-section">
+  <div class="container">
+    <div class="newsletter-card" data-aos="fade-up">
+      <div class="section-badge" style="background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.3);color:#93c5fd;"><i class="fas fa-envelope-open-text"></i> Newsletter</div>
+      <h2>Stay Updated with ENF</h2>
+      <p>Subscribe to our newsletter and never miss an update on our programs, achievements, and events. Get the latest news delivered straight to your inbox.</p>
+      <form class="newsletter-form" onsubmit="event.preventDefault(); alert('Thank you for subscribing!');">
+        <input type="email" placeholder="Enter your email address" required>
+        <button type="submit"><i class="fas fa-paper-plane"></i> Subscribe</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section">
+  <div class="container">
+    <div class="cta-card" data-aos="zoom-in">
+      <div class="section-badge"><i class="fas fa-bullhorn"></i> Get Involved</div>
+      <h2>Have a Story to Share?</h2>
+      <p>Are you an ENF alumnus, student, or partner with a success story? We'd love to feature your journey and inspire others. Reach out to us and share your experience.</p>
+      <div class="cta-actions">
+        <a href="#contact" class="btn-cta btn-cta-primary"><i class="fas fa-envelope"></i> Contact Us</a>
+        <a href="/about/" class="btn-cta btn-cta-outline"><i class="fas fa-info-circle"></i> Learn More</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <!-- Col 1: Brand -->
+      <div class="footer-col">
+        <div class="footer-brand">
+          <div class="logo-icon">E</div>
+          <span>ENABLE PROGRAM</span>
+        </div>
+        <p>Ex Navodayan Foundation (ENF) is a premier not-for-profit organization dedicated to empowering Navodaya alumni and students through quality education, mentorship, and technology-enabled learning programs across India.</p>
+        <div class="footer-social">
+          <a href="https://youtube.com" target="_blank" rel="noopener" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+          <a href="https://facebook.com" target="_blank" rel="noopener" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+          <a href="https://twitter.com" target="_blank" rel="noopener" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+          <a href="https://linkedin.com" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+          <a href="https://instagram.com" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        </div>
+      </div>
+
+      <!-- Col 2: Quick Links -->
+      <div class="footer-col">
+        <h4>Quick Links</h4>
+        <ul class="footer-links">
+          <li><a href="/about/">About Us</a></li>
+          <li><a href="/programs/">Programs</a></li>
+          <li><a href="/partners/">Partners</a></li>
+          <li><a href="/scholarships/">Scholarships</a></li>
+          <li><a href="/news/">News</a></li>
+          <li><a href="/gallery/">Gallery</a></li>
+        </ul>
+      </div>
+
+      <!-- Col 3: Programs -->
+      <div class="footer-col">
+        <h4>Programs</h4>
+        <ul class="footer-links">
+          <li><a href="/programs/">CoE</a></li>
+          <li><a href="/programs/">ENABLE</a></li>
+        </ul>
+      </div>
+
+      <!-- Col 4: Get in Touch -->
+      <div class="footer-col">
+        <h4>Get in Touch</h4>
+        <div class="footer-contact">
+          <div class="footer-contact-item">
+            <i class="fas fa-location-dot"></i>
+            <span>B-36/43-46M, Brahmanand Colony, Durgakund, Varanasi, UP (221005)</span>
+          </div>
+          <div class="footer-contact-item">
+            <i class="fas fa-phone"></i>
+            <span>+91-76070 02100</span>
+          </div>
+          <div class="footer-contact-item">
+            <i class="fas fa-envelope"></i>
+            <span>exnavodayanfoundation1@gmail.com</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Bottom -->
+    <div class="footer-bottom">
+      <p>&copy; 2026 Ex Navodayan Foundation. All rights reserved.</p>
+      <p>Design by <a href="https://erpdsoft.com" target="_blank" rel="noopener">ERPDSOFT</a></p>
+    </div>
+  </div>
+</footer>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Navbar scroll effect
+  window.addEventListener('scroll', function () {
+    document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 50);
+  });
+
+  // Mobile menu toggle
+  function toggleMobileMenu() {
+    var links = document.getElementById('navLinks');
+    links.classList.toggle('show');
+  }
+
+  // Category filter
+  var filterTabs = document.querySelectorAll('.filter-tab');
+  var newsCards = document.querySelectorAll('.news-card');
+  var featuredArticle = document.querySelector('.featured-article');
+
+  filterTabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      filterTabs.forEach(function (t) { t.classList.remove('active'); });
+      tab.classList.add('active');
+
+      var filter = tab.getAttribute('data-filter');
+
+      // Filter featured article
+      if (featuredArticle) {
+        if (filter === 'all') {
+          featuredArticle.style.display = 'grid';
+        } else {
+          featuredArticle.style.display = featuredArticle.getAttribute('data-category') === filter ? 'grid' : 'none';
+        }
+      }
+
+      // Filter news cards
+      newsCards.forEach(function (card) {
+        if (filter === 'all' || card.getAttribute('data-category') === filter) {
+          card.style.display = 'block';
+          card.style.opacity = '0';
+          card.style.transform = 'translateY(20px)';
+          setTimeout(function () {
+            card.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+          }, 50);
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    });
+  });
+
+  // Intersection Observer for scroll animations
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('[data-aos]').forEach(function (el) {
+    observer.observe(el);
+  });
+
+  // Smooth scroll for anchor links
+  document.querySelectorAll('a[href^="#"]').forEach(function (anchor) {
+    anchor.addEventListener('click', function (e) {
+      var targetId = this.getAttribute('href');
+      if (targetId === '#') return;
+      e.preventDefault();
+      var target = document.querySelector(targetId);
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
+</script>
+{% endblock %}

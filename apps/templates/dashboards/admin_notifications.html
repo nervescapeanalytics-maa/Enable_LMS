@@ -1,0 +1,52 @@
+{% extends 'dashboards/admin_base.html' %}
+
+{% block admin_content %}
+<div class="page-header">
+  <div><h2>Notifications</h2><p>All system notifications</p></div>
+</div>
+
+<!-- Stats -->
+<div class="stats-row">
+  <div class="stat-card"><div class="stat-value">{{ all_notifications|length }}</div><div class="stat-label">Total</div></div>
+  <div class="stat-card"><div class="stat-value" style="color:#6366f1;">{{ unread_count }}</div><div class="stat-label">Unread</div></div>
+  <div class="stat-card"><div class="stat-value" style="color:#22c55e;">{{ all_notifications|length|add:"-"|add:unread_count }}</div><div class="stat-label">Read</div></div>
+</div>
+
+<!-- Notifications List -->
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fas fa-bell"></i> All Notifications</h3>
+    <span class="card-badge info">Last 100</span>
+  </div>
+  {% if all_notifications %}
+  <div style="overflow-x:auto">
+    <table class="adm-table">
+      <thead><tr><th>Type</th><th>Title</th><th>Message</th><th>Time</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for n in all_notifications %}
+        <tr style="{% if not n.is_read %}background:#f0f9ff;{% endif %}">
+          <td>
+            {% if n.type == 'ALERT' %}
+              <span class="status inactive"><i class="fas fa-exclamation-circle" style="font-size:0.7rem;"></i> Alert</span>
+            {% elif n.type == 'INFO' %}
+              <span class="status active"><i class="fas fa-info-circle" style="font-size:0.7rem;"></i> Info</span>
+            {% elif n.type == 'WARNING' %}
+              <span class="status" style="background:#fffbeb;color:#d97706;border-color:#fde68a;"><i class="fas fa-exclamation-triangle" style="font-size:0.7rem;"></i> Warning</span>
+            {% else %}
+              <span class="card-badge neutral">{{ n.type|default:"General" }}</span>
+            {% endif %}
+          </td>
+          <td style="font-weight:{% if not n.is_read %}700{% else %}500{% endif %};">{{ n.title }}</td>
+          <td style="color:#64748b;font-size:0.85rem;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ n.message|truncatechars:80 }}</td>
+          <td style="white-space:nowrap;font-size:0.82rem;color:#94a3b8;">{{ n.time }}</td>
+          <td>{% if n.is_read %}<span class="card-badge neutral">Read</span>{% else %}<span class="card-badge info">Unread</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><i class="fas fa-bell-slash"></i><p>No notifications yet</p></div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,110 @@
+{% load admin_list %}
+{% load i18n %}
+{% comment %}
+Enable-LMS custom admin pagination:
+- Flat, borderless page-number pills.
+- Page-size selector (20 / 50 / 100 / 200) — preserves all current GET params,
+  AND remembers the user's choice in localStorage so it persists across pages.
+- Whitelisted by EnhancedModelAdmin.changelist_view -> (10, 20, 25, 50, 100, 200).
+{% endcomment %}
+<div class="enf-paginator" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:12px 4px;font-size:0.85rem;">
+  {% if pagination_required %}
+    <nav class="enf-pagenums" aria-label="Pagination" style="display:flex;align-items:center;gap:4px;">
+      {% for i in page_range %}
+        {% paginator_number cl i %}
+      {% endfor %}
+    </nav>
+  {% endif %}
+
+  <span class="enf-result-count" style="color:#64748b;">
+    {{ cl.result_count }}
+    {% if cl.result_count == 1 %}{{ cl.opts.verbose_name }}{% else %}{{ cl.opts.verbose_name_plural }}{% endif %}
+  </span>
+
+  <span class="enf-page-size-form" id="enf-pps-wrap" style="display:inline-flex;align-items:center;gap:6px;margin-left:auto;">
+    <label for="id_list_per_page" style="color:#64748b;">{% translate 'Per page' %}:</label>
+    <span id="enf-pps-spin" style="display:none;width:14px;height:14px;border:2px solid #cbd5e1;border-top-color:#844FC1;border-radius:50%;animation:enf-spin 0.7s linear infinite;"></span>
+    <select id="id_list_per_page"
+            data-current="{{ request.GET.list_per_page|default:cl.list_per_page }}"
+            style="padding:4px 8px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;font-size:0.85rem;cursor:pointer;">
+      {% with current=request.GET.list_per_page|default:cl.list_per_page %}
+        <option value="20"  {% if current|stringformat:'s' == '20'  %}selected{% endif %}>20</option>
+        <option value="50"  {% if current|stringformat:'s' == '50'  %}selected{% endif %}>50</option>
+        <option value="100" {% if current|stringformat:'s' == '100' %}selected{% endif %}>100</option>
+        <option value="200" {% if current|stringformat:'s' == '200' %}selected{% endif %}>200</option>
+      {% endwith %}
+    </select>
+  </span>
+
+  {% if show_all_url %}
+    <a href="{{ show_all_url }}" class="showall" style="color:#844FC1;">{% translate 'Show all' %}</a>
+  {% endif %}
+  {% if cl.formset and cl.result_count %}
+    <input type="submit" name="_save" class="default" value="{% translate 'Save' %}">
+  {% endif %}
+</div>
+
+<script>
+/* ── Per-page selector: instant navigation + persistence ──
+   - Uses location.replace (no extra history entry → faster back nav)
+   - Disables selector + shows spinner immediately so user sees feedback
+   - Preserves all other GET params (filters/search/order)
+   - Persists choice in localStorage so future pages start with same size
+*/
+(function(){
+  var sel = document.getElementById('id_list_per_page');
+  var spin = document.getElementById('enf-pps-spin');
+  if (!sel) return;
+
+  // Restore preference if URL has none
+  try {
+    var u0 = new URL(window.location.href);
+    if (!u0.searchParams.has('list_per_page')) {
+      var pref = localStorage.getItem('enf_list_per_page');
+      if (pref && ['20','50','100','200'].indexOf(pref) !== -1) {
+        var current = sel.getAttribute('data-current') || '50';
+        if (String(pref) !== String(current)) {
+          u0.searchParams.set('list_per_page', pref);
+          u0.searchParams.delete('p');
+          window.location.replace(u0.toString());
+          return;
+        }
+      }
+    }
+  } catch(e) {}
+
+  sel.addEventListener('change', function(){
+    var v = sel.value;
+    try { localStorage.setItem('enf_list_per_page', v); } catch(e){}
+    sel.disabled = true;
+    if (spin) spin.style.display = 'inline-block';
+    var u = new URL(window.location.href);
+    u.searchParams.set('list_per_page', v);
+    u.searchParams.delete('p');
+    // replace() avoids adding a history entry → snappier back-button
+    window.location.replace(u.toString());
+  });
+})();
+</script>
+
+<style>
+  @keyframes enf-spin { to { transform: rotate(360deg); } }
+  .enf-paginator .enf-pagenums a,
+  .enf-paginator .enf-pagenums .this-page,
+  .enf-paginator .enf-pagenums .end {
+    display: inline-block;
+    min-width: 28px;
+    padding: 4px 8px;
+    text-align: center;
+    border: none !important;
+    background: transparent !important;
+    color: #64748b !important;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color .15s ease;
+  }
+  .enf-paginator .enf-pagenums a:hover { color: #844FC1 !important; background: rgba(132, 79, 193, .08) !important; }
+  .enf-paginator .enf-pagenums .this-page { color: #844FC1 !important; font-weight: 700; background: transparent !important; }
+  .enf-paginator .enf-pagenums .end { color: #94a3b8 !important; }
+</style>

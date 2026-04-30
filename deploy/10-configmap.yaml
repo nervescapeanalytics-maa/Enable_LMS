@@ -1,0 +1,41 @@
+# =============================================================================
+# Non-secret configuration for Enable-LMS
+# Secrets (DJANGO_SECRET_KEY, DB_PASSWORD, CLOUDFLARE_TUNNEL_TOKEN) live in
+# the `lms-secrets` Secret — created by scripts/03-create-secrets.sh
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lms-config
+  namespace: lms-prod
+data:
+  # ── Django Core ─────────────────────────────────────────────────────────
+  DJANGO_ENV: "production"
+  DJANGO_SETTINGS_MODULE: "lms_enterprise.settings"
+  DJANGO_DEBUG: "false"
+  ALLOWED_HOSTS: "lms.automatebot.shop,.automatebot.shop,nginx,nginx.lms-prod.svc.cluster.local,localhost,127.0.0.1"
+  LOG_LEVEL: "INFO"
+
+  # ── Database (PostgreSQL VM on AceCloud, private IP) ────────────────────
+  # IMPORTANT: Use PRIVATE VPC IP here — not the public 45.194.90.251.
+  # Replace 10.50.10.20 with the actual private IP from the AceCloud console.
+  DB_HOST: "10.50.10.20"
+  DB_PORT: "5432"
+  DB_NAME: "LMS_PROD_DB"
+  DB_USER: "lms_app_user"
+  DB_CONN_MAX_AGE: "600"
+  DB_SSLMODE: "require"
+
+  # ── Redis (in-cluster) ──────────────────────────────────────────────────
+  REDIS_URL: "redis://redis:6379"
+  REDIS_MAXMEMORY: "256mb"
+
+  # ── Celery ──────────────────────────────────────────────────────────────
+  CELERY_BROKER_URL: "redis://redis:6379/3"
+  CELERY_RESULT_BACKEND: "redis://redis:6379/4"
+  CELERY_CONCURRENCY: "4"
+  CELERY_MAX_TASKS_PER_CHILD: "1000"
+
+  # ── CORS & CSRF ─────────────────────────────────────────────────────────
+  CORS_ORIGINS: "https://lms.automatebot.shop"
+  CSRF_TRUSTED_ORIGINS: "https://lms.automatebot.shop"

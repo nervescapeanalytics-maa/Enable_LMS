@@ -1,0 +1,69 @@
+{% extends 'dashboards/admin_base.html' %}
+
+{% block admin_content %}
+<div class="page-header">
+  <div><h2>Student Attendance</h2><p>{{ today_date }}</p></div>
+</div>
+
+<!-- Batch-wise Attendance -->
+<div class="card" style="margin-bottom:24px;">
+  <div class="card-header">
+    <h3><i class="fas fa-clipboard-check"></i> Today's Attendance by Batch</h3>
+  </div>
+  {% if batch_attendance %}
+  <div style="overflow-x:auto">
+    <table class="adm-table">
+      <thead><tr><th>Batch</th><th>Code</th><th>Present</th><th>Absent</th><th>Total Marked</th><th>Attendance %</th></tr></thead>
+      <tbody>
+        {% for b in batch_attendance %}
+        <tr>
+          <td style="font-weight:600;">{{ b.batch_name }}</td>
+          <td><span style="font-family:monospace;font-size:0.82rem;color:#64748b;">{{ b.batch_code }}</span></td>
+          <td style="color:#22c55e;font-weight:600;">{{ b.present }}</td>
+          <td style="color:#ef4444;font-weight:600;">{{ b.absent }}</td>
+          <td><strong>{{ b.total }}</strong></td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:60px;background:#f1f5f9;border-radius:4px;height:8px;overflow:hidden;">
+                <div style="width:{{ b.pct }}%;background:{% if b.pct >= 75 %}#22c55e{% elif b.pct >= 50 %}#f59e0b{% else %}#ef4444{% endif %};height:100%;border-radius:4px;"></div>
+              </div>
+              <span style="font-size:0.82rem;font-weight:600;">{{ b.pct }}%</span>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><i class="fas fa-clipboard-check"></i><p>No attendance marked today</p></div>
+  {% endif %}
+</div>
+
+<!-- Recent Records -->
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fas fa-history"></i> Recent Attendance Records</h3>
+  </div>
+  {% if recent_records %}
+  <div style="overflow-x:auto">
+    <table class="adm-table">
+      <thead><tr><th>Student</th><th>Date</th><th>Batch</th><th>Status</th><th>Source</th></tr></thead>
+      <tbody>
+        {% for r in recent_records %}
+        <tr>
+          <td style="font-weight:600;">{{ r.student }}</td>
+          <td>{{ r.date }}</td>
+          <td>{{ r.batch }}</td>
+          <td><span class="status {% if r.status == 'PRESENT' %}active{% elif r.status == 'ABSENT' %}live{% else %}pending{% endif %}">{{ r.status }}</span></td>
+          <td>{{ r.source|default:"Manual" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><i class="fas fa-history"></i><p>No recent attendance records</p></div>
+  {% endif %}
+</div>
+{% endblock %}

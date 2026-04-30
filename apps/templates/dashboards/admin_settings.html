@@ -1,0 +1,63 @@
+{% extends 'dashboards/admin_base.html' %}
+
+{% block admin_content %}
+<div class="page-header">
+  <div><h2>Settings</h2><p>System configuration and feature flags</p></div>
+</div>
+
+<!-- System Settings -->
+<div class="card" style="margin-bottom:24px;">
+  <div class="card-header">
+    <h3><i class="fas fa-cog"></i> System Settings</h3>
+    <span class="card-badge info">{{ total_settings }} Settings</span>
+  </div>
+  {% if settings %}
+  <div style="overflow-x:auto">
+    <table class="adm-table">
+      <thead><tr><th>Key</th><th>Value</th><th>Category</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        {% for s in settings %}
+        <tr>
+          <td><span style="font-family:monospace;font-size:0.82rem;font-weight:600;color:#0f172a;">{{ s.key }}</span></td>
+          <td>{% if s.is_secret %}<span style="color:#94a3b8;">••••••••</span>{% else %}<span style="font-size:0.85rem;">{{ s.value|truncatechars:50 }}</span>{% endif %}</td>
+          <td><span class="card-badge neutral">{{ s.category }}</span></td>
+          <td>{{ s.type }}</td>
+          <td style="color:#64748b;font-size:0.82rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ s.description }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><i class="fas fa-cog"></i><p>No editable settings configured</p></div>
+  {% endif %}
+</div>
+
+<!-- Feature Flags -->
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fas fa-flag"></i> Feature Flags</h3>
+    <span class="card-badge info">{{ total_flags }} Flags</span>
+  </div>
+  {% if feature_flags %}
+  <div style="overflow-x:auto">
+    <table class="adm-table">
+      <thead><tr><th>Flag</th><th>Name</th><th>Description</th><th>Rollout</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for f in feature_flags %}
+        <tr>
+          <td><span style="font-family:monospace;font-size:0.82rem;font-weight:600;color:#0f172a;">{{ f.key }}</span></td>
+          <td style="font-weight:600;">{{ f.name }}</td>
+          <td style="color:#64748b;font-size:0.82rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ f.description }}</td>
+          <td>{{ f.rollout }}%</td>
+          <td>{% if f.enabled %}<span class="status active"><i class="fas fa-toggle-on" style="font-size:0.8rem;"></i> Enabled</span>{% else %}<span class="status inactive"><i class="fas fa-toggle-off" style="font-size:0.8rem;"></i> Disabled</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><i class="fas fa-flag"></i><p>No feature flags configured</p></div>
+  {% endif %}
+</div>
+{% endblock %}

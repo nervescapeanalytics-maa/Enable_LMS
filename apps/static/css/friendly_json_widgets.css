@@ -1,0 +1,335 @@
+/* ══════════════════════════════════════════════════════════════════
+   FRIENDLY JSON WIDGETS — Admin Theme Extension
+   Matches ENABLE PROGRAM Purple Theme
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ─── Base Container ───────────────────────────────────────────── */
+.friendly-json-widget {
+  background: var(--bg-card, #fff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: var(--radius-md, 10px);
+  padding: 16px;
+  margin: 4px 0;
+  transition: border-color 0.2s ease;
+}
+.friendly-json-widget:hover {
+  border-color: var(--primary, #844FC1);
+}
+
+/* ─── Tags Container ───────────────────────────────────────────── */
+.fjw-tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 36px;
+  padding: 8px;
+  background: var(--primary-lighter, rgba(132, 79, 193, 0.05));
+  border-radius: var(--radius-sm, 8px);
+  margin-bottom: 12px;
+  border: 1px dashed var(--border-color, #e2e8f0);
+}
+.fjw-tags-container:empty::after {
+  content: 'No items added yet';
+  color: var(--text-muted, #64748b);
+  font-size: 0.82rem;
+  font-style: italic;
+  padding: 4px 0;
+}
+
+/* ─── Tag Chip ─────────────────────────────────────────────────── */
+.fjw-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, rgba(132, 79, 193, 0.15), rgba(108, 63, 175, 0.12));
+  color: var(--primary-dark, #6C3FAF);
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: var(--font-main, 'Inter', sans-serif);
+  border: 1px solid rgba(132, 79, 193, 0.25);
+  animation: fjw-fadeIn 0.2s ease;
+}
+.fjw-tag-email {
+  background: linear-gradient(135deg, rgba(59, 134, 209, 0.15), rgba(59, 134, 209, 0.10));
+  color: var(--info-blue, #3B86D1);
+  border-color: rgba(59, 134, 209, 0.25);
+}
+
+@keyframes fjw-fadeIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.fjw-tag-text {
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fjw-tag-remove {
+  background: none;
+  border: none;
+  color: currentColor;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+  opacity: 0.5;
+  padding: 0 2px;
+  transition: all 0.15s ease;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.fjw-tag-remove:hover {
+  opacity: 1;
+  background: rgba(220, 38, 38, 0.15);
+  color: #dc2626;
+}
+
+/* ─── Input Row ────────────────────────────────────────────────── */
+.fjw-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.fjw-text-input {
+  flex: 1;
+  padding: 9px 14px;
+  border: 1.5px solid var(--border-color, #e2e8f0);
+  border-radius: var(--radius-sm, 8px);
+  font-size: 0.85rem;
+  font-family: var(--font-main, 'Inter', sans-serif);
+  color: var(--text-primary, #1e293b);
+  background: var(--bg-card, #fff);
+  outline: none;
+  transition: all 0.2s ease;
+}
+.fjw-text-input:focus {
+  border-color: var(--primary, #844FC1);
+  box-shadow: 0 0 0 3px rgba(132, 79, 193, 0.12);
+}
+.fjw-text-input::placeholder {
+  color: var(--text-muted, #64748b);
+  font-weight: 400;
+}
+
+/* ─── Buttons ──────────────────────────────────────────────────── */
+.fjw-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border: none;
+  border-radius: var(--radius-sm, 8px);
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: var(--font-main, 'Inter', sans-serif);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.fjw-btn-add {
+  background: var(--accent-gradient, linear-gradient(135deg, #844FC1, #6C3FAF));
+  color: #fff;
+}
+.fjw-btn-add:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(132, 79, 193, 0.35);
+}
+.fjw-btn-add:active {
+  transform: translateY(0);
+}
+
+.fjw-btn-icon {
+  background: none;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: var(--radius-sm, 8px);
+  cursor: pointer;
+  padding: 8px 10px;
+  color: var(--text-muted, #64748b);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.fjw-btn-remove:hover {
+  background: rgba(220, 38, 38, 0.08);
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+/* ─── Help Text ────────────────────────────────────────────────── */
+.fjw-help {
+  margin: 10px 0 0;
+  font-size: 0.76rem;
+  color: var(--text-muted, #64748b);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.fjw-help i {
+  color: var(--primary, #844FC1);
+  opacity: 0.6;
+}
+
+/* ─── Key-Value Widget ─────────────────────────────────────────── */
+.fjw-kv-header {
+  display: flex;
+  gap: 8px;
+  padding: 0 4px 8px;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  margin-bottom: 8px;
+}
+.fjw-kv-col-header {
+  flex: 1;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--grey-purple, #6C7293);
+}
+
+.fjw-kv-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.fjw-kv-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  animation: fjw-fadeIn 0.2s ease;
+}
+.fjw-kv-key {
+  flex: 1;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace) !important;
+  font-size: 0.82rem !important;
+}
+.fjw-kv-val {
+  flex: 1;
+}
+
+/* ─── Actions Bar ──────────────────────────────────────────────── */
+.fjw-actions-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+/* ─── Empty State ──────────────────────────────────────────────── */
+.fjw-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  color: var(--text-muted, #64748b);
+  font-size: 0.85rem;
+}
+.fjw-empty-state i {
+  font-size: 1.5rem;
+  opacity: 0.3;
+}
+
+/* ─── Social Links Widget ──────────────────────────────────────── */
+.fjw-social-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.fjw-social-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.fjw-social-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--primary-lighter, rgba(132, 79, 193, 0.05));
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+.fjw-social-label {
+  width: 80px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary, #334155);
+  flex-shrink: 0;
+}
+.fjw-social-input {
+  flex: 1;
+}
+
+/* ─── Links List Widget ────────────────────────────────────────── */
+.fjw-links-header {
+  display: flex;
+  gap: 8px;
+  padding: 0 4px 8px;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  margin-bottom: 8px;
+}
+.fjw-links-col {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--grey-purple, #6C7293);
+}
+.fjw-links-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.fjw-links-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  animation: fjw-fadeIn 0.2s ease;
+}
+
+/* ─── Dark Theme Overrides ─────────────────────────────────────── */
+[data-theme="dark"] .friendly-json-widget {
+  background: var(--bg-card, #1a1a2e);
+}
+[data-theme="dark"] .fjw-tags-container {
+  background: rgba(132, 79, 193, 0.08);
+  border-color: rgba(132, 79, 193, 0.2);
+}
+[data-theme="dark"] .fjw-tag {
+  background: linear-gradient(135deg, rgba(132, 79, 193, 0.25), rgba(108, 63, 175, 0.2));
+  color: #c4a5e8;
+  border-color: rgba(132, 79, 193, 0.35);
+}
+[data-theme="dark"] .fjw-text-input {
+  background: rgba(15, 15, 26, 0.5);
+  border-color: var(--border-color, #2d2d4a);
+  color: var(--text-primary, #e2e8f0);
+}
+[data-theme="dark"] .fjw-text-input:focus {
+  border-color: #9b6dd7;
+  box-shadow: 0 0 0 3px rgba(155, 109, 215, 0.15);
+}
+[data-theme="dark"] .fjw-empty-state {
+  color: #64748b;
+}
+
+/* ─── Fieldset Label Enhancement ───────────────────────────────── */
+.friendly-json-widget + .help,
+fieldset .fjw-help {
+  font-size: 0 !important;
+}

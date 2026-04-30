@@ -1,0 +1,10 @@
+{% extends "admin/enhanced_change_list.html" %}
+{% load i18n %}
+
+{% block enf_tools_extra %}
+<script>
+  window.ENF_CP_EXTRA = (window.ENF_CP_EXTRA || []).concat([
+    { id: 'mon-dash', title: 'Monitoring Dashboard', desc: 'Live KPIs & system health', icon: 'fa-tachometer-alt', cls: 't-premium', href: '/admin/alerts/alertrule/monitoring/', keys: ['monitor','kpi','dashboard','health'] }
+  ]);
+</script>
+{% endblock %}

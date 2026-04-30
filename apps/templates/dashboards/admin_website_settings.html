@@ -1,0 +1,101 @@
+{% extends 'dashboards/admin_base.html' %}
+
+{% block admin_content %}
+<div class="page-header">
+  <div><h2><i class="fas fa-globe"></i> Website & Frontend Settings</h2><p>Configure homepage sections, branding, SEO, and social media</p></div>
+  <a href="/admin/system_config/websitesetting/add/" class="btn-primary"><i class="fas fa-plus"></i> Add Setting</a>
+</div>
+
+<!-- Summary -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px;">
+  <div class="card" style="padding:20px;text-align:center;">
+    <div style="font-size:2rem;font-weight:800;color:#6366f1;">{{ total_settings }}</div>
+    <div style="font-size:0.82rem;color:#64748b;margin-top:4px;">Total Settings</div>
+  </div>
+  <div class="card" style="padding:20px;text-align:center;">
+    <div style="font-size:2rem;font-weight:800;color:#22c55e;">{{ active_sections }}</div>
+    <div style="font-size:0.82rem;color:#64748b;margin-top:4px;">Active Sections</div>
+  </div>
+</div>
+
+<!-- Sections Grid -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px;margin-bottom:24px;">
+  {% for section_key, meta in section_meta.items %}
+  <div class="card" style="overflow:hidden;">
+    <div style="padding:16px 20px;background:{{ meta.color }}08;border-bottom:2px solid {{ meta.color }}20;display:flex;align-items:center;justify-content:space-between;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:36px;height:36px;background:{{ meta.color }}15;border-radius:10px;display:flex;align-items:center;justify-content:center;">
+          <i class="fas {{ meta.icon }}" style="color:{{ meta.color }};"></i>
+        </div>
+        <div>
+          <div style="font-weight:700;color:#0f172a;">{{ section_key }}</div>
+          <div style="font-size:0.75rem;color:#94a3b8;">{{ meta.desc }}</div>
+        </div>
+      </div>
+      {% if section_key in sections %}
+      <span style="background:{{ meta.color }};color:#fff;padding:2px 10px;border-radius:10px;font-size:0.72rem;font-weight:700;">{{ sections|dictsort:section_key|length }} items</span>
+      {% else %}
+      <span style="background:#f1f5f9;color:#94a3b8;padding:2px 10px;border-radius:10px;font-size:0.72rem;">Empty</span>
+      {% endif %}
+    </div>
+    <div style="padding:16px 20px;">
+      {% with sec=sections %}
+      {% if section_key in sec %}
+        {% for item in sec|get_item:section_key %}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f1f5f9;">
+          <div>
+            <span style="font-family:monospace;font-size:0.78rem;color:#475569;font-weight:600;">{{ item.key }}</span>
+          </div>
+          <span style="font-size:0.78rem;color:#94a3b8;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ item.value|truncatechars:30 }}</span>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div style="text-align:center;padding:16px;color:#cbd5e1;">
+          <i class="fas {{ meta.icon }}" style="font-size:1.5rem;margin-bottom:8px;display:block;"></i>
+          <span style="font-size:0.82rem;">No settings configured</span>
+        </div>
+      {% endif %}
+      {% endwith %}
+      <a href="/admin/system_config/websitesetting/add/?section={{ section_key }}" style="display:block;text-align:center;margin-top:12px;color:{{ meta.color }};font-size:0.82rem;font-weight:600;text-decoration:none;padding:8px;background:{{ meta.color }}08;border-radius:6px;">
+        <i class="fas fa-plus"></i> Add to {{ section_key }}
+      </a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- All Settings Table -->
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fas fa-list"></i> All Website Settings</h3>
+    <span class="card-badge info">{{ total_settings }} Total</span>
+  </div>
+  {% if sections %}
+  <div style="overflow-x:auto">
+    <table class="adm-table">
+      <thead><tr><th>Section</th><th>Key</th><th>Value</th><th>Media</th><th>Order</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for section_key, sec in sections.items %}
+        {% for item in sec.items %}
+        <tr>
+          <td><span style="background:{% if section_key == 'HERO' %}#8b5cf6{% elif section_key == 'ABOUT' %}#2563eb{% elif section_key == 'PROGRAMS' %}#16a34a{% elif section_key == 'TESTIMONIALS' %}#f59e0b{% elif section_key == 'FOOTER' %}#64748b{% elif section_key == 'SEO' %}#0891b2{% elif section_key == 'SOCIAL' %}#ec4899{% elif section_key == 'BRANDING' %}#6366f1{% elif section_key == 'CONTACT' %}#ef4444{% else %}#78716c{% endif %};color:#fff;padding:2px 8px;border-radius:4px;font-size:0.72rem;">{{ sec.label }}</span></td>
+          <td><span style="font-family:monospace;font-size:0.82rem;font-weight:600;color:#0f172a;">{{ item.key }}</span></td>
+          <td style="font-size:0.82rem;color:#475569;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ item.value|truncatechars:50|default:"—" }}</td>
+          <td>{% if item.media_url %}<a href="{{ item.media_url }}" target="_blank" style="color:#3b82f6;font-size:0.78rem;"><i class="fas fa-external-link-alt"></i> View</a>{% else %}<span style="color:#cbd5e1;">—</span>{% endif %}</td>
+          <td style="text-align:center;font-size:0.82rem;color:#64748b;">{{ item.order }}</td>
+          <td><a href="/admin/system_config/websitesetting/{{ item.id }}/change/" style="color:#3b82f6;font-size:0.82rem;text-decoration:none;font-weight:600;"><i class="fas fa-edit"></i> Edit</a></td>
+        </tr>
+        {% endfor %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <i class="fas fa-globe"></i>
+    <p>No website settings configured</p>
+    <a href="/admin/system_config/websitesetting/add/" class="btn-primary" style="margin-top:12px;"><i class="fas fa-plus"></i> Add First Setting</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

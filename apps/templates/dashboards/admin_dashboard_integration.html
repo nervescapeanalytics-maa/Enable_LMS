@@ -1,0 +1,149 @@
+{% extends 'dashboards/admin_base.html' %}
+
+{% block admin_content %}
+<div class="page-header">
+  <div><h2><i class="fas fa-columns"></i> Dashboard Integration</h2><p>Student & Teacher Dashboard SPAs linked to the admin console</p></div>
+</div>
+
+<!-- Dashboard Cards -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:24px;margin-bottom:24px;">
+  {% for dash in dashboards %}
+  <div class="card" style="overflow:hidden;">
+    <div style="padding:24px;background:{{ dash.color }}08;border-bottom:3px solid {{ dash.color }};">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div style="width:56px;height:56px;background:{{ dash.color }};border-radius:14px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px {{ dash.color }}40;">
+            <i class="fas {{ dash.icon }}" style="color:#fff;font-size:1.4rem;"></i>
+          </div>
+          <div>
+            <div style="font-size:1.2rem;font-weight:800;color:#0f172a;">{{ dash.name }}</div>
+            <div style="font-size:0.82rem;color:#94a3b8;">React Single Page Application</div>
+          </div>
+        </div>
+        {% if dash.status == 'live' %}
+        <span style="background:#dcfce7;color:#166534;padding:4px 12px;border-radius:10px;font-size:0.78rem;font-weight:700;">🟢 LIVE</span>
+        {% else %}
+        <span style="background:#fef3c7;color:#92400e;padding:4px 12px;border-radius:10px;font-size:0.78rem;font-weight:700;">🟡 BETA</span>
+        {% endif %}
+      </div>
+    </div>
+    <div style="padding:24px;">
+      <!-- Stats -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px;">
+        <div style="text-align:center;padding:12px;background:#f8fafc;border-radius:8px;">
+          <div style="font-size:1.5rem;font-weight:800;color:{{ dash.color }};">{{ dash.total_users }}</div>
+          <div style="font-size:0.75rem;color:#94a3b8;">Total Users</div>
+        </div>
+        <div style="text-align:center;padding:12px;background:#f8fafc;border-radius:8px;">
+          <div style="font-size:1.5rem;font-weight:800;color:#22c55e;">{{ dash.active_users }}</div>
+          <div style="font-size:0.75rem;color:#94a3b8;">Active</div>
+        </div>
+        <div style="text-align:center;padding:12px;background:#f8fafc;border-radius:8px;">
+          <div style="font-size:1.5rem;font-weight:800;color:#f59e0b;">{{ dash.logins_today }}</div>
+          <div style="font-size:0.75rem;color:#94a3b8;">Today's Logins</div>
+        </div>
+      </div>
+
+      <!-- Features -->
+      <div style="margin-bottom:20px;">
+        <div style="font-weight:700;font-size:0.85rem;color:#475569;margin-bottom:8px;">Features</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+          {% for feat in dash.features %}
+          <span style="background:{{ dash.color }}10;color:{{ dash.color }};border:1px solid {{ dash.color }}30;padding:4px 10px;border-radius:6px;font-size:0.75rem;font-weight:600;">{{ feat }}</span>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div style="display:flex;gap:10px;">
+        <a href="{{ dash.url }}" target="_blank" style="flex:1;background:{{ dash.color }};color:#fff;padding:10px 16px;border-radius:8px;font-weight:700;font-size:0.85rem;text-decoration:none;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;">
+          <i class="fas fa-external-link-alt"></i> Open Dashboard
+        </a>
+        <a href="{{ dash.url }}" style="background:#f1f5f9;color:#475569;padding:10px 16px;border-radius:8px;font-weight:600;font-size:0.85rem;text-decoration:none;display:flex;align-items:center;gap:6px;">
+          <i class="fas fa-chart-line"></i> Analytics
+        </a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Integration Architecture -->
+<div class="card" style="margin-bottom:24px;">
+  <div class="card-header"><h3><i class="fas fa-project-diagram"></i> Integration Architecture</h3></div>
+  <div style="padding:24px;">
+    <div style="display:flex;align-items:center;justify-content:center;gap:30px;flex-wrap:wrap;">
+      <div style="text-align:center;padding:24px;background:linear-gradient(135deg,#faf5ff,#f3e8ff);border:2px solid #e9d5ff;border-radius:16px;min-width:180px;">
+        <div style="font-size:2rem;margin-bottom:8px;">🎓</div>
+        <div style="font-weight:800;color:#7c3aed;">Student SPA</div>
+        <div style="font-size:0.75rem;color:#94a3b8;margin-top:4px;">React + Vite</div>
+        <div style="font-family:monospace;font-size:0.72rem;color:#a78bfa;margin-top:4px;">/student/dashboard/</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+        <span style="font-size:0.72rem;color:#94a3b8;">REST API</span>
+        <div style="font-size:1.5rem;">⇄</div>
+      </div>
+      <div style="text-align:center;padding:24px;background:linear-gradient(135deg,#f8fafc,#f1f5f9);border:2px solid #e2e8f0;border-radius:16px;min-width:180px;">
+        <div style="font-size:2rem;margin-bottom:8px;">⚙️</div>
+        <div style="font-weight:800;color:#0f172a;">Django Backend</div>
+        <div style="font-size:0.75rem;color:#94a3b8;margin-top:4px;">API + Admin</div>
+        <div style="font-family:monospace;font-size:0.72rem;color:#64748b;margin-top:4px;">/api/v1/</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+        <span style="font-size:0.72rem;color:#94a3b8;">REST API</span>
+        <div style="font-size:1.5rem;">⇄</div>
+      </div>
+      <div style="text-align:center;padding:24px;background:linear-gradient(135deg,#eff6ff,#dbeafe);border:2px solid #bfdbfe;border-radius:16px;min-width:180px;">
+        <div style="font-size:2rem;margin-bottom:8px;">👨‍🏫</div>
+        <div style="font-weight:800;color:#2563eb;">Teacher SPA</div>
+        <div style="font-size:0.75rem;color:#94a3b8;margin-top:4px;">React + Vite</div>
+        <div style="font-family:monospace;font-size:0.72rem;color:#60a5fa;margin-top:4px;">/teacher/dashboard/</div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:20px;">
+      <div style="font-size:1.5rem;">⬆</div>
+      <div style="display:inline-block;text-align:center;padding:20px 40px;background:linear-gradient(135deg,#0f172a,#1e293b);border-radius:16px;margin-top:8px;">
+        <div style="font-size:1.5rem;margin-bottom:8px;">🛡️</div>
+        <div style="font-weight:800;color:#fff;">Admin Console</div>
+        <div style="font-size:0.75rem;color:rgba(255,255,255,0.5);margin-top:4px;">Django Templates + Staff Views</div>
+        <div style="font-family:monospace;font-size:0.72rem;color:rgba(255,255,255,0.4);margin-top:4px;">/staff/dashboard/</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Links -->
+<div class="card">
+  <div class="card-header"><h3><i class="fas fa-link"></i> Quick Links</h3></div>
+  <div style="padding:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;">
+    <a href="/student/dashboard/" target="_blank" style="display:flex;align-items:center;gap:12px;padding:16px;background:#faf5ff;border:1px solid #e9d5ff;border-radius:10px;text-decoration:none;">
+      <i class="fas fa-user-graduate" style="color:#8b5cf6;font-size:1.2rem;"></i>
+      <div>
+        <div style="font-weight:700;color:#0f172a;">Student Dashboard</div>
+        <div style="font-size:0.78rem;color:#94a3b8;">/student/dashboard/</div>
+      </div>
+    </a>
+    <a href="/teacher/dashboard/" target="_blank" style="display:flex;align-items:center;gap:12px;padding:16px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;text-decoration:none;">
+      <i class="fas fa-chalkboard-teacher" style="color:#2563eb;font-size:1.2rem;"></i>
+      <div>
+        <div style="font-weight:700;color:#0f172a;">Teacher Dashboard</div>
+        <div style="font-size:0.78rem;color:#94a3b8;">/teacher/dashboard/</div>
+      </div>
+    </a>
+    <a href="/admin/" target="_blank" style="display:flex;align-items:center;gap:12px;padding:16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;text-decoration:none;">
+      <i class="fas fa-database" style="color:#64748b;font-size:1.2rem;"></i>
+      <div>
+        <div style="font-weight:700;color:#0f172a;">Django Admin</div>
+        <div style="font-size:0.78rem;color:#94a3b8;">/admin/</div>
+      </div>
+    </a>
+    <a href="/staff/dashboard/" style="display:flex;align-items:center;gap:12px;padding:16px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;text-decoration:none;">
+      <i class="fas fa-shield-alt" style="color:#16a34a;font-size:1.2rem;"></i>
+      <div>
+        <div style="font-weight:700;color:#0f172a;">Admin Console</div>
+        <div style="font-size:0.78rem;color:#94a3b8;">/staff/dashboard/</div>
+      </div>
+    </a>
+  </div>
+</div>
+{% endblock %}

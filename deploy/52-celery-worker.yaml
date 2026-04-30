@@ -1,0 +1,75 @@
+# =============================================================================
+# Celery worker — async task processing
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: celery-worker
+  namespace: lms-prod
+  labels: { app: celery-worker }
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: { maxSurge: 1, maxUnavailable: 0 }
+  selector:
+    matchLabels: { app: celery-worker }
+  template:
+    metadata:
+      labels: { app: celery-worker }
+    spec:
+      imagePullSecrets:
+        - name: acecloud-registry
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      terminationGracePeriodSeconds: 60     # let running tasks finish
+      containers:
+        - name: celery-worker
+          image: registry.internal.acecloud.io/enable-lms/api:${IMAGE_TAG}
+          imagePullPolicy: IfNotPresent
+          args: ["celery-worker"]
+          envFrom:
+            - configMapRef: { name: lms-config }
+            - secretRef:    { name: lms-secrets }
+          resources:
+            requests: { cpu: 500m, memory: 512Mi }
+            limits:   { cpu: "2",  memory: 1Gi }
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - "celery -A lms_enterprise inspect ping -d celery@$HOSTNAME | grep -q pong"
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - "celery -A lms_enterprise inspect ping -d celery@$HOSTNAME | grep -q pong"
+            initialDelaySeconds: 60
+            periodSeconds: 60
+            timeoutSeconds: 15
+            failureThreshold: 3
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: celery-worker-hpa
+  namespace: lms-prod
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: celery-worker
+  minReplicas: 2
+  maxReplicas: 8
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: { type: Utilization, averageUtilization: 70 }

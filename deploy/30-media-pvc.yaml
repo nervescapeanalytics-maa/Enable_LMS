@@ -1,0 +1,20 @@
+# =============================================================================
+# Shared media storage — mounted RW in api/websocket/celery, RO in nginx.
+# REQUIRES a ReadWriteMany storage class (NFS, CephFS, or AceCloud shared FS).
+#
+# If AceCloud does NOT provide RWX storage, use S3-compatible object storage
+# via django-storages instead and DELETE this file + the `media` volume in
+# deploy/50-api.yaml and deploy/60-nginx.yaml.
+# =============================================================================
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: media-pvc
+  namespace: lms-prod
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 20Gi
+  # storageClassName: <acecloud-rwx-storage-class>    # REPLACE with actual class name

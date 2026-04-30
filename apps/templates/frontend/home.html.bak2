@@ -1,0 +1,714 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block body %}
+
+<!-- ========== NAVBAR ========== -->
+<nav class="navbar" id="navbar">
+  <div class="container">
+    <a href="/" class="nav-brand">
+      <div class="logo-icon">E</div>
+      <span>ENABLE PROGRAM</span>
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="/" class="active">Home</a></li>
+      <li class="nav-dropdown">
+        <a href="#">About <i class="fas fa-chevron-down" style="font-size:.625rem;margin-left:4px"></i></a>
+        <div class="dropdown-menu">
+          <a href="/about/"><i class="fas fa-building"></i> About ENF</a>
+          <a href="/founder/"><i class="fas fa-user-tie"></i> Founder &amp; Trustees</a>
+          <a href="/management/"><i class="fas fa-users-cog"></i> Management Team</a>
+        </div>
+      </li>
+      <li><a href="/programs/">Programs</a></li>
+      <li><a href="/partners/">Partners</a></li>
+      <li><a href="/scholarships/">Scholarships</a></li>
+      <li><a href="/news/">News</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="javascript:void(0)" class="btn btn-primary btn-sm" onclick="openLoginModal()"><i class="fas fa-sign-in-alt"></i> Login</a>
+    </div>
+    <button class="mobile-menu-btn" onclick="toggleMobileMenu()"><i class="fas fa-bars"></i></button>
+  </div>
+</nav>
+
+<!-- ========== LOGIN MODAL ========== -->
+<div class="login-modal-overlay" id="loginModal">
+  <div class="login-modal" style="position:relative;max-width:600px">
+    <button class="login-modal-close" onclick="closeLoginModal()"><i class="fas fa-times"></i></button>
+    <div class="login-modal-header">
+      <h2 style="font-size:2rem;margin-bottom:8px">Welcome Back</h2>
+      <p style="font-size:1rem;color:#666;font-weight:500">Select your role to continue your learning journey</p>
+    </div>
+    <div class="login-role-grid">
+      <a href="/login/?role=student" class="login-role-card">
+        <div class="role-icon student"><i class="fas fa-user-graduate"></i></div>
+        <h3>Student</h3>
+        <span>Access your classes</span>
+      </a>
+      <a href="/login/?role=teacher" class="login-role-card">
+        <div class="role-icon teacher"><i class="fas fa-chalkboard-teacher"></i></div>
+        <h3>Teacher</h3>
+        <span>Manage your courses</span>
+      </a>
+      <a href="/login/?role=admin" class="login-role-card">
+        <div class="role-icon admin"><i class="fas fa-user-shield"></i></div>
+        <h3>Admin</h3>
+        <span>System management</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- ========== HERO SECTION ========== -->
+<section class="hero-section">
+  <div class="container">
+    <div class="hero-grid">
+      <!-- Left Content -->
+      <div class="hero-content" data-aos="fade-right" data-aos-delay="100">
+        <span class="badge badge-ai" style="font-size:0.9rem;padding:10px 18px"><i class="fas fa-sparkles"></i> AI-Powered Learning</span>
+        <h1 style="font-size:clamp(2.5rem,6vw,3.8rem)">Empowering Students Through <span style="background:linear-gradient(135deg,#3b82f6,#0ea5e9);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Premium Education</span></h1>
+        <p style="font-size:1.1rem;line-height:1.8;color:rgba(255,255,255,0.9);font-weight:400">ENABLE PROGRAM is the integrated learning platform by Ex Navodayan Foundation — delivering world-class JEE &amp; NEET preparation through live interactive classes, AI-driven analytics, smart assessments, and a comprehensive digital library for students across India.</p>
+        <div class="hero-buttons">
+          <a href="javascript:void(0)" class="btn btn-primary btn-lg" onclick="openLoginModal()"><i class="fas fa-rocket"></i> Get Started</a>
+          <a href="/programs/" class="btn btn-outline-white btn-lg"><i class="fas fa-compass"></i> Explore Programs</a>
+        </div>
+        <div class="hero-badges">
+          <div class="hero-badge-item">
+            <i class="fas fa-users"></i>
+            <span>15,000+ Students</span>
+          </div>
+          <div class="hero-badge-item">
+            <i class="fas fa-school"></i>
+            <span>380+ Schools</span>
+          </div>
+          <div class="hero-badge-item">
+            <i class="fas fa-chart-line"></i>
+            <span>95% Success</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Visual -->
+      <div class="hero-visual" data-aos="fade-left" data-aos-delay="200">
+        <div class="hero-stats-grid">
+          <div class="hero-stat-card" data-aos="zoom-in" data-aos-delay="300">
+            <div class="stat-icon blue"><i class="fas fa-user-graduate"></i></div>
+            <div class="stat-info">
+              <h3 data-count="15000" data-suffix="+">0</h3>
+              <p>Active Students</p>
+            </div>
+          </div>
+          <div class="hero-stat-card" data-aos="zoom-in" data-aos-delay="400">
+            <div class="stat-icon green"><i class="fas fa-school"></i></div>
+            <div class="stat-info">
+              <h3 data-count="380" data-suffix="+">0</h3>
+              <p>Partner Schools</p>
+            </div>
+          </div>
+          <div class="hero-stat-card" data-aos="zoom-in" data-aos-delay="500">
+            <div class="stat-icon amber"><i class="fas fa-video"></i></div>
+            <div class="stat-info">
+              <h3 data-count="1200" data-suffix="+">0</h3>
+              <p>Live Classes</p>
+            </div>
+          </div>
+          <div class="hero-stat-card" data-aos="zoom-in" data-aos-delay="600">
+            <div class="stat-icon purple"><i class="fas fa-trophy"></i></div>
+            <div class="stat-info">
+              <h3 data-count="95" data-suffix="%">0</h3>
+              <p>Success Rate</p>
+            </div>
+          </div>
+        </div>
+        <div class="ai-floating-badge">✨ AI-Powered Analytics</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== SCROLLING STATS TICKER BAR ========== -->
+<section class="stats-ticker" style="background:linear-gradient(90deg,rgba(15,23,42,0.95),rgba(30,58,138,0.95));">
+  <div class="ticker-track">
+    <div class="ticker-content">
+      <span class="ticker-item"><i class="fas fa-user-graduate"></i> 15,000+ Students Enrolled</span>
+      <span class="ticker-item"><i class="fas fa-school"></i> 380+ Partner Schools</span>
+      <span class="ticker-item"><i class="fas fa-chalkboard-teacher"></i> 50+ Expert Teachers</span>
+      <span class="ticker-item"><i class="fas fa-video"></i> 1,200+ Live Classes</span>
+      <span class="ticker-item"><i class="fas fa-chart-line"></i> 95% Success Rate</span>
+      <span class="ticker-item"><i class="fas fa-layer-group"></i> 6+ Programs</span>
+      <!-- Duplicate for seamless loop -->
+      <span class="ticker-item"><i class="fas fa-user-graduate"></i> 15,000+ Students Enrolled</span>
+      <span class="ticker-item"><i class="fas fa-school"></i> 380+ Partner Schools</span>
+      <span class="ticker-item"><i class="fas fa-chalkboard-teacher"></i> 50+ Expert Teachers</span>
+      <span class="ticker-item"><i class="fas fa-video"></i> 1,200+ Live Classes</span>
+      <span class="ticker-item"><i class="fas fa-chart-line"></i> 95% Success Rate</span>
+      <span class="ticker-item"><i class="fas fa-layer-group"></i> 6+ Programs</span>
+    </div>
+  </div>
+</section>
+
+<!-- ========== FEATURES SECTION ========== -->
+<section class="section features-section">
+  <div class="container">
+    <div class="section-header" data-aos="fade-up">
+      <span class="section-badge"><i class="fas fa-star"></i> Our Features</span>
+      <h2>Why Choose ENABLE PROGRAM</h2>
+      <p>A comprehensive platform built for academic excellence with cutting-edge technology and proven success</p>
+      <div class="section-divider"></div>
+    </div>
+    <div class="features-grid">
+      <!-- Feature 1 -->
+      <div class="feature-card" data-aos="fade-up" data-aos-delay="100">
+        <div class="feature-icon blue"><i class="fas fa-video"></i></div>
+        <h3>Live Interactive Classes</h3>
+        <p>Real-time interactive sessions with expert faculty, featuring HD video, live chat, digital whiteboard, and instant doubt-clearing — making learning engaging and effective.</p>
+      </div>
+      <!-- Feature 2 -->
+      <div class="feature-card" data-aos="fade-up" data-aos-delay="200">
+        <div class="feature-icon purple"><i class="fas fa-brain"></i></div>
+        <h3>AI-Powered Analytics</h3>
+        <p>Smart performance tracking using artificial intelligence to provide personalized learning paths, predictive scores, and actionable insights for every student.</p>
+        <span class="ai-tag"><i class="fas fa-sparkles"></i> AI Powered</span>
+      </div>
+      <!-- Feature 3 -->
+      <div class="feature-card" data-aos="fade-up" data-aos-delay="300">
+        <div class="feature-icon green"><i class="fas fa-clipboard-check"></i></div>
+        <h3>Smart Assessments</h3>
+        <p>Adaptive testing system that adjusts difficulty based on student performance, with detailed analytics, chapter-wise reports, and national-level benchmarking.</p>
+      </div>
+      <!-- Feature 4 -->
+      <div class="feature-card" data-aos="fade-up" data-aos-delay="100">
+        <div class="feature-icon amber"><i class="fas fa-book-open"></i></div>
+        <h3>Study Materials</h3>
+        <p>Comprehensive digital library with curated notes, video lectures, practice problems, previous year papers, and formula sheets — accessible anytime, anywhere.</p>
+      </div>
+      <!-- Feature 5 -->
+      <div class="feature-card" data-aos="fade-up" data-aos-delay="200">
+        <div class="feature-icon rose"><i class="fas fa-chart-line"></i></div>
+        <h3>Progress Tracking</h3>
+        <p>Real-time dashboards providing granular insights into attendance, performance trends, strengths &amp; weaknesses, and personalized improvement roadmaps.</p>
+        <span class="ai-tag"><i class="fas fa-sparkles"></i> AI Powered</span>
+      </div>
+      <!-- Feature 6 -->
+      <div class="feature-card" data-aos="fade-up" data-aos-delay="300">
+        <div class="feature-icon cyan"><i class="fas fa-building"></i></div>
+        <h3>Multi-Tenant Platform</h3>
+        <p>Enterprise-grade multi-school architecture allowing each partner institution to have its own branded environment, user management, and custom configurations.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== STUDENT GALLERY SECTION ========== -->
+<section class="section gallery-section">
+  <div class="container">
+    <div class="section-header" data-aos="fade-up">
+      <span class="section-badge"><i class="fas fa-images"></i> Gallery</span>
+      <h2>Our Students in Action</h2>
+      <p>Capturing moments of learning, growth, and achievement across our programs</p>
+      <div class="section-divider"></div>
+    </div>
+    <div class="gallery-grid">
+      <div class="gallery-item large" data-aos="zoom-in" data-aos-delay="100">
+        <img src="https://images.unsplash.com/photo-1523050854058-8df90110c8f1?w=600" alt="JEE Toppers 2025" loading="lazy">
+        <div class="gallery-overlay">
+          <span>JEE Toppers 2025</span>
+        </div>
+      </div>
+      <div class="gallery-item" data-aos="zoom-in" data-aos-delay="150">
+        <img src="https://images.unsplash.com/photo-1577896851231-70ef18881754?w=400" alt="NEET Preparation" loading="lazy">
+        <div class="gallery-overlay">
+          <span>NEET Preparation</span>
+        </div>
+      </div>
+      <div class="gallery-item" data-aos="zoom-in" data-aos-delay="200">
+        <img src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400" alt="CoE Classroom" loading="lazy">
+        <div class="gallery-overlay">
+          <span>CoE Classroom</span>
+        </div>
+      </div>
+      <div class="gallery-item" data-aos="zoom-in" data-aos-delay="250">
+        <img src="https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=400" alt="Campus Life" loading="lazy">
+        <div class="gallery-overlay">
+          <span>Campus Life</span>
+        </div>
+      </div>
+      <div class="gallery-item large" data-aos="zoom-in" data-aos-delay="300">
+        <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?w=600" alt="ENABLE Program" loading="lazy">
+        <div class="gallery-overlay">
+          <span>ENABLE Program</span>
+        </div>
+      </div>
+      <div class="gallery-item" data-aos="zoom-in" data-aos-delay="350">
+        <img src="https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=400" alt="Science Lab Sessions" loading="lazy">
+        <div class="gallery-overlay">
+          <span>Science Lab Sessions</span>
+        </div>
+      </div>
+      <div class="gallery-item" data-aos="zoom-in" data-aos-delay="400">
+        <img src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=400" alt="Award Ceremony" loading="lazy">
+        <div class="gallery-overlay">
+          <span>Award Ceremony</span>
+        </div>
+      </div>
+      <div class="gallery-item" data-aos="zoom-in" data-aos-delay="450">
+        <img src="https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=400" alt="Study Group" loading="lazy">
+        <div class="gallery-overlay">
+          <span>Study Group</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== PROGRAMS PREVIEW SECTION ========== -->
+<section class="section programs-section">
+  <div class="container">
+    <div class="section-header" data-aos="fade-up">
+      <span class="section-badge"><i class="fas fa-graduation-cap"></i> Programs</span>
+      <h2>Our Programs</h2>
+      <p>Transformative educational initiatives designed for academic excellence and student success</p>
+      <div class="section-divider"></div>
+    </div>
+    <div class="programs-grid">
+      <!-- CoE -->
+      <div class="program-card" data-aos="fade-up" data-aos-delay="100">
+        <div class="program-icon-area gradient-blue">
+          <i class="fas fa-award"></i>
+        </div>
+        <h3>CoE (Center of Excellence)</h3>
+        <p>An intensive 2-year residential classroom coaching program running at select Jawahar Navodaya Vidyalayas, providing rigorous JEE &amp; NEET preparation with expert faculty and structured study plans.</p>
+        <a href="/programs/" class="program-link">Learn More <i class="fas fa-arrow-right"></i></a>
+      </div>
+      <!-- ENABLE -->
+      <div class="program-card" data-aos="fade-up" data-aos-delay="200">
+        <div class="program-icon-area gradient-green">
+          <i class="fas fa-handshake"></i>
+        </div>
+        <h3>ENABLE</h3>
+        <p>A landmark joint initiative with Tata Motors and Navodaya Vidyalaya Samiti, bringing quality science and mathematics education to 350+ JNVs across India through technology-enabled classrooms.</p>
+        <a href="/programs/" class="program-link">Learn More <i class="fas fa-arrow-right"></i></a>
+      </div>
+      <!-- TPDDL -->
+      <div class="program-card" data-aos="fade-up" data-aos-delay="300">
+        <div class="program-icon-area gradient-amber">
+          <i class="fas fa-bolt"></i>
+        </div>
+        <h3>TPDDL</h3>
+        <p>ENF serves as the knowledge partner with Tata Power Delhi Distribution Limited, delivering specialized educational programs and skill development initiatives for community empowerment.</p>
+        <a href="/programs/" class="program-link">Learn More <i class="fas fa-arrow-right"></i></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== PARTNERS PREVIEW SECTION ========== -->
+<section class="section partners-section">
+  <div class="container">
+    <div class="section-header" data-aos="fade-up">
+      <span class="section-badge">Partners</span>
+      <h2>Our Trusted Partners</h2>
+      <p>Collaborating with India's leading organizations to deliver world-class education</p>
+    </div>
+    <div class="partners-grid">
+      <!-- Tata Motors -->
+      <div class="partner-card" data-aos="fade-up" data-aos-delay="100">
+        <div class="partner-logo" style="background:#1a365d;color:#fff">TM</div>
+        <h3>Tata Motors</h3>
+        <p>Strategic partner for the ENABLE program across 350+ JNVs nationwide.</p>
+      </div>
+      <!-- NVS -->
+      <div class="partner-card" data-aos="fade-up" data-aos-delay="200">
+        <div class="partner-logo" style="background:#065f46;color:#fff">NVS</div>
+        <h3>Navodaya Vidyalaya Samiti</h3>
+        <p>Government body managing 661 JNVs, enabling access to millions of students.</p>
+      </div>
+      <!-- Ministry -->
+      <div class="partner-card" data-aos="fade-up" data-aos-delay="300">
+        <div class="partner-logo" style="background:#7c3aed;color:#fff">MS</div>
+        <h3>Ministry of Science &amp; Technology</h3>
+        <p>Supporting science education and innovation initiatives across India.</p>
+      </div>
+      <!-- Tata Power -->
+      <div class="partner-card" data-aos="fade-up" data-aos-delay="400">
+        <div class="partner-logo" style="background:#b91c1c;color:#fff">TP</div>
+        <h3>Tata Power</h3>
+        <p>Knowledge partnership for community education and skill development.</p>
+      </div>
+    </div>
+    <div class="section-cta" data-aos="fade-up" data-aos-delay="500">
+      <a href="/partners/" class="btn btn-primary btn-lg">View All Partners <i class="fas fa-arrow-right"></i></a>
+    </div>
+  </div>
+</section>
+
+<!-- ========== NEWS SECTION ========== -->
+<section class="section news-section">
+  <div class="container">
+    <div class="section-header" data-aos="fade-up">
+      <span class="section-badge">News</span>
+      <h2>Latest News &amp; Updates</h2>
+      <p>Stay informed about ENF's latest initiatives, achievements, and announcements</p>
+    </div>
+    <div class="news-grid">
+      <!-- News 1 -->
+      <div class="news-card" data-aos="fade-up" data-aos-delay="100">
+        <div class="news-image">
+          <img src="https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&h=400&fit=crop" alt="AI-Powered Learning Platform" loading="lazy">
+          <span class="news-date"><i class="fas fa-calendar-alt"></i> Feb 10, 2026</span>
+        </div>
+        <div class="news-body">
+          <span class="news-category technology">Technology</span>
+          <h3>ENF Launches AI-Powered Learning Platform</h3>
+          <p>Ex Navodayan Foundation unveils its cutting-edge AI-driven learning platform, bringing personalized education to thousands of students across India with smart analytics and adaptive learning paths.</p>
+          <a href="/news/" class="news-link">Read More <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+      <!-- News 2 -->
+      <div class="news-card" data-aos="fade-up" data-aos-delay="200">
+        <div class="news-image">
+          <img src="https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=600&h=400&fit=crop" alt="JEE Advanced Results" loading="lazy">
+          <span class="news-date"><i class="fas fa-calendar-alt"></i> Jan 28, 2026</span>
+        </div>
+        <div class="news-body">
+          <span class="news-category achievement">Achievement</span>
+          <h3>JEE Advanced 2025: ENF Students Shine</h3>
+          <p>ENF students deliver outstanding results in JEE Advanced 2025, with 45 students securing ranks under 1000 and 12 students making it to the top 500 — a testament to our world-class coaching.</p>
+          <a href="/news/" class="news-link">Read More <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+      <!-- News 3 -->
+      <div class="news-card" data-aos="fade-up" data-aos-delay="300">
+        <div class="news-image">
+          <img src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600&h=400&fit=crop" alt="Partnership Announcement" loading="lazy">
+          <span class="news-date"><i class="fas fa-calendar-alt"></i> Jan 15, 2026</span>
+        </div>
+        <div class="news-body">
+          <span class="news-category partnership">Partnership</span>
+          <h3>New Partnership with Delhi Board of Education</h3>
+          <p>ENF signs a landmark MoU with the Delhi Board of Education to extend quality JEE and NEET preparation to government school students across Delhi, impacting over 10,000 learners.</p>
+          <a href="/news/" class="news-link">Read More <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+    </div>
+    <div class="section-cta" data-aos="fade-up" data-aos-delay="400">
+      <a href="/news/" class="btn btn-primary btn-lg">View All News <i class="fas fa-arrow-right"></i></a>
+    </div>
+  </div>
+</section>
+
+<!-- ========== TESTIMONIALS SECTION ========== -->
+<section class="section testimonials-section">
+  <div class="container">
+    <div class="section-header" data-aos="fade-up">
+      <span class="section-badge">Testimonials</span>
+      <h2>What Our Students Say</h2>
+      <p>Hear from the students whose lives have been transformed by ENF's programs</p>
+    </div>
+    <div class="testimonials-grid">
+      <!-- Testimonial 1 -->
+      <div class="testimonial-card" data-aos="fade-up" data-aos-delay="100">
+        <div class="testimonial-stars">
+          <i class="fas fa-star"></i>
+          <i class="fas fa-star"></i>
+          <i class="fas fa-star"></i>
+          <i class="fas fa-star"></i>
+          <i class="fas fa-star"></i>
+        </div>
+        <div class="testimonial-quote-icon"><i class="fas fa-quote-left"></i></div>
+        <p class="testimonial-text">"The CoE program completely transformed my JEE preparation. The faculty support was exceptional and I secured AIR 342 in JEE Advanced."</p>
+        <div class="testimonial-author">
+          <div class="author-avatar">RK</div>
+          <div class="author-info">
+            <h4>Rahul Kumar</h4>
+            <span>IIT Delhi</span>
+          </div>
+        </div>
+      </div>
+      <!-- Testimonial 2 -->
+      <div class="testimonial-card" data-aos="fade-up" data-aos-delay="200">
+        <div class="testimonial-stars">
+          <i class="fas fa-star"></i>
+          <i class="fas fa-star"></i>
+          <i class="fas fa-star"></i>
+          <i class="fas fa-star"></i>
+          <i class="fas fa-star"></i>
+        </div>
+        <div class="testimonial-quote-icon"><i class="fas fa-quote-left"></i></div>
+        <p class="testimonial-text">"ENF's online classes for NEET were comprehensive and well-structured. I got admission in AIIMS Patna."</p>
+        <div class="testimonial-author">
+          <div class="author-avatar">PS</div>
+          <div class="author-info">
+            <h4>Priya Singh</h4>
+            <span>AIIMS Patna</span>
+          </div>
+        </div>
+      </div>
+      <!-- Testimonial 3 -->
+      <div class="testimonial-card" data-aos="fade-up" data-aos-delay="300">
+        <div class="testimonial-stars">
+          <i class="fas fa-star"></i>
+          <i class="fas fa-star"></i>
+          <i class="fas fa-star"></i>
+          <i class="fas fa-star"></i>
+          <i class="fas fa-star"></i>
+        </div>
+        <div class="testimonial-quote-icon"><i class="fas fa-quote-left"></i></div>
+        <p class="testimonial-text">"The ENABLE program gave me access to quality education right at my JNV. Forever grateful to ENF and Tata Motors."</p>
+        <div class="testimonial-author">
+          <div class="author-avatar">AV</div>
+          <div class="author-info">
+            <h4>Amit Verma</h4>
+            <span>NIT Trichy</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== CTA SECTION ========== -->
+<section class="cta-section" data-aos="fade-up">
+  <div class="container">
+    <div class="cta-content">
+      <h2>Ready to Transform Your Future?</h2>
+      <p>Join thousands of students who are already learning with ENF's world-class programs and AI-powered platform.</p>
+      <div class="cta-buttons">
+        <a href="javascript:void(0)" class="btn btn-accent btn-lg" onclick="openLoginModal()"><i class="fas fa-rocket"></i> Start Learning Today</a>
+        <a href="#contact" class="btn btn-outline-white btn-lg"><i class="fas fa-envelope"></i> Contact Us</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== CONTACT SECTION ========== -->
+<section class="section contact-section" id="contact">
+  <div class="container">
+    <div class="section-header" data-aos="fade-up">
+      <span class="section-badge">Contact</span>
+      <h2>Get In Touch</h2>
+      <p>Have questions? We'd love to hear from you.</p>
+    </div>
+    <div class="contact-grid">
+      <!-- Left: Contact Info -->
+      <div class="contact-info" data-aos="fade-right" data-aos-delay="100">
+        <div class="contact-info-card">
+          <div class="contact-icon blue"><i class="fas fa-location-dot"></i></div>
+          <div class="contact-detail">
+            <h4>Our Address</h4>
+            <p>B-36/43-46M, Brahmanand Colony, Durgakund, Varanasi, UP (221005)</p>
+          </div>
+        </div>
+        <div class="contact-info-card">
+          <div class="contact-icon green"><i class="fas fa-phone"></i></div>
+          <div class="contact-detail">
+            <h4>Phone Number</h4>
+            <p>+91-76070 02100 (Office)</p>
+          </div>
+        </div>
+        <div class="contact-info-card">
+          <div class="contact-icon amber"><i class="fas fa-envelope"></i></div>
+          <div class="contact-detail">
+            <h4>Email Address</h4>
+            <p>exnavodayanfoundation1@gmail.com</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Contact Form -->
+      <div class="contact-form-wrapper" data-aos="fade-left" data-aos-delay="200">
+        <h3>Send us a Message</h3>
+        <form method="POST" action="/enquiry/" class="contact-form">
+          {% csrf_token %}
+          <div class="form-row">
+            <div class="form-group">
+              <label for="first_name">First Name</label>
+              <input type="text" id="first_name" name="first_name" placeholder="Enter your first name" required>
+            </div>
+            <div class="form-group">
+              <label for="last_name">Last Name</label>
+              <input type="text" id="last_name" name="last_name" placeholder="Enter your last name" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" placeholder="Enter your email address" required>
+          </div>
+          <div class="form-group">
+            <label for="phone">Phone</label>
+            <input type="tel" id="phone" name="phone" placeholder="Enter your phone number">
+          </div>
+          <div class="form-group">
+            <label for="subject">Subject</label>
+            <select id="subject" name="subject" required>
+              <option value="" disabled selected>Select a subject</option>
+              <option value="General Inquiry">General Inquiry</option>
+              <option value="Admission">Admission</option>
+              <option value="Programs">Programs</option>
+              <option value="Scholarships">Scholarships</option>
+              <option value="Technical Support">Technical Support</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="message">Message</label>
+            <textarea id="message" name="message" rows="5" placeholder="Write your message here..." required></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary btn-lg" style="width:100%">Send Message <i class="fas fa-paper-plane"></i></button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== FOOTER ========== -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <!-- Col 1: Brand -->
+      <div class="footer-col">
+        <div class="footer-brand">
+          <div class="logo-icon">E</div>
+          <span>ENABLE PROGRAM</span>
+        </div>
+        <p>Ex Navodayan Foundation (ENF) is a premier not-for-profit organization dedicated to empowering Navodaya alumni and students through quality education, mentorship, and technology-enabled learning programs across India.</p>
+        <div class="footer-social">
+          <a href="https://youtube.com" target="_blank" rel="noopener" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+          <a href="https://facebook.com" target="_blank" rel="noopener" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+          <a href="https://twitter.com" target="_blank" rel="noopener" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+          <a href="https://linkedin.com" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+          <a href="https://instagram.com" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        </div>
+      </div>
+
+      <!-- Col 2: Quick Links -->
+      <div class="footer-col">
+        <h4>Quick Links</h4>
+        <ul class="footer-links">
+          <li><a href="/about/">About Us</a></li>
+          <li><a href="/programs/">Programs</a></li>
+          <li><a href="/partners/">Partners</a></li>
+          <li><a href="/scholarships/">Scholarships</a></li>
+          <li><a href="/news/">News</a></li>
+          <li><a href="/gallery/">Gallery</a></li>
+        </ul>
+      </div>
+
+      <!-- Col 3: Programs -->
+      <div class="footer-col">
+        <h4>Programs</h4>
+        <ul class="footer-links">
+          <li><a href="/programs/">CoE</a></li>
+          <li><a href="/programs/">ENABLE</a></li>
+          <li><a href="/programs/">TPDDL</a></li>
+          <li><a href="/programs/">ASOSE</a></li>
+          <li><a href="/programs/">SEED</a></li>
+        </ul>
+      </div>
+
+      <!-- Col 4: Get in Touch -->
+      <div class="footer-col">
+        <h4>Get in Touch</h4>
+        <div class="footer-contact">
+          <div class="footer-contact-item">
+            <i class="fas fa-location-dot"></i>
+            <span>B-36/43-46M, Brahmanand Colony, Durgakund, Varanasi, UP (221005)</span>
+          </div>
+          <div class="footer-contact-item">
+            <i class="fas fa-phone"></i>
+            <span>+91-76070 02100</span>
+          </div>
+          <div class="footer-contact-item">
+            <i class="fas fa-envelope"></i>
+            <span>exnavodayanfoundation1@gmail.com</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Bottom -->
+    <div class="footer-bottom">
+      <p>&copy; 2026 Ex Navodayan Foundation. All rights reserved.</p>
+      <p>Design by <a href="https://erpdsoft.com" target="_blank" rel="noopener">ERPDSOFT</a></p>
+    </div>
+  </div>
+</footer>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Navbar scroll effect
+  window.addEventListener('scroll', function () {
+    document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 50);
+  });
+
+  // Login Modal
+  function openLoginModal() {
+    document.getElementById('loginModal').classList.add('show');
+  }
+  function closeLoginModal() {
+    document.getElementById('loginModal').classList.remove('show');
+  }
+  document.getElementById('loginModal').addEventListener('click', function (e) {
+    if (e.target === this) closeLoginModal();
+  });
+
+  // Mobile menu toggle
+  function toggleMobileMenu() {
+    var links = document.getElementById('navLinks');
+    links.classList.toggle('show');
+  }
+
+  // Counter animation
+  function animateCounters() {
+    document.querySelectorAll('[data-count]').forEach(function (el) {
+      if (el.dataset.animated) return;
+      el.dataset.animated = 'true';
+      var target = parseInt(el.getAttribute('data-count'));
+      var suffix = el.getAttribute('data-suffix') || '';
+      var current = 0;
+      var step = target / 60;
+      var timer = setInterval(function () {
+        current += step;
+        if (current >= target) {
+          current = target;
+          clearInterval(timer);
+        }
+        el.textContent = Math.floor(current).toLocaleString() + suffix;
+      }, 25);
+    });
+  }
+
+  // Intersection Observer for scroll animations
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        if (entry.target.querySelector('[data-count]')) {
+          animateCounters();
+        }
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.fade-up, .hero-visual, .hero-stats-grid, [data-aos]').forEach(function (el) {
+    observer.observe(el);
+  });
+
+  // Smooth scroll for anchor links
+  document.querySelectorAll('a[href^="#"]').forEach(function (anchor) {
+    anchor.addEventListener('click', function (e) {
+      var targetId = this.getAttribute('href');
+      if (targetId === '#') return;
+      e.preventDefault();
+      var target = document.querySelector(targetId);
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
+</script>
+{% endblock %}

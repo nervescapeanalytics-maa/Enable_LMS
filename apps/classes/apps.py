@@ -1,0 +1,7 @@
+from django.apps import AppConfig
+
+
+class ClassesConfig(AppConfig):
+    default_auto_field = 'django.db.models.UUIDField'
+    name = 'classes'
+    verbose_name = 'Live Classes & YouTube'

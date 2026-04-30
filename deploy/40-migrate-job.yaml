@@ -1,0 +1,34 @@
+# =============================================================================
+# One-shot Django migration Job.
+# Run BEFORE deploying api/websocket/celery workloads.
+#
+# Apply with:
+#   envsubst < deploy/40-migrate-job.yaml | kubectl apply -f -
+#   kubectl wait --for=condition=complete job/lms-migrate -n lms-prod --timeout=300s
+# =============================================================================
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: lms-migrate
+  namespace: lms-prod
+spec:
+  backoffLimit: 2
+  ttlSecondsAfterFinished: 600     # auto-cleanup 10 min after completion
+  template:
+    metadata:
+      labels: { app: lms-migrate }
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: acecloud-registry
+      containers:
+        - name: migrate
+          image: registry.internal.acecloud.io/enable-lms/api:${IMAGE_TAG}
+          imagePullPolicy: IfNotPresent
+          args: ["migrate"]
+          envFrom:
+            - configMapRef: { name: lms-config }
+            - secretRef:    { name: lms-secrets }
+          resources:
+            requests: { cpu: 200m, memory: 256Mi }
+            limits:   { cpu: "1",  memory: 512Mi }

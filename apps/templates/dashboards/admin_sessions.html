@@ -1,0 +1,34 @@
+{% extends 'dashboards/admin_base.html' %}
+
+{% block admin_content %}
+<div class="page-header">
+  <div><h2>Academic Sessions</h2><p>Manage academic year sessions</p></div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fas fa-calendar-alt"></i> All Sessions</h3>
+    <span class="card-badge info">{{ total_sessions }} Total</span>
+  </div>
+  {% if sessions %}
+  <div style="overflow-x:auto">
+    <table class="adm-table">
+      <thead><tr><th>Session Name</th><th>Start Date</th><th>End Date</th><th>Current</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for s in sessions %}
+        <tr>
+          <td style="font-weight:600;">{{ s.name }}</td>
+          <td>{{ s.start_date|default:"—" }}</td>
+          <td>{{ s.end_date|default:"—" }}</td>
+          <td>{% if s.is_current %}<span class="status active"><i class="fas fa-check" style="font-size:0.7rem;"></i> Current</span>{% else %}—{% endif %}</td>
+          <td><span class="status {% if s.status == 'Active' %}active{% else %}inactive{% endif %}">{{ s.status }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><i class="fas fa-calendar-alt"></i><p>No academic sessions found</p></div>
+  {% endif %}
+</div>
+{% endblock %}

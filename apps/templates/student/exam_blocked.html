@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Exam Unavailable{% endblock %}
+{% block body %}
+<div style="max-width:560px;margin:80px auto;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:32px;text-align:center;">
+  <i class="fas fa-lock" style="font-size:42px;color:#9ca3af;margin-bottom:12px;"></i>
+  <h1 style="font-size:22px;color:#111827;margin:0 0 10px;">Exam Unavailable</h1>
+  <p style="color:#374151;margin:0 0 6px;"><strong>{{ test.title }}</strong></p>
+  <p style="color:#6b7280;margin:0 0 22px;">{{ reason }}</p>
+  <a href="{% url 'student-exam-list' %}" style="display:inline-block;background:#2563eb;color:#fff;padding:10px 22px;border-radius:8px;text-decoration:none;font-weight:600;">
+    <i class="fas fa-arrow-left"></i> Back to My Exams
+  </a>
+</div>
+{% endblock %}

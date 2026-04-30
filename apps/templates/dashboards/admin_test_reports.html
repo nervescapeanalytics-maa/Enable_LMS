@@ -1,0 +1,50 @@
+{% extends 'dashboards/admin_base.html' %}
+
+{% block admin_content %}
+<div class="page-header">
+  <div><h2>Test Reports</h2><p>Performance analytics for all assessments</p></div>
+</div>
+
+<div class="stat-row">
+  <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-chart-bar"></i></div><div class="stat-info"><div class="stat-value">{{ total_attempts }}</div><div class="stat-label">Total Attempts</div></div></div>
+  <div class="stat-card"><div class="stat-icon green"><i class="fas fa-percentage"></i></div><div class="stat-info"><div class="stat-value">{{ avg_pass_rate }}%</div><div class="stat-label">Avg Pass Rate</div></div></div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fas fa-chart-bar"></i> Test Performance Reports</h3>
+  </div>
+  {% if reports %}
+  <div style="overflow-x:auto">
+    <table class="adm-table">
+      <thead><tr><th>Test</th><th>Code</th><th>Type</th><th>Attempts</th><th>Passed</th><th>Failed</th><th>Pass Rate</th><th>Avg Score</th><th>Avg Time</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for r in reports %}
+        <tr>
+          <td style="font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ r.test_title }}</td>
+          <td><span style="font-family:monospace;font-size:0.82rem;color:#64748b;">{{ r.test_code }}</span></td>
+          <td>{{ r.type|default:"—" }}</td>
+          <td><strong>{{ r.total_attempts }}</strong></td>
+          <td style="color:#22c55e;font-weight:600;">{{ r.passed }}</td>
+          <td style="color:#ef4444;font-weight:600;">{{ r.failed }}</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:60px;background:#f1f5f9;border-radius:4px;height:8px;overflow:hidden;">
+                <div style="width:{{ r.pass_rate }}%;background:{% if r.pass_rate >= 70 %}#22c55e{% elif r.pass_rate >= 40 %}#f59e0b{% else %}#ef4444{% endif %};height:100%;border-radius:4px;"></div>
+              </div>
+              <span style="font-size:0.82rem;font-weight:600;">{{ r.pass_rate }}%</span>
+            </div>
+          </td>
+          <td>{{ r.avg_score }}%</td>
+          <td>{{ r.avg_time_min }} min</td>
+          <td><span class="status {% if r.status == 'PUBLISHED' %}published{% else %}draft{% endif %}">{{ r.status }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><i class="fas fa-chart-bar"></i><p>No test reports available yet</p></div>
+  {% endif %}
+</div>
+{% endblock %}

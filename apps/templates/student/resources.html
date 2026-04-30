@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}E-Books & Resources – Student Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root{
+    --bg:#f3f4f6; --card:#ffffff; --border:#e5e7eb; --text:#111827; --muted:#6b7280;
+    --primary:#4f46e5; --primary-soft:#eef2ff; --primary-dark:#3730a3;
+    --green:#10b981; --green-soft:#d1fae5;
+    --amber:#f59e0b; --amber-soft:#fef3c7;
+    --rose:#ef4444; --rose-soft:#fee2e2;
+    --blue:#3b82f6; --blue-soft:#dbeafe;
+    --purple:#8b5cf6; --purple-soft:#ede9fe;
+  }
+  body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;}
+  .res-shell{max-width:1280px;margin:0 auto;padding:24px 20px;}
+  .res-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px;}
+  .res-header h1{font-size:28px;font-weight:700;color:var(--text);margin:0;display:flex;align-items:center;gap:10px;}
+  .res-header h1 .ico{width:40px;height:40px;background:linear-gradient(135deg,var(--primary),var(--purple));border-radius:10px;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:18px;}
+  .res-subtitle{color:var(--muted);font-size:14px;margin-top:4px;}
+  .user-pill{background:#fff;border:1px solid var(--border);border-radius:999px;padding:8px 18px;display:flex;align-items:center;gap:14px;font-weight:500;color:#374151;}
+  .user-pill a{color:var(--primary);text-decoration:none;font-size:13px;display:inline-flex;align-items:center;gap:5px;}
+  .user-pill a:hover{color:var(--primary-dark);}
+
+  /* Stats cards */
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px;}
+  .stat-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px;box-shadow:0 1px 2px rgba(0,0,0,.04);position:relative;overflow:hidden;}
+  .stat-card .num{font-size:26px;font-weight:700;color:var(--text);}
+  .stat-card .lbl{font-size:13px;color:var(--muted);font-weight:500;margin-top:2px;}
+  .stat-card .ico{position:absolute;top:14px;right:14px;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;}
+  .ico-blue{background:var(--blue-soft);color:var(--blue);}
+  .ico-green{background:var(--green-soft);color:var(--green);}
+  .ico-amber{background:var(--amber-soft);color:var(--amber);}
+  .ico-purple{background:var(--purple-soft);color:var(--purple);}
+
+  /* Filter bar */
+  .filter-bar{background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:20px;display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;}
+  .filter-bar input,.filter-bar select{height:40px;padding:0 14px;border:1px solid var(--border);border-radius:10px;background:#f9fafb;font-size:14px;outline:none;transition:all .15s;}
+  .filter-bar input:focus,.filter-bar select:focus{background:#fff;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
+  .filter-bar input{width:100%;}
+  .filter-bar .search-wrap{position:relative;}
+  .filter-bar .search-wrap i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);}
+  .filter-bar .search-wrap input{padding-left:36px;}
+
+  /* Type chips */
+  .type-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
+  .type-chip{padding:7px 14px;border-radius:999px;font-size:13px;font-weight:500;text-decoration:none;border:1px solid var(--border);background:#fff;color:#374151;transition:all .15s;}
+  .type-chip:hover{border-color:var(--primary);color:var(--primary);}
+  .type-chip.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+  .type-chip .count{margin-left:6px;opacity:.7;font-weight:400;}
+
+  /* Material grid */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px;}
+  .card{background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;transition:all .2s;display:flex;flex-direction:column;cursor:pointer;}
+  .card:hover{border-color:var(--primary);box-shadow:0 8px 24px rgba(79,70,229,.12);transform:translateY(-2px);}
+  .card .top{height:140px;display:flex;align-items:center;justify-content:center;position:relative;background:linear-gradient(135deg,#eef2ff 0%,#e0e7ff 100%);}
+  .card.t-EBOOK .top{background:linear-gradient(135deg,#fef3c7 0%,#fde68a 100%);}
+  .card.t-VIDEO .top, .card.t-TRAINING_VIDEO .top{background:linear-gradient(135deg,#fee2e2 0%,#fecaca 100%);}
+  .card.t-QUESTION_PAPER .top{background:linear-gradient(135deg,#ede9fe 0%,#ddd6fe 100%);}
+  .card.t-NOTES .top{background:linear-gradient(135deg,#d1fae5 0%,#a7f3d0 100%);}
+  .card.t-ASSIGNMENT .top{background:linear-gradient(135deg,#dbeafe 0%,#bfdbfe 100%);}
+  .card.t-PRESENTATION .top{background:linear-gradient(135deg,#fce7f3 0%,#fbcfe8 100%);}
+  .card .top .big-ico{font-size:48px;color:rgba(0,0,0,.25);}
+  .card .top img{width:100%;height:100%;object-fit:cover;}
+  .badge-type{position:absolute;top:10px;left:10px;background:rgba(255,255,255,.95);backdrop-filter:blur(4px);color:#374151;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:600;}
+  .badge-cls{position:absolute;top:10px;right:10px;background:rgba(255,255,255,.95);color:#374151;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:600;}
+  .card .body{padding:14px 16px;flex:1;display:flex;flex-direction:column;}
+  .card .body h3{margin:0 0 6px;font-size:15px;font-weight:600;color:var(--text);line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  .card .body .meta{font-size:12px;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+  .card .body .meta .dot{width:3px;height:3px;background:var(--muted);border-radius:50%;display:inline-block;}
+  .card .body .desc{font-size:12.5px;color:#4b5563;margin-top:8px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  .card .footer{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-top:1px solid #f3f4f6;}
+  .card .footer .stat{font-size:11px;color:var(--muted);display:inline-flex;align-items:center;gap:4px;}
+  .actions{display:flex;gap:6px;}
+  .btn-icon{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:#fff;display:inline-flex;align-items:center;justify-content:center;color:var(--muted);cursor:pointer;transition:all .15s;text-decoration:none;font-size:12px;}
+  .btn-icon:hover{background:var(--primary);color:#fff;border-color:var(--primary);}
+  .btn-icon.dl:hover{background:var(--green);border-color:var(--green);}
+
+  /* Empty */
+  .empty{text-align:center;padding:64px 20px;background:#fff;border:1px dashed var(--border);border-radius:14px;}
+  .empty .big{font-size:54px;color:#d1d5db;margin-bottom:14px;}
+  .empty h3{font-size:18px;font-weight:600;margin:0 0 8px;color:var(--text);}
+  .empty p{margin:0;color:var(--muted);font-size:14px;}
+
+  @media (max-width:768px){
+    .filter-bar{grid-template-columns:1fr;}
+    .res-header{flex-direction:column;align-items:flex-start;}
+  }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="res-shell">
+
+  <div class="res-header">
+    <div>
+      <h1><span class="ico"><i class="fas fa-book-open"></i></span> E-Books & Resources</h1>
+      <div class="res-subtitle">{{ total_count }} resource{{ total_count|pluralize }} available · curated by your teachers</div>
+    </div>
+    <div class="user-pill">
+      <span><i class="fas fa-user-circle"></i> {{ user_name }}</span>
+      <a href="/student/dashboard/"><i class="fas fa-th-large"></i> Dashboard</a>
+      <a href="/logout/"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="num">{{ total_count }}</div>
+      <div class="lbl">Total Resources</div>
+      <div class="ico ico-blue"><i class="fas fa-folder-open"></i></div>
+    </div>
+    <div class="stat-card">
+      <div class="num">{{ type_counts.EBOOK|default:0 }}</div>
+      <div class="lbl">E-Books / PDFs</div>
+      <div class="ico ico-amber"><i class="fas fa-book"></i></div>
+    </div>
+    <div class="stat-card">
+      <div class="num">{{ type_counts.NOTES|default:0 }}</div>
+      <div class="lbl">Notes</div>
+      <div class="ico ico-green"><i class="fas fa-sticky-note"></i></div>
+    </div>
+    <div class="stat-card">
+      <div class="num">{{ type_counts.QUESTION_PAPER|default:0 }}</div>
+      <div class="lbl">Question Papers</div>
+      <div class="ico ico-purple"><i class="fas fa-file-alt"></i></div>
+    </div>
+  </div>
+
+  <!-- Filter bar -->
+  <form method="get" class="filter-bar">
+    <div class="search-wrap">
+      <i class="fas fa-search"></i>
+      <input type="text" name="q" placeholder="Search resources by title or description…" value="{{ search }}">
+    </div>
+    <select name="subject" onchange="this.form.submit()">
+      <option value="">All Subjects</option>
+      {% for s in subjects %}
+        <option value="{{ s }}" {% if subject_filter == s %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" style="height:40px;padding:0 18px;background:var(--primary);color:#fff;border:none;border-radius:10px;font-weight:600;cursor:pointer;font-size:14px;">
+      <i class="fas fa-filter"></i> Filter
+    </button>
+    {% if type_filter %}<input type="hidden" name="type" value="{{ type_filter }}">{% endif %}
+  </form>
+
+  <!-- Type filter chips -->
+  <div class="type-chips">
+    <a href="?{% if search %}q={{ search }}&{% endif %}{% if subject_filter %}subject={{ subject_filter }}{% endif %}"
+       class="type-chip {% if not type_filter %}active{% endif %}">
+       All <span class="count">({{ total_count }})</span>
+    </a>
+    {% for value, label in material_types %}
+      <a href="?type={{ value }}{% if search %}&q={{ search }}{% endif %}{% if subject_filter %}&subject={{ subject_filter }}{% endif %}"
+         class="type-chip {% if type_filter == value %}active{% endif %}">{{ label }}</a>
+    {% endfor %}
+  </div>
+
+  {% if materials %}
+  <div class="grid">
+    {% for m in materials %}
+    <div class="card t-{{ m.material_type }}">
+      <div class="top">
+        {% if m.thumbnail_url %}
+          <img src="{{ m.thumbnail_url }}" alt="{{ m.title }}">
+        {% else %}
+          {% if m.material_type == 'EBOOK' %}
+            <i class="fas fa-book big-ico"></i>
+          {% elif m.material_type == 'VIDEO' or m.material_type == 'TRAINING_VIDEO' %}
+            <i class="fas fa-play-circle big-ico"></i>
+          {% elif m.material_type == 'QUESTION_PAPER' %}
+            <i class="fas fa-file-alt big-ico"></i>
+          {% elif m.material_type == 'NOTES' %}
+            <i class="fas fa-sticky-note big-ico"></i>
+          {% elif m.material_type == 'ASSIGNMENT' %}
+            <i class="fas fa-tasks big-ico"></i>
+          {% elif m.material_type == 'PRESENTATION' %}
+            <i class="fas fa-chalkboard big-ico"></i>
+          {% else %}
+            <i class="fas fa-file big-ico"></i>
+          {% endif %}
+        {% endif %}
+        <span class="badge-type">{{ m.material_type_label }}</span>
+        {% if m.subject_name %}<span class="badge-cls">{{ m.subject_name }}</span>{% endif %}
+      </div>
+      <div class="body">
+        <h3>{{ m.title }}</h3>
+        <div class="meta">
+          {% if m.chapter_name %}<span>{{ m.chapter_name }}</span>{% endif %}
+          {% if m.chapter_name and m.file_size %}<span class="dot"></span>{% endif %}
+          {% if m.file_size %}<span>{{ m.file_size }}</span>{% endif %}
+          {% if m.difficulty %}<span class="dot"></span><span>{{ m.difficulty }}</span>{% endif %}
+        </div>
+        {% if m.description %}<div class="desc">{{ m.description }}</div>{% endif %}
+      </div>
+      <div class="footer">
+        <div>
+          <span class="stat"><i class="far fa-eye"></i> {{ m.view_count }}</span>
+          {% if m.is_downloadable %}<span class="stat" style="margin-left:10px;"><i class="fas fa-download"></i> {{ m.download_count }}</span>{% endif %}
+        </div>
+        <div class="actions">
+          {% if m.file_url %}
+          <a class="btn-icon" href="/student/resources/{{ m.id }}/view/" target="_blank" rel="noopener" title="View"><i class="far fa-eye"></i></a>
+          {% endif %}
+          {% if m.is_downloadable and m.file_url %}
+          <a class="btn-icon dl" href="/student/resources/{{ m.id }}/download/" title="Download"><i class="fas fa-download"></i></a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty">
+    <div class="big"><i class="fas fa-folder-open"></i></div>
+    <h3>No resources available yet</h3>
+    <p>Your teachers haven't published any study materials matching these filters.<br>
+       Check back here soon — new materials are added regularly through the admin portal.</p>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

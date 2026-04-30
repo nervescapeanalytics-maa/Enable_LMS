@@ -1,0 +1,136 @@
+{% extends "admin/enhanced_change_list.html" %}
+{% load i18n admin_urls static %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+/* Export Filtered Button */
+.export-filtered-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+.export-filtered-btn:hover {
+  background: linear-gradient(135deg, #d97706, #b45309);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+  color: #fff;
+}
+</style>
+{% endblock %}
+
+{% block enf_tools_extra %}
+<div class="enf-tools-divider"></div>
+<div class="enf-tools-section">Filtered Export</div>
+<a href="#" onclick="exportFilteredExcel(event)" role="menuitem">
+  <i class="fas fa-file-excel"></i> Export Filtered Excel
+</a>
+{% endblock %}
+
+{% block object-tools-items %}
+{{ block.super }}
+{% endblock %}
+
+{% block content %}
+{{ block.super }}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  fixSortIcons();
+  // Note: rows-per-page selector is rendered by admin/pagination.html
+});
+
+/* Fix sort icon alignment in all th headers */
+function fixSortIcons() {
+  var ths = document.querySelectorAll('#result_list th');
+  ths.forEach(function(th) {
+    var anchors = th.querySelectorAll('a');
+    anchors.forEach(function(a) {
+      a.style.display = 'inline-flex';
+      a.style.alignItems = 'center';
+      a.style.gap = '4px';
+    });
+  });
+}
+
+/* Add rows-per-page selector to pagination area */
+function injectRowCountSelector() {
+  var paginator = document.querySelector('.paginator, p.paginator');
+  if (!paginator) return;
+
+  var text = paginator.textContent || '';
+  var totalMatch = text.match(/(\d+)\s*(result|total|student|teacher|record|item)/i);
+  var total = totalMatch ? totalMatch[1] : '';
+  if (!total) {
+    var allNums = text.match(/\d+/g);
+    if (allNums && allNums.length > 0) total = allNums[allNums.length - 1];
+  }
+
+  var urlParams = new URLSearchParams(window.location.search);
+  var currentPerPage = urlParams.get('list_per_page') || '';
+
+  var container = document.createElement('span');
+  container.className = 'enf-rows-per-page';
+
+  var label = document.createElement('label');
+  label.textContent = 'Rows per page:';
+  label.setAttribute('for', 'enf-rpp-select');
+
+  var select = document.createElement('select');
+  select.id = 'enf-rpp-select';
+  [10, 25, 50, 100].forEach(function(n) {
+    var opt = document.createElement('option');
+    opt.value = n;
+    opt.textContent = n;
+    if (currentPerPage && parseInt(currentPerPage) === n) {
+      opt.selected = true;
+    }
+    select.appendChild(opt);
+  });
+
+  select.addEventListener('change', function() {
+    var url = new URL(window.location.href);
+    url.searchParams.set('list_per_page', this.value);
+    url.searchParams.delete('p');
+    window.location.href = url.toString();
+  });
+
+  container.appendChild(label);
+  container.appendChild(select);
+
+  if (total) {
+    var info = document.createElement('span');
+    info.className = 'enf-record-info';
+    info.textContent = total + ' total records';
+    container.appendChild(info);
+  }
+
+  paginator.appendChild(container);
+}
+
+function exportFilteredExcel(event) {
+  event.preventDefault();
+  var currentUrl = new URL(window.location.href);
+  var params = currentUrl.searchParams;
+  var exportUrl = new URL(window.location.origin + window.location.pathname.replace(/\/$/, '') + '/export-filtered-excel/');
+
+  params.forEach(function(value, key) {
+    if (key !== 'p') {
+      exportUrl.searchParams.append(key, value);
+    }
+  });
+
+  window.location.href = exportUrl.toString();
+}
+</script>
+{% endblock %}

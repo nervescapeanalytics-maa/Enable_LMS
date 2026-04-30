@@ -1,0 +1,14 @@
+{% extends "admin/enhanced_change_list.html" %}
+{% load i18n %}
+
+{% block content %}
+{# Embed the monitoring dashboard inline above the rules list. #}
+<div id="enf-monitoring-embed" style="margin: 0 0 18px;">
+  <iframe src="monitoring/?embed=1" loading="lazy"
+          style="width:100%; height: 720px; border: 1px solid var(--border-color, #e2e8f0);
+                 border-radius: 12px; background: var(--bg-card, #fff);
+                 box-shadow: 0 1px 4px rgba(15,23,42,0.06);"
+          title="Monitoring Dashboard"></iframe>
+</div>
+{{ block.super }}
+{% endblock %}

@@ -1,0 +1,65 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student Dashboard – EMRS Online</title>
+    <!-- Navigation interceptor: force full-page loads for routes that have
+         server-rendered replacements. Must run BEFORE the React bundle. -->
+    <script>
+    (function () {
+      // Routes handled by Django server-rendered views (not the SPA).
+      // When React Router navigates to one of these, we redirect to the
+      // Django URL so the real page is served.
+      var INTERCEPT = {
+        '/student/dashboard/schedule':      '/student/schedule/',
+        '/student/dashboard/exams':         '/student/exams/',
+        '/student/dashboard/exam':          '/student/exams/',
+        '/student/dashboard/tests':         '/student/exams/',
+        '/student/dashboard/my-tests':      '/student/exams/',
+        '/student/dashboard/resources':     '/student/resources/',
+        '/student/dashboard/ebooks':        '/student/resources/',
+        '/student/dashboard/study-material':'/student/resources/',
+      };
+
+      function checkAndRedirect(url) {
+        if (!url) return;
+        try {
+          var path = (url.indexOf('://') !== -1)
+            ? new URL(url).pathname
+            : url.split('?')[0].split('#')[0];
+          // Normalise trailing slash
+          var norm = path.replace(/\/+$/, '');
+          if (INTERCEPT[norm]) {
+            window.location.href = INTERCEPT[norm];
+            return true;
+          }
+        } catch (e) {}
+        return false;
+      }
+
+      // Intercept React Router's history.pushState
+      var _push = history.pushState.bind(history);
+      history.pushState = function (state, title, url) {
+        if (!checkAndRedirect(url)) _push(state, title, url);
+      };
+
+      // Intercept history.replaceState (some navigations use this)
+      var _replace = history.replaceState.bind(history);
+      history.replaceState = function (state, title, url) {
+        if (!checkAndRedirect(url)) _replace(state, title, url);
+      };
+
+      // Also handle the initial URL (direct access still goes through Django,
+      // but this guards against edge cases)
+      checkAndRedirect(window.location.pathname);
+    })();
+    </script>
+    <script type="module" crossorigin src="{% static 'student-dashboard/assets/index-o9L3QeCD.js' %}"></script>
+    <link rel="stylesheet" crossorigin href="{% static 'student-dashboard/assets/index-55yBQPwh.css' %}">
+  </head>
+  <body class="bg-gray-50">
+    <div id="root"></div>
+  </body>
+</html>

@@ -1,0 +1,912 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+/* ========== Partners Page Styles ========== */
+
+/* Page Hero */
+.page-hero {
+  position: relative;
+  padding: 160px 0 100px;
+  background: linear-gradient(135deg, #020617 0%, #0f172a 30%, #1e3a8a 70%, #1e40af 100%);
+  overflow: hidden;
+}
+.page-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 70% 50%, rgba(59,130,246,0.15) 0%, transparent 60%),
+              radial-gradient(ellipse at 30% 80%, rgba(168,85,247,0.1) 0%, transparent 50%);
+  z-index: 1;
+}
+.page-hero::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100px;
+  background: linear-gradient(to top, var(--gray-50, #f8fafc) 0%, transparent 100%);
+  z-index: 2;
+}
+.page-hero .container {
+  position: relative;
+  z-index: 3;
+}
+.page-hero-content {
+  text-align: center;
+  max-width: 760px;
+  margin: 0 auto;
+}
+.page-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(59,130,246,0.15);
+  border: 1px solid rgba(59,130,246,0.3);
+  color: #93c5fd;
+  padding: 8px 20px;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+  backdrop-filter: blur(8px);
+}
+.page-hero h1 {
+  font-size: clamp(2.2rem, 5vw, 3.4rem);
+  font-weight: 900;
+  color: white;
+  line-height: 1.15;
+  margin-bottom: 18px;
+}
+.page-hero h1 .gradient-text {
+  background: linear-gradient(135deg, #60a5fa, #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.page-hero p {
+  color: #94a3b8;
+  font-size: 1.1rem;
+  line-height: 1.7;
+  max-width: 600px;
+  margin: 0 auto 30px;
+}
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+.breadcrumb a {
+  color: #93c5fd;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+.breadcrumb a:hover { color: #60a5fa; }
+.breadcrumb .separator { color: #475569; }
+
+/* Stats Bar */
+.stats-bar {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  margin-top: -50px;
+  position: relative;
+  z-index: 10;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.08);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 30px;
+  border: 1px solid rgba(59,130,246,0.08);
+}
+.stat-item {
+  text-align: center;
+  padding: 10px 0;
+  position: relative;
+}
+.stat-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 50px;
+  background: linear-gradient(to bottom, transparent, rgba(59,130,246,0.2), transparent);
+}
+.stat-number {
+  font-size: 2.2rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.2;
+}
+.stat-label {
+  color: #64748b;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+/* Section Common */
+.section { padding: 100px 0; }
+.section-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(59,130,246,0.08);
+  border: 1px solid rgba(59,130,246,0.15);
+  color: #3b82f6;
+  padding: 8px 20px;
+  border-radius: 50px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 16px;
+}
+.section-header {
+  text-align: center;
+  max-width: 700px;
+  margin: 0 auto 60px;
+}
+.section-header h2 {
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 16px;
+  line-height: 1.2;
+}
+.section-header p {
+  color: #64748b;
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+.section-divider {
+  width: 60px;
+  height: 4px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  border-radius: 2px;
+  margin: 16px auto 0;
+}
+
+/* Partners Grid */
+.partners-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 30px;
+}
+.partner-card {
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(59,130,246,0.08);
+  box-shadow: 0 4px 30px rgba(0,0,0,0.04);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+.partner-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 25px 60px rgba(59,130,246,0.15);
+  border-color: rgba(59,130,246,0.2);
+}
+.partner-card-header {
+  padding: 0;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.partner-card-header-img {
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+}
+.partner-card-header-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.partner-card:hover .partner-card-header-img img {
+  transform: scale(1.08);
+}
+.partner-card-header-content {
+  background: linear-gradient(135deg, rgba(15,23,42,0.92) 0%, rgba(30,58,138,0.92) 100%);
+  padding: 24px 30px;
+  position: relative;
+}
+.partner-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  font-size: 2rem;
+  color: #60a5fa;
+  position: relative;
+  z-index: 1;
+}
+.partner-card-header h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: white;
+  position: relative;
+  z-index: 1;
+  margin-bottom: 8px;
+}
+.partner-badges {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
+}
+.partner-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 50px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.badge-year {
+  background: rgba(59,130,246,0.2);
+  color: #93c5fd;
+  border: 1px solid rgba(59,130,246,0.3);
+}
+.badge-type {
+  background: rgba(168,85,247,0.2);
+  color: #c4b5fd;
+  border: 1px solid rgba(168,85,247,0.3);
+}
+.partner-card-body {
+  padding: 30px;
+}
+.partner-card-body p {
+  color: #475569;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  margin-bottom: 20px;
+}
+.partner-highlights {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.partner-highlights li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 0;
+  color: #334155;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+.partner-highlights li i {
+  color: #3b82f6;
+  font-size: 0.7rem;
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+/* Impact Section */
+.impact-section {
+  background: linear-gradient(135deg, #020617 0%, #0f172a 30%, #1e3a8a 70%, #1e40af 100%);
+  padding: 100px 0;
+  position: relative;
+  overflow: hidden;
+}
+.impact-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 30% 50%, rgba(59,130,246,0.12) 0%, transparent 60%),
+              radial-gradient(ellipse at 70% 80%, rgba(168,85,247,0.08) 0%, transparent 50%);
+}
+.impact-section .section-header h2 { color: #fff; }
+.impact-section .section-header p { color: #94a3b8; }
+.impact-section .section-badge {
+  background: rgba(59,130,246,0.15);
+  border-color: rgba(59,130,246,0.3);
+  color: #93c5fd;
+}
+.impact-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  position: relative;
+  z-index: 1;
+}
+.impact-card {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px;
+  padding: 40px 24px;
+  text-align: center;
+  transition: all 0.4s;
+}
+.impact-card:hover {
+  background: rgba(255,255,255,0.1);
+  transform: translateY(-5px);
+  border-color: rgba(59,130,246,0.3);
+}
+.impact-card-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  background: rgba(59,130,246,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  font-size: 1.5rem;
+  color: #60a5fa;
+}
+.impact-card h3 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 6px;
+}
+.impact-card p {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* CTA Section */
+.cta-section {
+  padding: 100px 0;
+  background: var(--gray-50, #f8fafc);
+}
+.cta-card {
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+  border-radius: 24px;
+  padding: 60px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.cta-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 0%, rgba(59,130,246,0.2) 0%, transparent 50%);
+}
+.cta-card .section-badge {
+  background: rgba(59,130,246,0.15);
+  border-color: rgba(59,130,246,0.3);
+  color: #93c5fd;
+  position: relative;
+  z-index: 1;
+}
+.cta-card h2 {
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 16px;
+  position: relative;
+  z-index: 1;
+}
+.cta-card p {
+  color: #94a3b8;
+  font-size: 1.05rem;
+  line-height: 1.7;
+  max-width: 600px;
+  margin: 0 auto 30px;
+  position: relative;
+  z-index: 1;
+}
+.cta-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
+}
+.btn-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 32px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s;
+  cursor: pointer;
+  border: none;
+}
+.btn-cta-primary {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  box-shadow: 0 8px 30px rgba(59,130,246,0.3);
+}
+.btn-cta-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(59,130,246,0.45);
+}
+.btn-cta-outline {
+  background: transparent;
+  color: #93c5fd;
+  border: 2px solid rgba(59,130,246,0.3);
+}
+.btn-cta-outline:hover {
+  background: rgba(59,130,246,0.1);
+  border-color: rgba(59,130,246,0.5);
+}
+
+/* Animations */
+[data-aos] {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+[data-aos="fade-up"].visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+[data-aos="fade-right"] {
+  transform: translateX(-30px);
+}
+[data-aos="fade-right"].visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+[data-aos="fade-left"] {
+  transform: translateX(30px);
+}
+[data-aos="fade-left"].visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+[data-aos="zoom-in"] {
+  transform: scale(0.9);
+}
+[data-aos="zoom-in"].visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .partners-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .impact-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 768px) {
+  .page-hero { padding: 130px 0 80px; }
+  .stats-bar {
+    grid-template-columns: repeat(2, 1fr);
+    padding: 24px;
+    gap: 20px;
+    margin-top: -30px;
+  }
+  .stat-item:not(:last-child)::after { display: none; }
+  .stat-number { font-size: 1.6rem; }
+  .partners-grid {
+    grid-template-columns: 1fr;
+  }
+  .impact-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .section { padding: 60px 0; }
+  .impact-section { padding: 60px 0; }
+  .cta-card { padding: 40px 24px; }
+}
+@media (max-width: 480px) {
+  .stats-bar { grid-template-columns: 1fr; }
+  .partners-grid { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+
+<!-- Navbar -->
+<nav class="navbar" id="navbar">
+  <div class="container">
+    <a href="/" class="nav-brand">
+      <div class="logo-icon">E</div>
+      <span>ENABLE PROGRAM</span>
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="/">Home</a></li>
+      <li class="nav-dropdown">
+        <a href="#">About <i class="fas fa-chevron-down" style="font-size:.625rem;margin-left:4px"></i></a>
+        <div class="dropdown-menu">
+          <a href="/about/"><i class="fas fa-building"></i> About ENF</a>
+          <a href="/founder/"><i class="fas fa-user-tie"></i> Founder &amp; Trustees</a>
+          <a href="/management/"><i class="fas fa-users-cog"></i> Management Team</a>
+        </div>
+      </li>
+      <li><a href="/programs/">Programs</a></li>
+      <li><a href="/partners/" class="active">Partners</a></li>
+      <li><a href="/scholarships/">Scholarships</a></li>
+      <li><a href="/news/">News</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="/login/" class="btn btn-primary btn-sm"><i class="fas fa-sign-in-alt"></i> Login</a>
+    </div>
+    <button class="mobile-menu-btn" onclick="toggleMobileMenu()"><i class="fas fa-bars"></i></button>
+  </div>
+</nav>
+
+<!-- Hero Section -->
+<section class="page-hero">
+  <div class="container">
+    <div class="page-hero-content" data-aos="fade-up">
+      <div class="page-hero-badge">
+        <i class="fas fa-handshake"></i> Collaboration &amp; Impact
+      </div>
+      <h1>Our <span class="gradient-text">Trusted Partners</span></h1>
+      <p>Building meaningful partnerships with leading organizations, government bodies, and corporate leaders to transform education and empower students across India.</p>
+      <div class="breadcrumb">
+        <a href="/"><i class="fas fa-home"></i> Home</a>
+        <span class="separator">/</span>
+        <span>Partners</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Stats Bar -->
+<div class="container" data-aos="fade-up">
+  <div class="stats-bar">
+    <div class="stat-item">
+      <div class="stat-number">7+</div>
+      <div class="stat-label">Partners</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number">5+</div>
+      <div class="stat-label">Years</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number">15,000+</div>
+      <div class="stat-label">Students Impacted</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number">350+</div>
+      <div class="stat-label">Schools Reached</div>
+    </div>
+  </div>
+</div>
+
+<!-- Partners Section -->
+<section class="section">
+  <div class="container">
+    <div class="section-header" data-aos="fade-up">
+      <div class="section-badge"><i class="fas fa-star"></i> Our Partners</div>
+      <h2>Organizations Driving Change Together</h2>
+      <p>We proudly collaborate with government bodies, corporate houses, and social organizations committed to transforming education for underprivileged students across India.</p>
+      <div class="section-divider"></div>
+    </div>
+
+    <div class="partners-grid">
+
+      <!-- Partner 1: Tata Motors -->
+      <div class="partner-card" data-aos="fade-up">
+        <div class="partner-card-header">
+          <div class="partner-card-header-img">
+            <img src="https://images.unsplash.com/photo-1581092162384-8987c1d64718?w=800&h=360&fit=crop&q=85" alt="Tata Motors Industrial Facility" loading="lazy">
+          </div>
+          <div class="partner-card-header-content">
+            <div class="partner-icon"><i class="fas fa-industry"></i></div>
+            <h3>Tata Motors</h3>
+            <div class="partner-badges">
+              <span class="partner-badge badge-year"><i class="fas fa-calendar-alt"></i> Since 2021</span>
+              <span class="partner-badge badge-type"><i class="fas fa-briefcase"></i> CSR Partner</span>
+            </div>
+          </div>
+        </div>
+        <div class="partner-card-body">
+          <p>Strategic CSR partner for the ENABLE program. A joint initiative to provide quality JEE/NEET preparation to Jawahar Navodaya Vidyalaya students across India.</p>
+          <ul class="partner-highlights">
+            <li><i class="fas fa-circle"></i> Funding, technology, and resource support for 350+ JNVs</li>
+            <li><i class="fas fa-circle"></i> Covering 5 regions across the country</li>
+            <li><i class="fas fa-circle"></i> Quality JEE &amp; NEET preparation for JNV students</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Partner 2: Tata AIG General Insurance -->
+      <div class="partner-card" data-aos="fade-up">
+        <div class="partner-card-header">
+          <div class="partner-card-header-img">
+            <img src="https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800&h=360&fit=crop&q=85" alt="Tata AIG Insurance Corporate Office" loading="lazy">
+          </div>
+          <div class="partner-card-header-content">
+            <div class="partner-icon"><i class="fas fa-shield-alt"></i></div>
+            <h3>Tata AIG General Insurance</h3>
+            <div class="partner-badges">
+              <span class="partner-badge badge-year"><i class="fas fa-calendar-alt"></i> Since 2019</span>
+              <span class="partner-badge badge-type"><i class="fas fa-hand-holding-heart"></i> CSR</span>
+            </div>
+          </div>
+        </div>
+        <div class="partner-card-body">
+          <p>Supporting ENF's educational initiatives with corporate social responsibility funding. A valued partner contributing to student welfare programs and scholarship support.</p>
+          <ul class="partner-highlights">
+            <li><i class="fas fa-circle"></i> Corporate social responsibility funding since 2019</li>
+            <li><i class="fas fa-circle"></i> Student welfare programs and support</li>
+            <li><i class="fas fa-circle"></i> Scholarship contributions for deserving students</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Partner 3: Navodaya Vidyalaya Samiti (NVS) -->
+      <div class="partner-card" data-aos="fade-up">
+        <div class="partner-card-header">
+          <div class="partner-card-header-img">
+            <img src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800&h=360&fit=crop&q=85" alt="Navodaya Vidyalaya School Building" loading="lazy">
+          </div>
+          <div class="partner-card-header-content">
+            <div class="partner-icon"><i class="fas fa-university"></i></div>
+            <h3>Navodaya Vidyalaya Samiti (NVS)</h3>
+            <div class="partner-badges">
+              <span class="partner-badge badge-year"><i class="fas fa-calendar-alt"></i> Institutional</span>
+              <span class="partner-badge badge-type"><i class="fas fa-landmark"></i> Government</span>
+            </div>
+          </div>
+        </div>
+        <div class="partner-card-body">
+          <p>Government body under the Ministry of Education managing all 661 Jawahar Navodaya Vidyalayas across India. Key institutional partner providing access to school infrastructure and student enrollment.</p>
+          <ul class="partner-highlights">
+            <li><i class="fas fa-circle"></i> Managing 661 Jawahar Navodaya Vidyalayas</li>
+            <li><i class="fas fa-circle"></i> Access to school infrastructure nationwide</li>
+            <li><i class="fas fa-circle"></i> Student enrollment and institutional support</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Partner 4: Ministry of Science & Technology -->
+      <div class="partner-card" data-aos="fade-up">
+        <div class="partner-card-header">
+          <div class="partner-card-header-img">
+            <img src="https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=800&h=360&fit=crop&q=85" alt="Science and Technology Research Lab" loading="lazy">
+          </div>
+          <div class="partner-card-header-content">
+            <div class="partner-icon"><i class="fas fa-microscope"></i></div>
+            <h3>Ministry of Science &amp; Technology</h3>
+            <div class="partner-badges">
+              <span class="partner-badge badge-year"><i class="fas fa-calendar-alt"></i> Government</span>
+              <span class="partner-badge badge-type"><i class="fas fa-atom"></i> STEM</span>
+            </div>
+          </div>
+        </div>
+        <div class="partner-card-body">
+          <p>Government partnership supporting STEM education and innovation initiatives. Programs for strengthening science education at the grassroots level across India.</p>
+          <ul class="partner-highlights">
+            <li><i class="fas fa-circle"></i> STEM education and innovation programs</li>
+            <li><i class="fas fa-circle"></i> Strengthening science education at grassroots level</li>
+            <li><i class="fas fa-circle"></i> Research and innovation mentorship support</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Partner 5: Social Welfare Society, UP -->
+      <div class="partner-card" data-aos="fade-up">
+        <div class="partner-card-header">
+          <div class="partner-card-header-img">
+            <img src="https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=800&h=360&fit=crop&q=85" alt="Community Social Welfare" loading="lazy">
+          </div>
+          <div class="partner-card-header-content">
+            <div class="partner-icon"><i class="fas fa-hands-helping"></i></div>
+            <h3>Social Welfare Society, UP</h3>
+            <div class="partner-badges">
+              <span class="partner-badge badge-year"><i class="fas fa-calendar-alt"></i> State Level</span>
+              <span class="partner-badge badge-type"><i class="fas fa-users"></i> Social Welfare</span>
+            </div>
+          </div>
+        </div>
+        <div class="partner-card-body">
+          <p>State-level partnership for social welfare and education outreach programs in Uttar Pradesh. Community engagement and support for underprivileged students.</p>
+          <ul class="partner-highlights">
+            <li><i class="fas fa-circle"></i> Social welfare &amp; education outreach in UP</li>
+            <li><i class="fas fa-circle"></i> Community engagement and student support</li>
+            <li><i class="fas fa-circle"></i> Programs for underprivileged communities</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Partnership Impact Section -->
+<section class="impact-section">
+  <div class="container">
+    <div class="section-header" data-aos="fade-up">
+      <div class="section-badge"><i class="fas fa-chart-line"></i> Impact</div>
+      <h2>Partnership Impact</h2>
+      <p>Together with our partners, we are creating a measurable impact on education and empowering students across India.</p>
+      <div class="section-divider"></div>
+    </div>
+
+    <div class="impact-grid">
+      <div class="impact-card" data-aos="fade-up">
+        <div class="impact-card-icon"><i class="fas fa-school"></i></div>
+        <h3>661+</h3>
+        <p>Schools Connected</p>
+      </div>
+      <div class="impact-card" data-aos="fade-up">
+        <div class="impact-card-icon"><i class="fas fa-user-graduate"></i></div>
+        <h3>15,000+</h3>
+        <p>Students Benefited</p>
+      </div>
+      <div class="impact-card" data-aos="fade-up">
+        <div class="impact-card-icon"><i class="fas fa-map-marked-alt"></i></div>
+        <h3>28+</h3>
+        <p>States &amp; UTs Covered</p>
+      </div>
+      <div class="impact-card" data-aos="fade-up">
+        <div class="impact-card-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+        <h3>500+</h3>
+        <p>Expert Mentors</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section">
+  <div class="container">
+    <div class="cta-card" data-aos="zoom-in">
+      <div class="section-badge"><i class="fas fa-handshake"></i> Join Us</div>
+      <h2>Become a Partner</h2>
+      <p>Join hands with Ex Navodayan Foundation and be a part of the mission to transform education for underprivileged and talented students across India. Your collaboration can make a lasting impact.</p>
+      <div class="cta-actions">
+        <a href="#contact" class="btn-cta btn-cta-primary"><i class="fas fa-envelope"></i> Get in Touch</a>
+        <a href="/about/" class="btn-cta btn-cta-outline"><i class="fas fa-info-circle"></i> Learn More</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <!-- Col 1: Brand -->
+      <div class="footer-col">
+        <div class="footer-brand">
+          <div class="logo-icon">E</div>
+          <span>ENABLE PROGRAM</span>
+        </div>
+        <p>Ex Navodayan Foundation (ENF) is a premier not-for-profit organization dedicated to empowering Navodaya alumni and students through quality education, mentorship, and technology-enabled learning programs across India.</p>
+        <div class="footer-social">
+          <a href="https://youtube.com" target="_blank" rel="noopener" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+          <a href="https://facebook.com" target="_blank" rel="noopener" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+          <a href="https://twitter.com" target="_blank" rel="noopener" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+          <a href="https://linkedin.com" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+          <a href="https://instagram.com" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        </div>
+      </div>
+
+      <!-- Col 2: Quick Links -->
+      <div class="footer-col">
+        <h4>Quick Links</h4>
+        <ul class="footer-links">
+          <li><a href="/about/">About Us</a></li>
+          <li><a href="/programs/">Programs</a></li>
+          <li><a href="/partners/">Partners</a></li>
+          <li><a href="/scholarships/">Scholarships</a></li>
+          <li><a href="/news/">News</a></li>
+          <li><a href="/gallery/">Gallery</a></li>
+        </ul>
+      </div>
+
+      <!-- Col 3: Programs -->
+      <div class="footer-col">
+        <h4>Programs</h4>
+        <ul class="footer-links">
+          <li><a href="/programs/">CoE</a></li>
+          <li><a href="/programs/">ENABLE</a></li>
+        </ul>
+      </div>
+
+      <!-- Col 4: Get in Touch -->
+      <div class="footer-col">
+        <h4>Get in Touch</h4>
+        <div class="footer-contact">
+          <div class="footer-contact-item">
+            <i class="fas fa-location-dot"></i>
+            <span>B-36/43-46M, Brahmanand Colony, Durgakund, Varanasi, UP (221005)</span>
+          </div>
+          <div class="footer-contact-item">
+            <i class="fas fa-phone"></i>
+            <span>+91-76070 02100</span>
+          </div>
+          <div class="footer-contact-item">
+            <i class="fas fa-envelope"></i>
+            <span>exnavodayanfoundation1@gmail.com</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Bottom -->
+    <div class="footer-bottom">
+      <p>&copy; 2026 Ex Navodayan Foundation. All rights reserved.</p>
+      <p>Design by <a href="https://erpdsoft.com" target="_blank" rel="noopener">ERPDSOFT</a></p>
+    </div>
+  </div>
+</footer>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Navbar scroll effect
+  window.addEventListener('scroll', function () {
+    document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 50);
+  });
+
+  // Login Modal
+  function openLoginModal() {
+    document.getElementById('loginModal').classList.add('show');
+  }
+  function closeLoginModal() {
+    document.getElementById('loginModal').classList.remove('show');
+  }
+  document.getElementById('loginModal').addEventListener('click', function (e) {
+    if (e.target === this) closeLoginModal();
+  });
+
+  // Mobile menu toggle
+  function toggleMobileMenu() {
+    var links = document.getElementById('navLinks');
+    links.classList.toggle('show');
+  }
+
+  // Intersection Observer for scroll animations
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('[data-aos]').forEach(function (el) {
+    observer.observe(el);
+  });
+
+  // Smooth scroll for anchor links
+  document.querySelectorAll('a[href^="#"]').forEach(function (anchor) {
+    anchor.addEventListener('click', function (e) {
+      var targetId = this.getAttribute('href');
+      if (targetId === '#') return;
+      e.preventDefault();
+      var target = document.querySelector(targetId);
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
+</script>
+{% endblock %}

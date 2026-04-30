@@ -1,0 +1,73 @@
+{% load static %}
+<div class="friendly-json-widget tag-list-widget" id="tlw-{{ widget.name }}">
+  <div class="fjw-tags-container" id="tags-{{ widget.name }}">
+    {% for item in widget.items %}
+    <span class="fjw-tag">
+      <span class="fjw-tag-text">{{ item }}</span>
+      <input type="hidden" name="{{ widget.name }}_items" value="{{ item }}">
+      <button type="button" class="fjw-tag-remove" onclick="this.parentElement.remove()" title="Remove">&times;</button>
+    </span>
+    {% endfor %}
+  </div>
+
+  <div class="fjw-input-row">
+    <input type="text" class="fjw-text-input" id="input-{{ widget.name }}"
+           placeholder="{{ widget.placeholder }}"
+           autocomplete="off"
+           list="suggestions-{{ widget.name }}">
+    <button type="button" class="fjw-btn fjw-btn-add" onclick="fjwAddTag('{{ widget.name }}')">
+      <i class="fas fa-plus"></i> Add
+    </button>
+  </div>
+
+  {% if widget.suggestions != '[]' %}
+  <datalist id="suggestions-{{ widget.name }}">
+    <!-- Populated by JS -->
+  </datalist>
+  {% endif %}
+
+  <p class="fjw-help">Type a value and click Add or press Enter. Click × to remove.</p>
+</div>
+
+<script>
+(function() {
+  // Populate suggestions
+  var suggestions = {{ widget.suggestions|safe }};
+  var datalist = document.getElementById('suggestions-{{ widget.name }}');
+  if (datalist && suggestions.length) {
+    suggestions.forEach(function(s) {
+      var opt = document.createElement('option');
+      opt.value = s;
+      datalist.appendChild(opt);
+    });
+  }
+
+  // Enter key support
+  var input = document.getElementById('input-{{ widget.name }}');
+  if (input) {
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        fjwAddTag('{{ widget.name }}');
+      }
+    });
+  }
+})();
+
+function fjwAddTag(name) {
+  var input = document.getElementById('input-' + name);
+  var container = document.getElementById('tags-' + name);
+  var val = input.value.trim();
+  if (!val) return;
+
+  var span = document.createElement('span');
+  span.className = 'fjw-tag';
+  span.innerHTML =
+    '<span class="fjw-tag-text">' + val.replace(/</g, '&lt;') + '</span>' +
+    '<input type="hidden" name="' + name + '_items" value="' + val.replace(/"/g, '&quot;') + '">' +
+    '<button type="button" class="fjw-tag-remove" onclick="this.parentElement.remove()" title="Remove">&times;</button>';
+  container.appendChild(span);
+  input.value = '';
+  input.focus();
+}
+</script>

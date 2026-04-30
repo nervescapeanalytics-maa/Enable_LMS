@@ -1,0 +1,107 @@
+{% extends 'dashboards/admin_base.html' %}
+
+{% block admin_content %}
+<div class="page-header">
+  <div><h2><i class="fas fa-plug"></i> Integrations & Configuration</h2><p>Manage LLM, YouTube, API and third-party integrations</p></div>
+  <a href="/admin/system_config/integrationconfig/add/" class="btn-primary"><i class="fas fa-plus"></i> Add Integration</a>
+</div>
+
+<!-- Health Summary -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px;">
+  <div class="card" style="padding:20px;text-align:center;">
+    <div style="font-size:2rem;font-weight:800;color:#6366f1;">{{ total_integrations }}</div>
+    <div style="font-size:0.82rem;color:#64748b;margin-top:4px;">Total Integrations</div>
+  </div>
+  <div class="card" style="padding:20px;text-align:center;">
+    <div style="font-size:2rem;font-weight:800;color:#22c55e;">{{ enabled_count }}</div>
+    <div style="font-size:0.82rem;color:#64748b;margin-top:4px;">✅ Enabled</div>
+  </div>
+  <div class="card" style="padding:20px;text-align:center;">
+    <div style="font-size:2rem;font-weight:800;color:#22c55e;">{{ healthy_count }}</div>
+    <div style="font-size:0.82rem;color:#64748b;margin-top:4px;">🟢 Healthy</div>
+  </div>
+  <div class="card" style="padding:20px;text-align:center;">
+    <div style="font-size:2rem;font-weight:800;color:#f59e0b;">{{ degraded_count }}</div>
+    <div style="font-size:0.82rem;color:#64748b;margin-top:4px;">🟡 Degraded</div>
+  </div>
+  <div class="card" style="padding:20px;text-align:center;">
+    <div style="font-size:2rem;font-weight:800;color:#ef4444;">{{ down_count }}</div>
+    <div style="font-size:0.82rem;color:#64748b;margin-top:4px;">🔴 Down</div>
+  </div>
+</div>
+
+<!-- Integrations by Type -->
+{% for type_label, items in type_groups.items %}
+<div class="card" style="margin-bottom:24px;">
+  <div class="card-header">
+    <h3><i class="fas fa-layer-group"></i> {{ type_label }}</h3>
+    <span class="card-badge info">{{ items|length }} Integration{{ items|length|pluralize }}</span>
+  </div>
+  <div style="overflow-x:auto">
+    <table class="adm-table">
+      <thead><tr><th>Name</th><th>Provider</th><th>Health</th><th>Status</th><th>Rate Limit</th><th>Budget</th><th>Updated</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for i in items %}
+        <tr>
+          <td>
+            <div style="font-weight:700;color:#0f172a;">{{ i.name }}</div>
+            {% if i.endpoint %}<div style="font-size:0.72rem;color:#94a3b8;font-family:monospace;margin-top:2px;">{{ i.endpoint|truncatechars:40 }}</div>{% endif %}
+            {% if i.model_name %}<div style="font-size:0.75rem;color:#8b5cf6;margin-top:2px;">Model: {{ i.model_name }}</div>{% endif %}
+          </td>
+          <td><span style="font-weight:600;">{{ i.provider|default:"—" }}</span></td>
+          <td>
+            {% if i.health == 'HEALTHY' %}<span style="color:#22c55e;font-weight:600;">🟢 Healthy</span>
+            {% elif i.health == 'DEGRADED' %}<span style="color:#f59e0b;font-weight:600;">🟡 Degraded</span>
+            {% elif i.health == 'DOWN' %}<span style="color:#ef4444;font-weight:600;">🔴 Down</span>
+            {% else %}<span style="color:#94a3b8;">⚪ Unknown</span>{% endif %}
+          </td>
+          <td>{% if i.is_active %}<span class="status active">Enabled</span>{% else %}<span class="status inactive">Disabled</span>{% endif %}</td>
+          <td><span style="font-family:monospace;font-size:0.82rem;">{{ i.rate_limit|default:"∞" }}/hr</span></td>
+          <td>
+            {% if i.daily_budget %}<span style="font-size:0.82rem;color:#64748b;">₹{{ i.daily_budget }}/day</span>{% endif %}
+            {% if i.monthly_budget %}<br><span style="font-size:0.75rem;color:#94a3b8;">₹{{ i.monthly_budget }}/mo</span>{% endif %}
+            {% if not i.daily_budget and not i.monthly_budget %}<span style="color:#94a3b8;">—</span>{% endif %}
+          </td>
+          <td style="font-size:0.82rem;color:#64748b;">{{ i.updated }}</td>
+          <td>
+            <a href="/admin/system_config/integrationconfig/{{ i.id }}/change/" style="color:#3b82f6;font-size:0.82rem;text-decoration:none;font-weight:600;"><i class="fas fa-edit"></i> Configure</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% empty %}
+<div class="card">
+  <div class="empty-state">
+    <i class="fas fa-plug" style="font-size:3rem;color:#cbd5e1;margin-bottom:16px;"></i>
+    <p>No integrations configured yet</p>
+    <p style="font-size:0.85rem;color:#94a3b8;margin-bottom:16px;">Add LLM, YouTube, or other API integrations</p>
+    <a href="/admin/system_config/integrationconfig/add/" class="btn-primary"><i class="fas fa-plus"></i> Add First Integration</a>
+  </div>
+</div>
+{% endfor %}
+
+<!-- Quick Setup Guide -->
+<div class="card" style="margin-top:8px;">
+  <div class="card-header"><h3><i class="fas fa-rocket"></i> Quick Setup Guide</h3></div>
+  <div style="padding:24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;">
+    <div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:12px;padding:20px;">
+      <div style="font-weight:700;color:#7c3aed;margin-bottom:8px;"><i class="fas fa-brain"></i> LLM / AI</div>
+      <p style="font-size:0.85rem;color:#6b7280;margin-bottom:12px;">Connect OpenAI, Anthropic, or other LLM providers for AI-powered features.</p>
+      <code style="font-size:0.75rem;background:#f3e8ff;padding:4px 8px;border-radius:4px;">API Key + Endpoint + Model Name</code>
+    </div>
+    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:20px;">
+      <div style="font-weight:700;color:#dc2626;margin-bottom:8px;"><i class="fab fa-youtube"></i> YouTube</div>
+      <p style="font-size:0.85rem;color:#6b7280;margin-bottom:12px;">Sync video content from YouTube channels for study materials.</p>
+      <code style="font-size:0.75rem;background:#fee2e2;padding:4px 8px;border-radius:4px;">API Key + Channel ID + Playlists</code>
+    </div>
+    <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:20px;">
+      <div style="font-weight:700;color:#2563eb;margin-bottom:8px;"><i class="fas fa-video"></i> Zoom / Meet</div>
+      <p style="font-size:0.85rem;color:#6b7280;margin-bottom:12px;">Integrate live class platforms for automated scheduling.</p>
+      <code style="font-size:0.75rem;background:#dbeafe;padding:4px 8px;border-radius:4px;">OAuth Client ID + Secret + Token URL</code>
+    </div>
+  </div>
+</div>
+{% endblock %}

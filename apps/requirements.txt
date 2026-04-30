@@ -1,0 +1,90 @@
+# =============================================================================
+# LMS Enterprise - Python Dependencies
+# =============================================================================
+
+# Django Core
+Django==5.2
+djangorestframework==3.16.1
+django-filter==24.3
+django-cors-headers==4.6.0
+
+# Authentication
+djangorestframework-simplejwt==5.5.1
+PyOTP==2.9.0
+
+# Database
+psycopg[binary]==3.2.4
+psycopg[pool]==3.2.4
+dj-database-url==2.3.0
+
+# Redis & Caching
+django-redis==5.4.0
+redis==5.2.1
+
+# Channels (WebSocket)
+channels==4.2.0
+channels-redis==4.2.1
+daphne==4.1.2
+
+# Celery (Async Tasks)
+celery==5.4.0
+django-celery-beat==2.9.0
+django-celery-results==2.5.1
+
+# File & Media
+Pillow==11.1.0
+boto3==1.35.86
+django-storages==1.14.4
+
+# API Utilities
+drf-spectacular==0.28.0
+# REMOVED by remediation: django-rest-swagger==2.2.0
+djangorestframework-camel-case==1.4.2
+
+# Security
+django-axes==7.0.1
+django-ratelimit==4.1.0
+cryptography==44.0.0
+
+# Monitoring & Logging
+sentry-sdk==2.19.2
+django-prometheus==2.3.1
+django-health-check==3.18.3
+
+# Utilities
+python-decouple==3.8
+python-dateutil==2.9.0
+pytz==2024.2
+whitenoise==6.8.2
+gunicorn==23.0.0
+uvicorn[standard]==0.34.0
+openpyxl==3.1.5
+
+# YouTube API
+google-api-python-client==2.159.0
+google-auth==2.37.0
+google-auth-oauthlib==1.2.1
+google-auth-httplib2==0.2.0
+
+# AI / LLM (EduAssist)
+openai==1.82.0
+anthropic==0.52.0
+
+# Testing
+pytest==8.3.4
+pytest-django==4.9.0
+pytest-cov==6.0.0
+pytest-asyncio==0.24.0
+factory-boy==3.3.1
+faker==33.1.0
+
+# Code Quality
+ruff==0.8.6
+black==24.10.0
+isort==5.13.2
+mypy==1.14.1
+django-stubs==5.2.0
+
+# DevOps
+django-extensions==3.2.3
+ipython==8.31.0

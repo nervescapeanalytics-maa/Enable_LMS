@@ -1,0 +1,118 @@
+{% extends 'dashboards/admin_base.html' %}
+
+{% block admin_content %}
+<div class="page-header">
+  <div><h2><i class="fas fa-brain"></i> AI Features & Configuration</h2><p>Manage AI models, features, and LLM integrations</p></div>
+  <a href="/admin/system_config/aifeatureconfig/add/" class="btn-primary"><i class="fas fa-plus"></i> Add AI Feature</a>
+</div>
+
+<!-- Summary Cards -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px;">
+  <div class="card" style="padding:20px;text-align:center;background:linear-gradient(135deg,#faf5ff,#f3e8ff);border:1px solid #e9d5ff;">
+    <div style="font-size:2rem;font-weight:800;color:#7c3aed;">{{ total_features }}</div>
+    <div style="font-size:0.82rem;color:#6d28d9;margin-top:4px;">🧠 AI Features</div>
+  </div>
+  <div class="card" style="padding:20px;text-align:center;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #bbf7d0;">
+    <div style="font-size:2rem;font-weight:800;color:#16a34a;">{{ enabled_features }}</div>
+    <div style="font-size:0.82rem;color:#15803d;margin-top:4px;">✅ Enabled</div>
+  </div>
+  <div class="card" style="padding:20px;text-align:center;background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #bfdbfe;">
+    <div style="font-size:2rem;font-weight:800;color:#2563eb;">{{ total_llm }}</div>
+    <div style="font-size:0.82rem;color:#1d4ed8;margin-top:4px;">🔗 LLM Integrations</div>
+  </div>
+</div>
+
+<!-- AI Capabilities Roadmap -->
+<div class="card" style="margin-bottom:24px;">
+  <div class="card-header"><h3><i class="fas fa-rocket"></i> AI Capabilities</h3></div>
+  <div style="padding:24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;">
+    {% for cap in ai_capabilities %}
+    <div style="background:{% if cap.status == 'active' %}#f0fdf4{% elif cap.status == 'beta' %}#fffbeb{% else %}#f8fafc{% endif %};border:2px solid {% if cap.status == 'active' %}#bbf7d0{% elif cap.status == 'beta' %}#fde68a{% else %}#e2e8f0{% endif %};border-radius:12px;padding:20px;position:relative;">
+      {% if cap.status == 'beta' %}<span style="position:absolute;top:8px;right:8px;background:#f59e0b;color:#fff;padding:2px 8px;border-radius:10px;font-size:0.68rem;font-weight:700;">BETA</span>{% endif %}
+      {% if cap.status == 'planned' %}<span style="position:absolute;top:8px;right:8px;background:#94a3b8;color:#fff;padding:2px 8px;border-radius:10px;font-size:0.68rem;font-weight:700;">PLANNED</span>{% endif %}
+      {% if cap.status == 'active' %}<span style="position:absolute;top:8px;right:8px;background:#22c55e;color:#fff;padding:2px 8px;border-radius:10px;font-size:0.68rem;font-weight:700;">ACTIVE</span>{% endif %}
+      <div style="width:44px;height:44px;background:{% if cap.status == 'active' %}#dcfce7{% elif cap.status == 'beta' %}#fef3c7{% else %}#f1f5f9{% endif %};border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;">
+        <i class="fas {{ cap.icon }}" style="color:{% if cap.status == 'active' %}#16a34a{% elif cap.status == 'beta' %}#d97706{% else %}#64748b{% endif %};font-size:1.1rem;"></i>
+      </div>
+      <div style="font-weight:700;color:#0f172a;margin-bottom:6px;">{{ cap.name }}</div>
+      <div style="font-size:0.82rem;color:#64748b;">{{ cap.desc }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Configured AI Features -->
+<div class="card" style="margin-bottom:24px;">
+  <div class="card-header">
+    <h3><i class="fas fa-cogs"></i> Configured AI Features</h3>
+    <span class="card-badge info">{{ total_features }} Features</span>
+  </div>
+  {% if features %}
+  <div style="overflow-x:auto">
+    <table class="adm-table">
+      <thead><tr><th>Feature</th><th>Provider</th><th>Model</th><th>Max Tokens</th><th>Temp</th><th>Daily Limit</th><th>Status</th><th>Updated</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for f in features %}
+        <tr>
+          <td>
+            <div style="font-weight:700;color:#0f172a;">{{ f.name }}</div>
+            {% if f.description %}<div style="font-size:0.75rem;color:#94a3b8;margin-top:2px;">{{ f.description|truncatechars:50 }}</div>{% endif %}
+          </td>
+          <td><span style="font-weight:600;">{{ f.model_provider|default:"—" }}</span></td>
+          <td><span style="font-family:monospace;font-size:0.82rem;color:#8b5cf6;">{{ f.model_name|default:"—" }}</span></td>
+          <td style="text-align:center;font-family:monospace;">{{ f.max_tokens }}</td>
+          <td style="text-align:center;">{{ f.temperature }}</td>
+          <td style="text-align:center;font-weight:600;">{{ f.daily_limit }}</td>
+          <td>{% if f.is_enabled %}<span class="status active">Enabled</span>{% else %}<span class="status inactive">Disabled</span>{% endif %}</td>
+          <td style="font-size:0.82rem;color:#64748b;">{{ f.updated }}</td>
+          <td><a href="/admin/system_config/aifeatureconfig/{{ f.id }}/change/" style="color:#3b82f6;font-size:0.82rem;text-decoration:none;font-weight:600;"><i class="fas fa-edit"></i> Edit</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <i class="fas fa-brain"></i>
+    <p>No AI features configured</p>
+    <a href="/admin/system_config/aifeatureconfig/add/" class="btn-primary" style="margin-top:12px;"><i class="fas fa-plus"></i> Add AI Feature</a>
+  </div>
+  {% endif %}
+</div>
+
+<!-- LLM Integrations -->
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fas fa-link"></i> LLM Integrations</h3>
+    <a href="/staff/integrations/" style="color:#3b82f6;font-size:0.82rem;text-decoration:none;font-weight:600;"><i class="fas fa-external-link-alt"></i> All Integrations</a>
+  </div>
+  {% if llm_integrations %}
+  <div style="padding:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;">
+    {% for llm in llm_integrations %}
+    <div style="background:linear-gradient(135deg,#faf5ff,#f3e8ff);border:2px solid #e9d5ff;border-radius:12px;padding:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div style="font-weight:700;color:#7c3aed;font-size:1.05rem;">{{ llm.name }}</div>
+        {% if llm.is_active %}
+          {% if llm.health == 'HEALTHY' %}<span style="background:#dcfce7;color:#166534;padding:3px 10px;border-radius:10px;font-size:0.72rem;font-weight:600;">🟢 Healthy</span>
+          {% elif llm.health == 'DEGRADED' %}<span style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:10px;font-size:0.72rem;font-weight:600;">🟡 Degraded</span>
+          {% else %}<span style="background:#fef2f2;color:#dc2626;padding:3px 10px;border-radius:10px;font-size:0.72rem;font-weight:600;">🔴 Down</span>{% endif %}
+        {% else %}<span style="background:#f1f5f9;color:#94a3b8;padding:3px 10px;border-radius:10px;font-size:0.72rem;font-weight:600;">Disabled</span>{% endif %}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.82rem;">
+        <div><span style="color:#94a3b8;">Provider:</span> <span style="font-weight:600;">{{ llm.provider|default:"—" }}</span></div>
+        <div><span style="color:#94a3b8;">Model:</span> <span style="font-weight:600;color:#8b5cf6;">{{ llm.model|default:"—" }}</span></div>
+        <div><span style="color:#94a3b8;">Max Tokens:</span> <span style="font-weight:600;">{{ llm.max_tokens }}</span></div>
+        <div><span style="color:#94a3b8;">Rate:</span> <span style="font-weight:600;">{{ llm.rate_limit }}/hr</span></div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <i class="fas fa-link"></i>
+    <p>No LLM integrations configured</p>
+    <a href="/admin/system_config/integrationconfig/add/" class="btn-primary" style="margin-top:12px;"><i class="fas fa-plus"></i> Add LLM Integration</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

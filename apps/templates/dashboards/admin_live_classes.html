@@ -1,0 +1,44 @@
+{% extends 'dashboards/admin_base.html' %}
+
+{% block admin_content %}
+<div class="page-header">
+  <div><h2>Live Classes</h2><p>Manage scheduled and live classes</p></div>
+</div>
+
+<div class="stat-row">
+  <div class="stat-card"><div class="stat-icon red"><i class="fas fa-broadcast-tower"></i></div><div class="stat-info"><div class="stat-value">{{ live_count }}</div><div class="stat-label">Live Now</div></div></div>
+  <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-calendar-check"></i></div><div class="stat-info"><div class="stat-value">{{ scheduled_count }}</div><div class="stat-label">Scheduled</div></div></div>
+  <div class="stat-card"><div class="stat-icon purple"><i class="fas fa-video"></i></div><div class="stat-info"><div class="stat-value">{{ total_classes }}</div><div class="stat-label">Total Classes</div></div></div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fas fa-video"></i> All Classes</h3>
+    <span class="card-badge info">{{ total_classes }} Total</span>
+  </div>
+  {% if classes %}
+  <div style="overflow-x:auto">
+    <table class="adm-table">
+      <thead><tr><th>Title</th><th>Code</th><th>Teacher</th><th>Batch</th><th>Date</th><th>Time</th><th>Duration</th><th>Viewers</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for c in classes %}
+        <tr>
+          <td style="font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ c.title }}</td>
+          <td><span style="font-family:monospace;font-size:0.82rem;color:#64748b;">{{ c.code }}</span></td>
+          <td>{{ c.teacher }}</td>
+          <td>{{ c.batch }}</td>
+          <td style="white-space:nowrap;">{{ c.date }}</td>
+          <td style="white-space:nowrap;">{{ c.start_time }} – {{ c.end_time }}</td>
+          <td>{{ c.duration }} min</td>
+          <td>{{ c.viewers }}</td>
+          <td><span class="status {% if c.status == 'LIVE' %}live{% elif c.status == 'SCHEDULED' %}scheduled{% elif c.status == 'COMPLETED' %}completed{% else %}draft{% endif %}">{{ c.status }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><i class="fas fa-video"></i><p>No classes scheduled yet</p></div>
+  {% endif %}
+</div>
+{% endblock %}

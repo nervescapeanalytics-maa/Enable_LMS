@@ -1,0 +1,109 @@
+{% extends 'dashboards/admin_base.html' %}
+
+{% block admin_content %}
+<div class="page-header">
+  <div><h2><i class="fas fa-user-shield"></i> Staff Roles & Permissions</h2><p>Manage role hierarchy: Super Admin → Admin → Operator</p></div>
+  <a href="/admin/accounts/staffrole/add/" class="btn-primary"><i class="fas fa-plus"></i> Create Role</a>
+</div>
+
+<!-- Summary Cards -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px;">
+  <div class="card" style="padding:20px;text-align:center;">
+    <div style="font-size:2rem;font-weight:800;color:#ef4444;">{{ level_counts.super_admin }}</div>
+    <div style="font-size:0.82rem;color:#64748b;margin-top:4px;">👑 Super Admins</div>
+  </div>
+  <div class="card" style="padding:20px;text-align:center;">
+    <div style="font-size:2rem;font-weight:800;color:#2563eb;">{{ level_counts.admin }}</div>
+    <div style="font-size:0.82rem;color:#64748b;margin-top:4px;">🛡️ Admins</div>
+  </div>
+  <div class="card" style="padding:20px;text-align:center;">
+    <div style="font-size:2rem;font-weight:800;color:#16a34a;">{{ level_counts.operator }}</div>
+    <div style="font-size:0.82rem;color:#64748b;margin-top:4px;">⚙️ Operators</div>
+  </div>
+  <div class="card" style="padding:20px;text-align:center;">
+    <div style="font-size:2rem;font-weight:800;color:#8b5cf6;">{{ total_roles }}</div>
+    <div style="font-size:0.82rem;color:#64748b;margin-top:4px;">Total Roles</div>
+  </div>
+</div>
+
+<!-- Roles List -->
+<div class="card" style="margin-bottom:24px;">
+  <div class="card-header">
+    <h3><i class="fas fa-key"></i> Role Definitions</h3>
+    <span class="card-badge info">{{ total_roles }} Roles</span>
+  </div>
+  {% if roles %}
+  <div style="overflow-x:auto">
+    <table class="adm-table">
+      <thead><tr><th>Role</th><th>Level</th><th>Permissions</th><th>Staff Assigned</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for r in roles %}
+        <tr>
+          <td>
+            <div style="font-weight:700;color:#0f172a;">{{ r.name }}</div>
+            {% if r.description %}<div style="font-size:0.78rem;color:#94a3b8;margin-top:2px;">{{ r.description|truncatechars:60 }}</div>{% endif %}
+          </td>
+          <td>
+            {% if r.level == 'SUPER_ADMIN' %}<span style="background:#ef4444;color:#fff;padding:3px 10px;border-radius:6px;font-size:0.75rem;font-weight:700;">👑 Super Admin</span>
+            {% elif r.level == 'ADMIN' %}<span style="background:#2563eb;color:#fff;padding:3px 10px;border-radius:6px;font-size:0.75rem;font-weight:700;">🛡️ Admin</span>
+            {% else %}<span style="background:#16a34a;color:#fff;padding:3px 10px;border-radius:6px;font-size:0.75rem;font-weight:700;">⚙️ Operator</span>{% endif %}
+          </td>
+          <td>
+            <span style="color:#8b5cf6;font-weight:700;">{{ r.permissions_count }}/14</span>
+            <div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:3px;">
+              {% for p in r.permissions|slice:":5" %}
+              <span style="background:#f1f5f9;color:#475569;padding:1px 6px;border-radius:3px;font-size:0.68rem;">{{ p }}</span>
+              {% endfor %}
+              {% if r.permissions|length > 5 %}<span style="color:#94a3b8;font-size:0.68rem;">+{{ r.permissions|length|add:"-5" }} more</span>{% endif %}
+            </div>
+          </td>
+          <td><span style="color:#6366f1;font-weight:700;font-size:1.1rem;">{{ r.staff_count }}</span></td>
+          <td>{% if r.is_active %}<span class="status active">Active</span>{% else %}<span class="status inactive">Inactive</span>{% endif %}</td>
+          <td style="font-size:0.82rem;color:#64748b;">{{ r.created }}</td>
+          <td><a href="/admin/accounts/staffrole/{{ r.id }}/change/" style="color:#3b82f6;font-size:0.82rem;text-decoration:none;font-weight:600;"><i class="fas fa-edit"></i> Edit</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><i class="fas fa-user-shield"></i><p>No staff roles configured yet</p><a href="/admin/accounts/staffrole/add/" class="btn-primary" style="margin-top:12px;">Create First Role</a></div>
+  {% endif %}
+</div>
+
+<!-- Staff Assignments -->
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fas fa-users-cog"></i> Staff Assignments</h3>
+    <span class="card-badge info">{{ staff_list|length }} Staff</span>
+  </div>
+  {% if staff_list %}
+  <div style="overflow-x:auto">
+    <table class="adm-table">
+      <thead><tr><th>Name</th><th>Email</th><th>Assigned Role</th><th>Level</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for s in staff_list %}
+        <tr>
+          <td style="font-weight:600;">{{ s.name }}</td>
+          <td style="font-size:0.82rem;color:#64748b;">{{ s.email }}</td>
+          <td>
+            {% if s.role_name == 'Unassigned' %}<span style="color:#f59e0b;font-weight:600;">⚠ Unassigned</span>
+            {% else %}<span style="font-weight:600;color:#0f172a;">{{ s.role_name }}</span>{% endif %}
+          </td>
+          <td>
+            {% if s.role_level == 'SUPER_ADMIN' %}<span style="background:#fef2f2;color:#ef4444;padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:600;">Super Admin</span>
+            {% elif s.role_level == 'ADMIN' %}<span style="background:#eff6ff;color:#2563eb;padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:600;">Admin</span>
+            {% elif s.role_level == 'OPERATOR' %}<span style="background:#f0fdf4;color:#16a34a;padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:600;">Operator</span>
+            {% else %}<span style="color:#94a3b8;">—</span>{% endif %}
+          </td>
+          <td>{% if s.status == 'ACTIVE' %}<span class="status active">Active</span>{% else %}<span class="status inactive">{{ s.status }}</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><i class="fas fa-users"></i><p>No staff members found</p></div>
+  {% endif %}
+</div>
+{% endblock %}

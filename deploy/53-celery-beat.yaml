@@ -1,0 +1,43 @@
+# =============================================================================
+# Celery beat — periodic task scheduler.
+# MUST remain exactly 1 replica to avoid duplicate scheduled tasks.
+# NO HorizontalPodAutoscaler here — that would be a bug.
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: celery-beat
+  namespace: lms-prod
+  labels: { app: celery-beat }
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate       # ensures only one beat pod ever exists during updates
+  selector:
+    matchLabels: { app: celery-beat }
+  template:
+    metadata:
+      labels: { app: celery-beat }
+    spec:
+      imagePullSecrets:
+        - name: acecloud-registry
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: celery-beat
+          image: registry.internal.acecloud.io/enable-lms/api:${IMAGE_TAG}
+          imagePullPolicy: IfNotPresent
+          args: ["celery-beat"]
+          envFrom:
+            - configMapRef: { name: lms-config }
+            - secretRef:    { name: lms-secrets }
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits:   { cpu: 500m, memory: 256Mi }
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "test -f /tmp/celerybeat-schedule.db || test -f /tmp/celerybeat-schedule"]
+            initialDelaySeconds: 60
+            periodSeconds: 60
+            failureThreshold: 3

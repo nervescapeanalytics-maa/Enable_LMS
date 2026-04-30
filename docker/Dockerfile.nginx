@@ -1,0 +1,27 @@
+# =============================================================================
+# Enable-LMS — Nginx Dockerfile
+# Enterprise reverse proxy for Gunicorn + Daphne + static file serving
+# =============================================================================
+FROM nginx:1.28-alpine
+
+LABEL maintainer="Enable-LMS Enterprise" \
+      description="Enable-LMS Nginx Reverse Proxy" \
+      version="2.0.0"
+
+# Remove default config
+RUN rm /etc/nginx/conf.d/default.conf
+
+# Copy custom nginx config
+COPY docker/nginx/nginx.conf /etc/nginx/nginx.conf
+COPY docker/nginx/lms.conf /etc/nginx/conf.d/lms.conf
+
+# Create cache directories
+RUN mkdir -p /var/cache/nginx/proxy \
+    && chown -R nginx:nginx /var/cache/nginx
+
+EXPOSE 80
+
+HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://127.0.0.1/nginx-health || exit 1
+
+CMD ["nginx", "-g", "daemon off;"]

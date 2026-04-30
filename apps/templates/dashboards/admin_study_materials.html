@@ -1,0 +1,42 @@
+{% extends 'dashboards/admin_base.html' %}
+
+{% block admin_content %}
+<div class="page-header">
+  <div><h2>Study Materials</h2><p>Manage videos, documents and resources</p></div>
+</div>
+
+<div class="stat-row">
+  <div class="stat-card"><div class="stat-icon purple"><i class="fas fa-book-open"></i></div><div class="stat-info"><div class="stat-value">{{ total_materials }}</div><div class="stat-label">Total Materials</div></div></div>
+  <div class="stat-card"><div class="stat-icon green"><i class="fas fa-check-circle"></i></div><div class="stat-info"><div class="stat-value">{{ published_materials }}</div><div class="stat-label">Published</div></div></div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fas fa-book-open"></i> All Study Materials</h3>
+    <span class="card-badge info">{{ total_materials }} Total</span>
+  </div>
+  {% if materials %}
+  <div style="overflow-x:auto">
+    <table class="adm-table">
+      <thead><tr><th>Title</th><th>Code</th><th>Type</th><th>Subject</th><th>Views</th><th>Downloads</th><th>Published</th><th>Created</th></tr></thead>
+      <tbody>
+        {% for m in materials %}
+        <tr>
+          <td style="font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ m.title }}</td>
+          <td><span style="font-family:monospace;font-size:0.82rem;color:#64748b;">{{ m.code }}</span></td>
+          <td>{{ m.type|default:"—" }}</td>
+          <td>{{ m.subject }}</td>
+          <td>{{ m.views }}</td>
+          <td>{{ m.downloads }}</td>
+          <td>{% if m.is_published %}<span class="status active">Yes</span>{% else %}<span class="status draft">No</span>{% endif %}</td>
+          <td style="white-space:nowrap;">{{ m.created }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><i class="fas fa-book-open"></i><p>No study materials uploaded yet</p></div>
+  {% endif %}
+</div>
+{% endblock %}

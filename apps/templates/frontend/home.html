@@ -1,0 +1,2216 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+/* ========== Home Page Specific Styles ========== */
+
+/* Particle Background */
+.particles-container {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  overflow: hidden;
+  z-index: 0;
+}
+.particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: rgba(59,130,246,0.4);
+  border-radius: 50%;
+  animation: particleFloat 8s infinite ease-in-out;
+}
+.particle:nth-child(2n) { width: 6px; height: 6px; background: rgba(14,165,233,0.3); animation-duration: 12s; }
+.particle:nth-child(3n) { width: 3px; height: 3px; background: rgba(168,85,247,0.3); animation-duration: 10s; }
+@keyframes particleFloat {
+  0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  50% { transform: translateY(-200px) translateX(50px); }
+}
+
+/* Enhanced Hero */
+.hero-section {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  background: linear-gradient(135deg, #020617 0%, #0f172a 30%, #1e3a8a 70%, #1e40af 100%);
+  overflow: hidden;
+  padding: 120px 0 80px;
+}
+.hero-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 70% 50%, rgba(59,130,246,0.15) 0%, transparent 60%),
+              radial-gradient(ellipse at 30% 80%, rgba(168,85,247,0.1) 0%, transparent 50%);
+  z-index: 1;
+}
+.hero-section::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 120px;
+  background: linear-gradient(to top, var(--white) 0%, transparent 100%);
+  z-index: 2;
+}
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
+  position: relative;
+  z-index: 3;
+}
+.hero-content { position: relative; }
+.hero-content h1 {
+  font-size: clamp(2.5rem, 5.5vw, 3.8rem);
+  font-weight: 900;
+  color: white;
+  line-height: 1.15;
+  margin-bottom: 24px;
+  letter-spacing: -0.02em;
+}
+.hero-content h1 .gradient-text {
+  background: linear-gradient(135deg, #60a5fa, #a78bfa, #38bdf8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-content > p {
+  font-size: 1.15rem;
+  line-height: 1.85;
+  color: rgba(255,255,255,0.85);
+  margin-bottom: 32px;
+  max-width: 540px;
+}
+.hero-buttons {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 40px;
+  flex-wrap: wrap;
+}
+.hero-badges {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.hero-badge-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255,255,255,0.8);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+.hero-badge-item i {
+  color: #60a5fa;
+  font-size: 0.85rem;
+}
+
+/* Hero Visual */
+.hero-visual {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+.hero-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  width: 100%;
+  max-width: 480px;
+}
+.hero-visual-image {
+  display: none;
+}
+.hero-stat-card {
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px;
+  padding: 28px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.hero-stat-card:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.2);
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+}
+.stat-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  color: white;
+  flex-shrink: 0;
+}
+.stat-icon.blue { background: linear-gradient(135deg, #3b82f6, #0ea5e9); }
+.stat-icon.green { background: linear-gradient(135deg, #10b981, #34d399); }
+.stat-icon.amber { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+.stat-icon.purple { background: linear-gradient(135deg, #8b5cf6, #a78bfa); }
+.stat-info h3 {
+  color: white;
+  font-size: 1.7rem;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.stat-info p {
+  color: rgba(255,255,255,0.6);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* AI Floating Badge */
+.ai-floating-badge {
+  position: absolute;
+  bottom: -20px;
+  right: 20px;
+  background: linear-gradient(135deg, #8b5cf6, #6366f1);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(99,102,241,0.4);
+  animation: floatBadge 3s ease-in-out infinite;
+  z-index: 5;
+}
+@keyframes floatBadge {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+/* Badge Styles */
+.badge-ai {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.2));
+  border: 1px solid rgba(139,92,246,0.4);
+  color: #c4b5fd;
+  padding: 8px 18px;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+  backdrop-filter: blur(8px);
+}
+
+/* Nav Search Bar */
+.nav-search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.nav-search-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.nav-search-btn:hover { background: rgba(255,255,255,0.1); }
+.nav-search-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.85);
+  backdrop-filter: blur(12px);
+  z-index: 9999;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 140px;
+}
+.nav-search-overlay.active { display: flex; }
+.nav-search-box {
+  width: 90%;
+  max-width: 680px;
+  position: relative;
+  animation: searchSlideDown 0.3s ease-out;
+}
+@keyframes searchSlideDown {
+  from { opacity: 0; transform: translateY(-30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.nav-search-box input {
+  width: 100%;
+  padding: 20px 60px 20px 24px;
+  background: rgba(30, 41, 59, 0.9);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  border-radius: 16px;
+  color: white;
+  font-size: 1.15rem;
+  font-family: inherit;
+  outline: none;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(59, 130, 246, 0.15);
+}
+.nav-search-box input::placeholder { color: #64748b; }
+.nav-search-box input:focus { border-color: #3b82f6; }
+.nav-search-close {
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 4px;
+}
+.nav-search-close:hover { color: white; }
+.search-results-dropdown {
+  margin-top: 8px;
+  background: rgba(30, 41, 59, 0.95);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 16px;
+  max-height: 400px;
+  overflow-y: auto;
+  display: none;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+}
+.search-results-dropdown.visible { display: block; }
+.search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  color: #e2e8f0;
+  text-decoration: none;
+  transition: background 0.2s;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.search-result-item:last-child { border-bottom: none; }
+.search-result-item:hover { background: rgba(59, 130, 246, 0.08); }
+.search-result-icon {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: rgba(59, 130, 246, 0.12);
+  color: #60a5fa;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+.search-result-text h5 { margin: 0 0 2px; font-size: 0.9rem; font-weight: 600; color: #f1f5f9; }
+.search-result-text p { margin: 0; font-size: 0.75rem; color: #64748b; }
+.search-results-dropdown::-webkit-scrollbar { width: 4px; }
+.search-results-dropdown::-webkit-scrollbar-thumb { background: rgba(59,130,246,0.3); border-radius: 2px; }
+
+/* Stats Ticker */
+.stats-ticker {
+  background: linear-gradient(90deg, #020617, #1e3a8a, #020617);
+  padding: 16px 0;
+  overflow: hidden;
+  position: relative;
+  z-index: 5;
+}
+.stats-ticker::before,
+.stats-ticker::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100px;
+  z-index: 2;
+  pointer-events: none;
+}
+.stats-ticker::before { left: 0; background: linear-gradient(to right, #020617, transparent); }
+.stats-ticker::after { right: 0; background: linear-gradient(to left, #020617, transparent); }
+.ticker-track {
+  display: flex;
+  animation: scrollTicker 30s linear infinite;
+}
+.ticker-content {
+  display: flex;
+  gap: 0;
+  flex-shrink: 0;
+}
+.ticker-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255,255,255,0.9);
+  font-size: 0.9rem;
+  font-weight: 500;
+  white-space: nowrap;
+  padding: 0 32px;
+}
+.ticker-item i {
+  color: #60a5fa;
+}
+@keyframes scrollTicker {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* Section Styles */
+.page-section {
+  padding: 100px 0;
+  position: relative;
+}
+.page-section-header {
+  text-align: center;
+  max-width: 660px;
+  margin: 0 auto 60px;
+}
+.page-section-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  color: #1e40af;
+  padding: 8px 20px;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 16px;
+}
+.page-section-header h2 {
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
+  font-weight: 800;
+  color: var(--gray-900);
+  margin-bottom: 16px;
+  letter-spacing: -0.02em;
+}
+.page-section-header p {
+  font-size: 1.1rem;
+  color: var(--gray-500);
+  line-height: 1.7;
+}
+.section-divider {
+  width: 60px;
+  height: 4px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  border-radius: 4px;
+  margin: 20px auto 0;
+}
+
+/* Features Grid */
+.features-section { background: var(--gray-50); }
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+}
+.feature-card {
+  background: white;
+  border-radius: 20px;
+  padding: 0;
+  border: 1px solid var(--gray-100);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+.feature-card-img {
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+  position: relative;
+}
+.feature-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.feature-card:hover .feature-card-img img {
+  transform: scale(1.08);
+}
+.feature-card-body {
+  padding: 28px 24px;
+}
+.feature-card-body .home-feature-icon {
+  display: none;
+}
+.feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.feature-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 48px rgba(0,0,0,0.1);
+  border-color: transparent;
+}
+.feature-card:hover::before { opacity: 1; }
+.home-feature-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  color: white;
+  margin-bottom: 20px;
+}
+.home-feature-icon.blue { background: linear-gradient(135deg, #3b82f6, #0ea5e9); }
+.home-feature-icon.purple { background: linear-gradient(135deg, #a78bfa, #c084fc); }
+.home-feature-icon.green { background: linear-gradient(135deg, #10b981, #34d399); }
+.home-feature-icon.amber { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+.home-feature-icon.rose { background: linear-gradient(135deg, #f43f5e, #fb7185); }
+.home-feature-icon.cyan { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+.feature-card h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: 12px;
+}
+.feature-card p {
+  color: var(--gray-500);
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+.ai-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #f3e8ff, #ede9fe);
+  color: #7c3aed;
+  padding: 5px 12px;
+  border-radius: 50px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-top: 12px;
+}
+
+/* Gallery Section */
+.gallery-section { background: white; }
+.gallery-filter-bar {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 40px;
+  flex-wrap: wrap;
+}
+.gallery-filter-btn {
+  padding: 8px 22px;
+  border-radius: 50px;
+  border: 2px solid var(--gray-200);
+  background: white;
+  color: var(--gray-600);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: inherit;
+}
+.gallery-filter-btn.active,
+.gallery-filter-btn:hover {
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 4px 16px rgba(59,130,246,0.3);
+}
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+.gallery-item {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  background: white;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+  border: 1px solid rgba(0,0,0,0.06);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.gallery-item:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 40px rgba(59,130,246,0.15);
+  border-color: rgba(59,130,246,0.2);
+}
+.gallery-item.large {
+  grid-column: span 2;
+  grid-row: span 2;
+}
+.gallery-item-img {
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+}
+.gallery-item.large .gallery-item-img {
+  aspect-ratio: 1;
+}
+.gallery-item-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.gallery-item:hover .gallery-item-img img {
+  transform: scale(1.08);
+}
+.gallery-item-caption {
+  padding: 16px 18px;
+  text-align: center;
+}
+.gallery-item-caption h4 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 4px;
+}
+.gallery-item-caption p {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 500;
+}
+.gallery-item.large .gallery-item-caption h4 {
+  font-size: 1.1rem;
+}
+.gallery-overlay {
+  display: none;
+}
+
+/* Lightbox */
+.gallery-lightbox {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.92);
+  z-index: 10000;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+.gallery-lightbox.active { display: flex; }
+.gallery-lightbox img {
+  max-width: 90%;
+  max-height: 85vh;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.gallery-lightbox-close {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  color: white;
+  font-size: 2rem;
+  cursor: pointer;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(8px);
+  border: none;
+  transition: all 0.3s;
+}
+.gallery-lightbox-close:hover {
+  background: rgba(255,255,255,0.2);
+}
+.gallery-lightbox-caption {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 600;
+  background: rgba(0,0,0,0.5);
+  padding: 10px 24px;
+  border-radius: 50px;
+  backdrop-filter: blur(8px);
+}
+.gallery-lightbox-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(8px);
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+}
+.gallery-lightbox-nav:hover { background: rgba(255,255,255,0.2); }
+.gallery-lightbox-nav.prev { left: 30px; }
+.gallery-lightbox-nav.next { right: 30px; }
+
+/* Programs Preview */
+.programs-section { background: var(--gray-50); }
+.programs-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+}
+.program-card {
+  background: white;
+  border-radius: 20px;
+  padding: 0;
+  border: 1px solid var(--gray-100);
+  transition: all 0.4s;
+  position: relative;
+  overflow: hidden;
+}
+.program-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 48px rgba(0,0,0,0.1);
+}
+.program-card-img {
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  position: relative;
+  order: 2;
+}
+.program-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s;
+}
+.program-card:hover .program-card-img img {
+  transform: scale(1.08);
+}
+.program-card-body {
+  padding: 28px 24px;
+  order: 1;
+}
+.program-card {
+  display: flex;
+  flex-direction: column;
+}
+.program-icon-area {
+  display: none;
+}
+.gradient-blue { background: linear-gradient(135deg, #3b82f6, #1e40af); }
+.gradient-green { background: linear-gradient(135deg, #10b981, #059669); }
+.gradient-amber { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.gradient-purple { background: linear-gradient(135deg, #8b5cf6, #6366f1); }
+.gradient-rose { background: linear-gradient(135deg, #f43f5e, #e11d48); }
+.program-card h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: 12px;
+}
+.program-card p {
+  color: var(--gray-500);
+  font-size: 0.95rem;
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+.program-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #3b82f6;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: gap 0.3s;
+}
+.program-link:hover { gap: 12px; }
+
+/* Partners Section */
+.partners-section { background: white; }
+.partners-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+.partner-card {
+  background: var(--gray-50);
+  border-radius: 20px;
+  padding: 32px 24px;
+  text-align: center;
+  border: 1px solid var(--gray-100);
+  transition: all 0.4s;
+}
+.partner-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.08);
+  background: white;
+}
+.partner-logo {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  font-weight: 800;
+  margin: 0 auto 16px;
+}
+.partner-card h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: 8px;
+}
+.partner-card p {
+  color: var(--gray-500);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+/* News Section */
+.news-section { background: var(--gray-50); }
+.news-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+}
+.news-card {
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid var(--gray-100);
+  transition: all 0.4s;
+}
+.news-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 48px rgba(0,0,0,0.1);
+}
+.news-image {
+  position: relative;
+  height: 200px;
+  overflow: hidden;
+}
+.news-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s;
+}
+.news-card:hover .news-image img {
+  transform: scale(1.08);
+}
+.news-date {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(8px);
+  color: white;
+  padding: 6px 14px;
+  border-radius: 50px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+.news-body {
+  padding: 24px;
+}
+.news-category {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 50px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.news-category.technology { background: #eff6ff; color: #1e40af; }
+.news-category.achievement { background: #f0fdf4; color: #166534; }
+.news-category.partnership { background: #fef3c7; color: #92400e; }
+.news-body h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+.news-body p {
+  color: var(--gray-500);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+.news-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #3b82f6;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+
+/* Testimonials — Card Grid */
+.testimonials-section { background: white; overflow: hidden; }
+.testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-top: 10px;
+}
+.testimonial-card {
+  background: var(--gray-50);
+  border-radius: 20px;
+  padding: 28px;
+  border: 1px solid var(--gray-100);
+  transition: all 0.4s;
+  display: flex;
+  flex-direction: column;
+}
+.testimonial-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.08);
+}
+.testimonial-stars {
+  display: flex;
+  gap: 3px;
+  margin-bottom: 14px;
+  color: #fbbf24;
+  font-size: 0.9rem;
+}
+.testimonial-quote-icon {
+  color: #dbeafe;
+  font-size: 1.4rem;
+  margin-bottom: 10px;
+}
+.testimonial-text {
+  color: var(--gray-600);
+  font-size: 0.92rem;
+  line-height: 1.7;
+  margin-bottom: 18px;
+  font-style: italic;
+  flex: 1;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+}
+.testimonial-author {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid var(--gray-100);
+}
+.author-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
+  color: white;
+  flex-shrink: 0;
+}
+.author-info h4 {
+  font-weight: 700;
+  color: var(--gray-900);
+  font-size: 0.92rem;
+  margin: 0;
+}
+.author-info span {
+  color: var(--gray-400);
+  font-size: 0.82rem;
+}
+
+/* CTA Section */
+.cta-section {
+  padding: 80px 0;
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #1e40af 100%);
+  position: relative;
+  overflow: hidden;
+}
+.cta-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 30% 50%, rgba(59,130,246,0.15), transparent 50%),
+              radial-gradient(circle at 70% 50%, rgba(139,92,246,0.1), transparent 50%);
+}
+.cta-content {
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+.cta-content h2 {
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  font-weight: 800;
+  color: white;
+  margin-bottom: 16px;
+}
+.cta-content p {
+  color: rgba(255,255,255,0.75);
+  font-size: 1.1rem;
+  margin-bottom: 32px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.cta-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Contact Section */
+.contact-section { background: var(--gray-50); }
+.contact-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 48px;
+  align-items: start;
+}
+.contact-info-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px;
+  background: white;
+  border-radius: 16px;
+  border: 1px solid var(--gray-100);
+  margin-bottom: 16px;
+  transition: all 0.3s;
+}
+.contact-info-card:hover {
+  box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+  transform: translateX(4px);
+}
+.contact-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  color: white;
+  flex-shrink: 0;
+}
+.contact-icon.blue { background: linear-gradient(135deg, #3b82f6, #1e40af); }
+.contact-icon.green { background: linear-gradient(135deg, #10b981, #059669); }
+.contact-icon.amber { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.contact-detail h4 {
+  font-weight: 700;
+  color: var(--gray-900);
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+}
+.contact-detail p {
+  color: var(--gray-500);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+.contact-map {
+  margin-top: 20px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--gray-100);
+}
+.contact-map iframe {
+  width: 100%;
+  height: 200px;
+  border: 0;
+}
+.contact-form-wrapper {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  border: 1px solid var(--gray-100);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+}
+.contact-form-wrapper h3 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: 24px;
+}
+.contact-form .form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.contact-form .form-group {
+  margin-bottom: 20px;
+}
+.contact-form label {
+  display: block;
+  font-weight: 600;
+  color: var(--gray-700);
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+}
+.contact-form input,
+.contact-form select,
+.contact-form textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid var(--gray-200);
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: var(--gray-800);
+  transition: all 0.3s;
+  background: var(--gray-50);
+}
+.contact-form input:focus,
+.contact-form select:focus,
+.contact-form textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: white;
+  box-shadow: 0 0 0 4px rgba(59,130,246,0.1);
+}
+.contact-form textarea { resize: vertical; min-height: 120px; }
+.contact-form-success {
+  display: none;
+  text-align: center;
+  padding: 40px;
+}
+.contact-form-success i {
+  font-size: 3rem;
+  color: #10b981;
+  margin-bottom: 16px;
+  display: block;
+}
+.contact-form-success h4 {
+  font-size: 1.3rem;
+  color: var(--gray-900);
+  margin-bottom: 8px;
+}
+.contact-form-success p {
+  color: var(--gray-500);
+}
+
+/* Footer */
+.footer {
+  background: #020617;
+  color: rgba(255,255,255,0.7);
+  padding: 80px 0 0;
+}
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 1.3fr;
+  gap: 48px;
+  padding-bottom: 48px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.footer-brand .logo-icon {
+  width: 42px;
+  height: 42px;
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 1.2rem;
+  color: white;
+}
+.footer-brand span {
+  font-weight: 800;
+  font-size: 1.2rem;
+  color: white;
+}
+.footer-col p {
+  font-size: 0.9rem;
+  line-height: 1.7;
+  margin-bottom: 20px;
+}
+.footer-social {
+  display: flex;
+  gap: 12px;
+}
+.footer-social a {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,0.6);
+  text-decoration: none;
+  transition: all 0.3s;
+  font-size: 1rem;
+}
+.footer-social a:hover {
+  background: #3b82f6;
+  color: white;
+  transform: translateY(-3px);
+}
+.footer-col h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 20px;
+}
+.footer-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.footer-links li {
+  margin-bottom: 12px;
+}
+.footer-links a {
+  color: rgba(255,255,255,0.6);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: all 0.3s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.footer-links a:hover {
+  color: #60a5fa;
+  transform: translateX(4px);
+}
+.footer-contact {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.footer-contact-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 0.9rem;
+}
+.footer-contact-item i {
+  color: #60a5fa;
+  font-size: 0.9rem;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+.footer-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 0;
+  font-size: 0.85rem;
+}
+.footer-bottom a {
+  color: #60a5fa;
+  text-decoration: none;
+}
+
+/* Section CTA */
+.section-cta {
+  text-align: center;
+  margin-top: 48px;
+}
+
+/* Login Modal */
+.login-modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.login-modal-overlay.show {
+  display: flex;
+}
+.login-modal {
+  background: white;
+  border-radius: 24px;
+  padding: 48px;
+  max-width: 600px;
+  width: 100%;
+  position: relative;
+  box-shadow: 0 32px 72px rgba(0,0,0,0.2);
+  animation: modalPopIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes modalPopIn {
+  0% { opacity: 0; transform: scale(0.9) translateY(20px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+.login-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: var(--gray-100);
+  color: var(--gray-600);
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+}
+.login-modal-close:hover {
+  background: var(--gray-200);
+  transform: rotate(90deg);
+}
+.login-modal-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+.login-modal-header h2 {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--gray-900);
+  margin-bottom: 8px;
+}
+.login-modal-header p {
+  color: var(--gray-500);
+  font-size: 1rem;
+}
+.login-role-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.login-role-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 28px 20px;
+  border-radius: 20px;
+  border: 2px solid var(--gray-100);
+  text-decoration: none;
+  color: var(--gray-700);
+  transition: all 0.4s;
+  background: var(--gray-50);
+}
+.login-role-card:hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(59,130,246,0.15);
+}
+.role-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: white;
+}
+.role-icon.student { background: linear-gradient(135deg, #3b82f6, #1e40af); }
+.role-icon.teacher { background: linear-gradient(135deg, #10b981, #059669); }
+.role-icon.admin { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.login-role-card h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+.login-role-card span {
+  font-size: 0.85rem;
+  color: var(--gray-400);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .hero-grid { grid-template-columns: 1fr; gap: 40px; }
+  .hero-visual { display: none; }
+  .features-grid { grid-template-columns: repeat(2, 1fr); }
+  .programs-grid { grid-template-columns: repeat(2, 1fr); }
+  .partners-grid { grid-template-columns: repeat(2, 1fr); }
+  .news-grid { grid-template-columns: repeat(2, 1fr); }
+  .contact-grid { grid-template-columns: 1fr; }
+  .footer-grid { grid-template-columns: repeat(2, 1fr); }
+  .gallery-grid { grid-template-columns: repeat(3, 1fr); }
+  .testimonials-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 768px) {
+  .hero-section { padding: 100px 0 60px; min-height: auto; }
+  .hero-content h1 { font-size: 2rem; }
+  .hero-buttons { flex-direction: column; }
+  .hero-badges { flex-direction: column; gap: 12px; }
+  .features-grid { grid-template-columns: 1fr; }
+  .programs-grid { grid-template-columns: 1fr; }
+  .partners-grid { grid-template-columns: 1fr; }
+  .news-grid { grid-template-columns: 1fr; }
+  .login-role-grid { grid-template-columns: 1fr; }
+  .footer-grid { grid-template-columns: 1fr; }
+  .footer-bottom { flex-direction: column; gap: 8px; text-align: center; }
+  .gallery-grid { grid-template-columns: repeat(2, 1fr); }
+  .gallery-item.large { grid-column: span 1; grid-row: span 1; }
+  .page-section { padding: 60px 0; }
+  .contact-form .form-row { grid-template-columns: 1fr; }
+  .testimonials-grid { grid-template-columns: 1fr; }
+}
+
+
+</style>
+{% endblock %}
+
+{% block body %}
+
+<!-- ========== NAVBAR ========== -->
+<nav class="navbar" id="navbar">
+  <div class="container">
+    <a href="/" class="nav-brand">
+      <div class="logo-icon">E</div>
+      <span>ENABLE PROGRAM</span>
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="/" class="active">Home</a></li>
+      <li class="nav-dropdown">
+        <a href="#">About <i class="fas fa-chevron-down" style="font-size:.625rem;margin-left:4px"></i></a>
+        <div class="dropdown-menu">
+          <a href="/about/"><i class="fas fa-building"></i> About ENF</a>
+          <a href="/founder/"><i class="fas fa-user-tie"></i> Founder &amp; Trustees</a>
+          <a href="/management/"><i class="fas fa-users-cog"></i> Management Team</a>
+        </div>
+      </li>
+      <li><a href="/programs/">Programs</a></li>
+      <li><a href="/partners/">Partners</a></li>
+      <li><a href="/scholarships/">Scholarships</a></li>
+      <li><a href="/news/">News</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <div class="nav-actions">
+      <div class="nav-search-wrapper">
+        <button class="nav-search-btn" onclick="openSearch()" aria-label="Search"><i class="fas fa-search"></i></button>
+      </div>
+      <a href="javascript:void(0)" class="btn btn-primary btn-sm" onclick="openLoginModal()"><i class="fas fa-sign-in-alt"></i> Login</a>
+    </div>
+    <button class="mobile-menu-btn" onclick="toggleMobileMenu()"><i class="fas fa-bars"></i></button>
+  </div>
+</nav>
+
+<!-- ========== SEARCH OVERLAY ========== -->
+<div class="nav-search-overlay" id="searchOverlay">
+  <div class="nav-search-box">
+    <input type="text" id="globalSearchInput" placeholder="Search programs, scholarships, news, pages..." oninput="handleGlobalSearch(this.value)" autocomplete="off">
+    <button class="nav-search-close" onclick="closeSearch()"><i class="fas fa-times"></i></button>
+    <div class="search-results-dropdown" id="searchResults"></div>
+  </div>
+</div>
+
+<!-- ========== LOGIN MODAL ========== -->
+<div class="login-modal-overlay" id="loginModal">
+  <div class="login-modal">
+    <button class="login-modal-close" onclick="closeLoginModal()"><i class="fas fa-times"></i></button>
+    <div class="login-modal-header">
+      <h2>Welcome Back</h2>
+      <p>Select your role to continue your learning journey</p>
+    </div>
+    <div class="login-role-grid">
+      <a href="/login/?role=student" class="login-role-card">
+        <div class="role-icon student"><i class="fas fa-user-graduate"></i></div>
+        <h3>Student</h3>
+        <span>Access your classes</span>
+      </a>
+      <a href="/login/?role=teacher" class="login-role-card">
+        <div class="role-icon teacher"><i class="fas fa-chalkboard-teacher"></i></div>
+        <h3>Teacher</h3>
+        <span>Manage your courses</span>
+      </a>
+      <a href="/login/?role=staff" class="login-role-card">
+        <div class="role-icon admin"><i class="fas fa-user-shield"></i></div>
+        <h3>Staff</h3>
+        <span>System management</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- ========== HERO SECTION ========== -->
+<section class="hero-section">
+  <div class="particles-container" id="particlesContainer"></div>
+  <div class="container">
+    <div class="hero-grid">
+      <div class="hero-content" data-aos="fade-right" data-aos-delay="100">
+        <span class="badge-ai"><i class="fas fa-wand-magic-sparkles"></i> {{ hero_badge }}</span>
+        <h1>{{ hero_title|safe }}</h1>
+        <p>{{ hero_subtitle }}</p>
+        <div class="hero-buttons">
+          <a href="javascript:void(0)" onclick="openLoginModal()" style="background:linear-gradient(135deg,#3b82f6,#1e40af);border:none;padding:14px 32px;font-size:1rem;font-weight:600;border-radius:14px;color:white;text-decoration:none;display:inline-flex;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(59,130,246,0.4);transition:all 0.3s;"><i class="fas fa-rocket"></i> Get Started</a>
+          <a href="/programs/" style="padding:14px 32px;font-size:1rem;font-weight:600;border-radius:14px;border:2px solid rgba(255,255,255,0.3);color:white;text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:all 0.3s;"><i class="fas fa-compass"></i> Explore Programs</a>
+        </div>
+        <div class="hero-badges">
+          <div class="hero-badge-item"><i class="fas fa-users"></i><span>{{ stat_students }} Students</span></div>
+          <div class="hero-badge-item"><i class="fas fa-school"></i><span>{{ stat_schools }} Schools</span></div>
+          <div class="hero-badge-item"><i class="fas fa-chart-line"></i><span>{{ stat_success }} Success</span></div>
+        </div>
+      </div>
+      <div class="hero-visual" data-aos="fade-left" data-aos-delay="200">
+        <div class="hero-visual-image">
+          <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&h=600&fit=crop&q=85" alt="Students Learning Together in Modern Classroom" loading="lazy">
+        </div>
+        <div class="hero-stats-grid">
+          <div class="hero-stat-card" data-aos="zoom-in" data-aos-delay="300">
+            <div class="stat-icon blue"><i class="fas fa-user-graduate"></i></div>
+            <div class="stat-info"><h3 data-count="15000" data-suffix="+">0</h3><p>Active Students</p></div>
+          </div>
+          <div class="hero-stat-card" data-aos="zoom-in" data-aos-delay="400">
+            <div class="stat-icon green"><i class="fas fa-school"></i></div>
+            <div class="stat-info"><h3 data-count="380" data-suffix="+">0</h3><p>Partner Schools</p></div>
+          </div>
+          <div class="hero-stat-card" data-aos="zoom-in" data-aos-delay="500">
+            <div class="stat-icon amber"><i class="fas fa-video"></i></div>
+            <div class="stat-info"><h3 data-count="1200" data-suffix="+">0</h3><p>Live Classes</p></div>
+          </div>
+          <div class="hero-stat-card" data-aos="zoom-in" data-aos-delay="600">
+            <div class="stat-icon purple"><i class="fas fa-trophy"></i></div>
+            <div class="stat-info"><h3 data-count="95" data-suffix="%">0</h3><p>Success Rate</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== SCROLLING STATS TICKER ========== -->
+<section class="stats-ticker">
+  <div class="ticker-track">
+    <div class="ticker-content">
+      {% if ticker_items %}
+        {% for item in ticker_items %}
+        <span class="ticker-item"><i class="{{ item.icon_class }}"></i> {{ item.value }} {{ item.label }}</span>
+        {% endfor %}
+        {% for item in ticker_items %}
+        <span class="ticker-item"><i class="{{ item.icon_class }}"></i> {{ item.value }} {{ item.label }}</span>
+        {% endfor %}
+      {% else %}
+      <span class="ticker-item"><i class="fas fa-user-graduate"></i> {{ stat_students }} Students Enrolled</span>
+      <span class="ticker-item"><i class="fas fa-school"></i> {{ stat_schools }} Partner Schools</span>
+      <span class="ticker-item"><i class="fas fa-chalkboard-teacher"></i> {{ stat_teachers }} Expert Teachers</span>
+      <span class="ticker-item"><i class="fas fa-video"></i> {{ stat_classes }} Live Classes</span>
+      <span class="ticker-item"><i class="fas fa-chart-line"></i> {{ stat_success }} Success Rate</span>
+      <span class="ticker-item"><i class="fas fa-layer-group"></i> 6+ Programs</span>
+      <span class="ticker-item"><i class="fas fa-award"></i> {{ stat_jnvs }} JNVs Covered</span>
+      <span class="ticker-item"><i class="fas fa-handshake"></i> {{ stat_partners }} Corporate Partners</span>
+      <span class="ticker-item"><i class="fas fa-user-graduate"></i> {{ stat_students }} Students Enrolled</span>
+      <span class="ticker-item"><i class="fas fa-school"></i> {{ stat_schools }} Partner Schools</span>
+      <span class="ticker-item"><i class="fas fa-chalkboard-teacher"></i> {{ stat_teachers }} Expert Teachers</span>
+      <span class="ticker-item"><i class="fas fa-video"></i> {{ stat_classes }} Live Classes</span>
+      <span class="ticker-item"><i class="fas fa-chart-line"></i> {{ stat_success }} Success Rate</span>
+      <span class="ticker-item"><i class="fas fa-layer-group"></i> 6+ Programs</span>
+      <span class="ticker-item"><i class="fas fa-award"></i> {{ stat_jnvs }} JNVs Covered</span>
+      <span class="ticker-item"><i class="fas fa-handshake"></i> {{ stat_partners }} Corporate Partners</span>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<!-- ========== FEATURES SECTION ========== -->
+<section class="page-section features-section">
+  <div class="container">
+    <div class="page-section-header" data-aos="fade-up">
+      <span class="page-section-badge"><i class="fas fa-star"></i> Our Features</span>
+      <h2>Why Choose ENABLE PROGRAM</h2>
+      <p>A comprehensive platform built for academic excellence with cutting-edge technology and proven success</p>
+      <div class="section-divider"></div>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card" data-aos="fade-up" data-aos-delay="100">
+        <div class="feature-card-img">
+          <img src="https://images.unsplash.com/photo-1588196749597-9ff075ee6b5b?w=800&h=400&fit=crop&q=85" alt="Live Online Video Class" loading="lazy">
+        </div>
+        <div class="feature-card-body">
+          <div class="home-feature-icon blue"><i class="fas fa-video"></i></div>
+          <h3>Live Interactive Classes</h3>
+          <p>Real-time interactive sessions with expert faculty, featuring HD video, live chat, digital whiteboard, and instant doubt-clearing — making learning engaging and effective.</p>
+        </div>
+      </div>
+      <div class="feature-card" data-aos="fade-up" data-aos-delay="200">
+        <div class="feature-card-img">
+          <img src="https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=400&fit=crop&q=85" alt="AI Analytics Dashboard" loading="lazy">
+        </div>
+        <div class="feature-card-body">
+          <div class="home-feature-icon purple"><i class="fas fa-brain"></i></div>
+          <h3>AI-Powered Analytics</h3>
+          <p>Smart performance tracking using artificial intelligence to provide personalized learning paths, predictive scores, and actionable insights for every student.</p>
+          <span class="ai-tag"><i class="fas fa-wand-magic-sparkles"></i> AI Powered</span>
+        </div>
+      </div>
+      <div class="feature-card" data-aos="fade-up" data-aos-delay="300">
+        <div class="feature-card-img">
+          <img src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&h=400&fit=crop&q=85" alt="Student Taking Assessment Test" loading="lazy">
+        </div>
+        <div class="feature-card-body">
+          <div class="home-feature-icon green"><i class="fas fa-clipboard-check"></i></div>
+          <h3>Smart Assessments</h3>
+          <p>Adaptive testing system that adjusts difficulty based on student performance, with detailed analytics, chapter-wise reports, and national-level benchmarking.</p>
+        </div>
+      </div>
+      <div class="feature-card" data-aos="fade-up" data-aos-delay="100">
+        <div class="feature-card-img">
+          <img src="https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&h=400&fit=crop&q=85" alt="Digital Library Books and Resources" loading="lazy">
+        </div>
+        <div class="feature-card-body">
+          <div class="home-feature-icon amber"><i class="fas fa-book-open"></i></div>
+          <h3>Study Materials</h3>
+          <p>Comprehensive digital library with curated notes, video lectures, practice problems, previous year papers, and formula sheets — accessible anytime, anywhere.</p>
+        </div>
+      </div>
+      <div class="feature-card" data-aos="fade-up" data-aos-delay="200">
+        <div class="feature-card-img">
+          <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=400&fit=crop&q=85" alt="Performance Analytics Dashboard" loading="lazy">
+        </div>
+        <div class="feature-card-body">
+          <div class="home-feature-icon rose"><i class="fas fa-chart-line"></i></div>
+          <h3>Progress Tracking</h3>
+          <p>Real-time dashboards providing granular insights into attendance, performance trends, strengths &amp; weaknesses, and personalized improvement roadmaps.</p>
+          <span class="ai-tag"><i class="fas fa-wand-magic-sparkles"></i> AI Powered</span>
+        </div>
+      </div>
+      <div class="feature-card" data-aos="fade-up" data-aos-delay="300">
+        <div class="feature-card-img">
+          <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=400&fit=crop&q=85" alt="Enterprise Multi-School Architecture" loading="lazy">
+        </div>
+        <div class="feature-card-body">
+          <div class="home-feature-icon cyan"><i class="fas fa-building"></i></div>
+          <h3>Multi-Tenant Platform</h3>
+          <p>Enterprise-grade multi-school architecture allowing each partner institution to have its own branded environment, user management, and custom configurations.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== STUDENT GALLERY SECTION ========== -->
+<section class="page-section gallery-section" id="gallery">
+  <div class="container">
+    <div class="page-section-header" data-aos="fade-up">
+      <span class="page-section-badge"><i class="fas fa-images"></i> Gallery</span>
+      <h2>Our Students in Action</h2>
+      <p>Capturing moments of learning, growth, and achievement across our programs</p>
+      <div class="section-divider"></div>
+    </div>
+    <div class="gallery-filter-bar" data-aos="fade-up" data-aos-delay="50">
+      <button class="gallery-filter-btn active" onclick="filterGallery('all', this)">All</button>
+      <button class="gallery-filter-btn" onclick="filterGallery('classroom', this)">Classroom</button>
+      <button class="gallery-filter-btn" onclick="filterGallery('events', this)">Events</button>
+      <button class="gallery-filter-btn" onclick="filterGallery('achievements', this)">Achievements</button>
+      <button class="gallery-filter-btn" onclick="filterGallery('campus', this)">Campus Life</button>
+    </div>
+    <div class="gallery-grid" id="galleryGrid">
+      <div class="gallery-item large" data-category="achievements" data-aos="zoom-in" data-aos-delay="100" onclick="openLightbox(0)">
+        <div class="gallery-item-img">
+          <img src="https://images.unsplash.com/photo-1627556704302-624286467c65?w=1200&h=1200&fit=crop&q=85" alt="Indian Students Celebrating JEE Success" loading="lazy">
+        </div>
+        <div class="gallery-item-caption"><h4>JEE Toppers Celebration 2025</h4><p>Achievements</p></div>
+      </div>
+      <div class="gallery-item" data-category="classroom" data-aos="zoom-in" data-aos-delay="150" onclick="openLightbox(1)">
+        <div class="gallery-item-img">
+          <img src="https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800&h=800&fit=crop&q=85" alt="Students Studying for Competitive Exams" loading="lazy">
+        </div>
+        <div class="gallery-item-caption"><h4>NEET Preparation Class</h4><p>Classroom</p></div>
+      </div>
+      <div class="gallery-item" data-category="classroom" data-aos="zoom-in" data-aos-delay="200" onclick="openLightbox(2)">
+        <div class="gallery-item-img">
+          <img src="https://images.unsplash.com/photo-1610484826967-09c5720778c7?w=800&h=800&fit=crop&q=85" alt="Interactive Classroom Session" loading="lazy">
+        </div>
+        <div class="gallery-item-caption"><h4>CoE Interactive Live Class</h4><p>Classroom</p></div>
+      </div>
+      <div class="gallery-item" data-category="campus" data-aos="zoom-in" data-aos-delay="250" onclick="openLightbox(3)">
+        <div class="gallery-item-img">
+          <img src="https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=800&h=800&fit=crop&q=85" alt="Modern Library with Students" loading="lazy">
+        </div>
+        <div class="gallery-item-caption"><h4>Digital Library Access</h4><p>Campus Life</p></div>
+      </div>
+      <div class="gallery-item" data-category="events" data-aos="zoom-in" data-aos-delay="300" onclick="openLightbox(4)">
+        <div class="gallery-item-img">
+          <img src="https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=800&h=800&fit=crop&q=85" alt="ENABLE Program Launch Event" loading="lazy">
+        </div>
+        <div class="gallery-item-caption"><h4>ENABLE Program Launch</h4><p>Events</p></div>
+      </div>
+      <div class="gallery-item large" data-category="classroom" data-aos="zoom-in" data-aos-delay="350" onclick="openLightbox(5)">
+        <div class="gallery-item-img">
+          <img src="https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=1200&h=1200&fit=crop&q=85" alt="Science Laboratory Experiment" loading="lazy">
+        </div>
+        <div class="gallery-item-caption"><h4>Science Lab Practical Session</h4><p>Classroom</p></div>
+      </div>
+      <div class="gallery-item" data-category="achievements" data-aos="zoom-in" data-aos-delay="400" onclick="openLightbox(6)">
+        <div class="gallery-item-img">
+          <img src="https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=800&h=800&fit=crop&q=85" alt="Award Ceremony for Merit Students" loading="lazy">
+        </div>
+        <div class="gallery-item-caption"><h4>Merit Award Ceremony</h4><p>Achievements</p></div>
+      </div>
+      <div class="gallery-item" data-category="events" data-aos="zoom-in" data-aos-delay="450" onclick="openLightbox(7)">
+        <div class="gallery-item-img">
+          <img src="https://images.unsplash.com/photo-1591115765373-5f9c7c8de4d3?w=800&h=800&fit=crop&q=85" alt="STEM Workshop with Students" loading="lazy">
+        </div>
+        <div class="gallery-item-caption"><h4>STEM Workshop &amp; Seminars</h4><p>Events</p></div>
+      </div>
+      <div class="gallery-item" data-category="campus" data-aos="zoom-in" data-aos-delay="500" onclick="openLightbox(8)">
+        <div class="gallery-item-img">
+          <img src="https://images.unsplash.com/photo-1529390079861-591de354faf5?w=800&h=800&fit=crop&q=85" alt="Student Group Discussion" loading="lazy">
+        </div>
+        <div class="gallery-item-caption"><h4>Collaborative Study Groups</h4><p>Campus Life</p></div>
+      </div>
+      <div class="gallery-item" data-category="events" data-aos="zoom-in" data-aos-delay="550" onclick="openLightbox(9)">
+        <div class="gallery-item-img">
+          <img src="https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&h=800&fit=crop&q=85" alt="Annual Day Cultural Event" loading="lazy">
+        </div>
+        <div class="gallery-item-caption"><h4>Annual Day Celebration</h4><p>Events</p></div>
+      </div>
+      <div class="gallery-item" data-category="classroom" data-aos="zoom-in" data-aos-delay="100" onclick="openLightbox(10)">
+        <div class="gallery-item-img">
+          <img src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&h=800&fit=crop&q=85" alt="Student Writing Exam" loading="lazy">
+        </div>
+        <div class="gallery-item-caption"><h4>Mock Test in Progress</h4><p>Classroom</p></div>
+      </div>
+      <div class="gallery-item" data-category="achievements" data-aos="zoom-in" data-aos-delay="150" onclick="openLightbox(11)">
+        <div class="gallery-item-img">
+          <img src="https://images.unsplash.com/photo-1606761568499-6d2451b23c66?w=800&h=800&fit=crop&q=85" alt="Graduation Cap Achievement" loading="lazy">
+        </div>
+        <div class="gallery-item-caption"><h4>IIT/AIIMS Selection Day</h4><p>Achievements</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Gallery Lightbox -->
+<div class="gallery-lightbox" id="galleryLightbox">
+  <button class="gallery-lightbox-close" onclick="closeLightbox()"><i class="fas fa-times"></i></button>
+  <button class="gallery-lightbox-nav prev" onclick="navigateLightbox(-1)"><i class="fas fa-chevron-left"></i></button>
+  <img id="lightboxImage" src="" alt="">
+  <button class="gallery-lightbox-nav next" onclick="navigateLightbox(1)"><i class="fas fa-chevron-right"></i></button>
+  <div class="gallery-lightbox-caption" id="lightboxCaption"></div>
+</div>
+
+<!-- ========== PROGRAMS PREVIEW ========== -->
+<section class="page-section programs-section">
+  <div class="container">
+    <div class="page-section-header" data-aos="fade-up">
+      <span class="page-section-badge"><i class="fas fa-graduation-cap"></i> Programs</span>
+      <h2>Our Programs</h2>
+      <p>Transformative educational initiatives empowering underprivileged students for IIT &amp; AIIMS</p>
+      <div class="section-divider"></div>
+    </div>
+    <div class="programs-grid">
+      <div class="program-card" data-aos="fade-up" data-aos-delay="100">
+        <div class="program-card-img">
+          <img src="https://images.unsplash.com/photo-1562774053-701939374585?w=800&h=400&fit=crop&q=85" alt="Center of Excellence Campus" loading="lazy">
+        </div>
+        <div class="program-card-body">
+          <div class="program-icon-area gradient-blue"><i class="fas fa-award"></i></div>
+          <h3>CoE (Center of Excellence)</h3>
+          <p>Intensive 2-year residential JEE &amp; NEET coaching at JNV Meja-Prayagraj, Gajokhar-Varanasi, and Rajgir-Nalanda with expert faculty and structured study plans.</p>
+          <a href="/programs/" class="program-link">Learn More <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+      <div class="program-card" data-aos="fade-up" data-aos-delay="200">
+        <div class="program-card-img">
+          <img src="https://images.unsplash.com/photo-1610484826967-09c5720778c7?w=800&h=400&fit=crop&q=85" alt="ENABLE Online Class in JNV" loading="lazy">
+        </div>
+        <div class="program-card-body">
+          <div class="program-icon-area gradient-green"><i class="fas fa-handshake"></i></div>
+          <h3>ENABLE</h3>
+          <p>Joint initiative with Tata Motors &amp; NVS since Jan 2021, reaching 350+ JNVs across 5 regions with quality science and mathematics education.</p>
+          <a href="/programs/" class="program-link">Learn More <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+    </div>
+    <div class="section-cta" data-aos="fade-up" data-aos-delay="400">
+      <a href="/programs/" style="background:linear-gradient(135deg,#3b82f6,#1e40af);color:white;padding:14px 32px;border-radius:14px;text-decoration:none;font-weight:600;display:inline-flex;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(59,130,246,0.3);">View All Programs <i class="fas fa-arrow-right"></i></a>
+    </div>
+  </div>
+</section>
+
+<!-- ========== PARTNERS SECTION ========== -->
+<section class="page-section partners-section">
+  <div class="container">
+    <div class="page-section-header" data-aos="fade-up">
+      <span class="page-section-badge"><i class="fas fa-handshake"></i> Partners</span>
+      <h2>Our Trusted Partners</h2>
+      <p>Collaborating with India's leading organizations to deliver world-class education</p>
+      <div class="section-divider"></div>
+    </div>
+    <div class="partners-grid">
+      <div class="partner-card" data-aos="fade-up" data-aos-delay="100">
+        <div class="partner-logo" style="background:#1a365d;color:#fff">TM</div>
+        <h3>Tata Motors</h3>
+        <p>Strategic partner for ENABLE across 350+ JNVs nationwide.</p>
+      </div>
+      <div class="partner-card" data-aos="fade-up" data-aos-delay="200">
+        <div class="partner-logo" style="background:#065f46;color:#fff">NVS</div>
+        <h3>Navodaya Vidyalaya Samiti</h3>
+        <p>Government body managing 661 JNVs across India.</p>
+      </div>
+      <div class="partner-card" data-aos="fade-up" data-aos-delay="300">
+        <div class="partner-logo" style="background:#7c3aed;color:#fff">MS</div>
+        <h3>Ministry of Science &amp; Technology</h3>
+        <p>Supporting science education &amp; innovation initiatives.</p>
+      </div>
+    </div>
+    <div class="section-cta" data-aos="fade-up" data-aos-delay="500">
+      <a href="/partners/" style="background:linear-gradient(135deg,#3b82f6,#1e40af);color:white;padding:14px 32px;border-radius:14px;text-decoration:none;font-weight:600;display:inline-flex;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(59,130,246,0.3);">View All Partners <i class="fas fa-arrow-right"></i></a>
+    </div>
+  </div>
+</section>
+
+<!-- ========== NEWS SECTION ========== -->
+<section class="page-section news-section">
+  <div class="container">
+    <div class="page-section-header" data-aos="fade-up">
+      <span class="page-section-badge"><i class="fas fa-newspaper"></i> News</span>
+      <h2>Latest News &amp; Updates</h2>
+      <p>Stay informed about ENF's latest initiatives, achievements, and announcements</p>
+      <div class="section-divider"></div>
+    </div>
+    <div class="news-grid">
+      {% for item in news_items %}
+      <div class="news-card" data-aos="fade-up" data-aos-delay="{{ forloop.counter|add:0|stringformat:'d' }}00">
+        <div class="news-image">
+          {% if item.featured_image %}<img src="{{ item.featured_image }}" alt="{{ item.title }}" loading="lazy">{% endif %}
+          <span class="news-date"><i class="fas fa-calendar-alt"></i> {{ item.publish_date|date:"M d, Y" }}</span>
+        </div>
+        <div class="news-body">
+          <span class="news-category {{ item.news_type|lower }}">{{ item.get_news_type_display }}</span>
+          <h3>{{ item.title }}</h3>
+          <p>{{ item.summary }}</p>
+          <a href="/news/" class="news-link">Read More <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="section-cta" data-aos="fade-up" data-aos-delay="400">
+      <a href="/news/" style="background:linear-gradient(135deg,#3b82f6,#1e40af);color:white;padding:14px 32px;border-radius:14px;text-decoration:none;font-weight:600;display:inline-flex;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(59,130,246,0.3);">View All News <i class="fas fa-arrow-right"></i></a>
+    </div>
+  </div>
+</section>
+
+<!-- ========== TESTIMONIALS ========== -->
+<section class="page-section testimonials-section">
+  <div class="container">
+    <div class="page-section-header" data-aos="fade-up">
+      <span class="page-section-badge"><i class="fas fa-quote-left"></i> Testimonials</span>
+      <h2>What Our Students Say</h2>
+      <p>Hear from the students whose lives have been transformed by ENF's programs</p>
+      <div class="section-divider"></div>
+    </div>
+    <div class="testimonials-grid" data-aos="fade-up">
+      {% for t in testimonials %}
+      <div class="testimonial-card">
+        <div class="testimonial-stars">{% for i in "12345" %}{% if forloop.counter <= t.rating %}<i class="fas fa-star"></i>{% else %}<i class="far fa-star"></i>{% endif %}{% endfor %}</div>
+        <div class="testimonial-quote-icon"><i class="fas fa-quote-left"></i></div>
+        <p class="testimonial-text">"{{ t.content }}"</p>
+        <div class="testimonial-author">
+          <div class="author-avatar">{{ t.initials }}</div>
+          <div class="author-info"><h4>{{ t.author_name }}</h4><span>{{ t.achievement }}</span></div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ========== CTA SECTION ========== -->
+<section class="cta-section" data-aos="fade-up">
+  <div class="container">
+    <div class="cta-content">
+      <h2>Ready to Transform Your Future?</h2>
+      <p>Join thousands of students who are already learning with ENF's world-class programs and AI-powered platform.</p>
+      <div class="cta-buttons">
+        <a href="javascript:void(0)" onclick="openLoginModal()" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:white;padding:14px 32px;border-radius:14px;text-decoration:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(245,158,11,0.4);font-size:1rem;"><i class="fas fa-rocket"></i> Start Learning Today</a>
+        <a href="#contact" style="padding:14px 32px;border-radius:14px;border:2px solid rgba(255,255,255,0.3);color:white;text-decoration:none;font-weight:600;display:inline-flex;align-items:center;gap:8px;font-size:1rem;"><i class="fas fa-envelope"></i> Contact Us</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== CONTACT SECTION ========== -->
+<section class="page-section contact-section" id="contact">
+  <div class="container">
+    <div class="page-section-header" data-aos="fade-up">
+      <span class="page-section-badge"><i class="fas fa-envelope"></i> Contact</span>
+      <h2>Get In Touch</h2>
+      <p>Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.</p>
+      <div class="section-divider"></div>
+    </div>
+    <div class="contact-grid">
+      <div class="contact-info" data-aos="fade-right" data-aos-delay="100">
+        <div class="contact-info-card">
+          <div class="contact-icon blue"><i class="fas fa-location-dot"></i></div>
+          <div class="contact-detail">
+            <h4>Our Address</h4>
+            <p>{{ contact_address }}</p>
+          </div>
+        </div>
+        <div class="contact-info-card">
+          <div class="contact-icon green"><i class="fas fa-phone"></i></div>
+          <div class="contact-detail">
+            <h4>Phone Number</h4>
+            <p>{{ contact_phone }} (Office)<br>{{ office_hours }}</p>
+          </div>
+        </div>
+        <div class="contact-info-card">
+          <div class="contact-icon amber"><i class="fas fa-envelope"></i></div>
+          <div class="contact-detail">
+            <h4>Email Address</h4>
+            <p>{{ contact_email }}</p>
+          </div>
+        </div>
+        <div class="contact-map">
+          <iframe src="{{ map_embed_url }}" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
+      </div>
+      <div class="contact-form-wrapper" data-aos="fade-left" data-aos-delay="200">
+        <h3><i class="fas fa-paper-plane" style="color:#3b82f6;margin-right:8px"></i> Send us a Message</h3>
+        <form method="POST" action="/enquiry/" class="contact-form" id="contactForm">
+          {% csrf_token %}
+          <div class="form-row">
+            <div class="form-group">
+              <label for="first_name"><i class="fas fa-user" style="margin-right:6px;color:#3b82f6;font-size:0.8rem;"></i>First Name</label>
+              <input type="text" id="first_name" name="first_name" placeholder="Enter your first name" required>
+            </div>
+            <div class="form-group">
+              <label for="last_name"><i class="fas fa-user" style="margin-right:6px;color:#3b82f6;font-size:0.8rem;"></i>Last Name</label>
+              <input type="text" id="last_name" name="last_name" placeholder="Enter your last name" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="email"><i class="fas fa-envelope" style="margin-right:6px;color:#3b82f6;font-size:0.8rem;"></i>Email</label>
+            <input type="email" id="email" name="email" placeholder="Enter your email address" required>
+          </div>
+          <div class="form-group">
+            <label for="phone"><i class="fas fa-phone" style="margin-right:6px;color:#3b82f6;font-size:0.8rem;"></i>Phone</label>
+            <input type="tel" id="phone" name="phone" placeholder="+91-XXXXX XXXXX">
+          </div>
+          <div class="form-group">
+            <label for="subject"><i class="fas fa-tag" style="margin-right:6px;color:#3b82f6;font-size:0.8rem;"></i>Subject</label>
+            <select id="subject" name="subject" required>
+              <option value="" disabled selected>Select a subject</option>
+              <option value="General Inquiry">General Inquiry</option>
+              <option value="Admission">Admission</option>
+              <option value="Programs">Programs</option>
+              <option value="Scholarships">Scholarships</option>
+              <option value="Technical Support">Technical Support</option>
+              <option value="Partnership">Partnership</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="message"><i class="fas fa-comment" style="margin-right:6px;color:#3b82f6;font-size:0.8rem;"></i>Message</label>
+            <textarea id="message" name="message" rows="5" placeholder="Write your message here..." required></textarea>
+          </div>
+          <button type="submit" style="width:100%;padding:14px;background:linear-gradient(135deg,#3b82f6,#1e40af);color:white;border:none;border-radius:14px;font-size:1rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 8px 24px rgba(59,130,246,0.3);transition:all 0.3s;">
+            <i class="fas fa-paper-plane"></i> Send Message
+          </button>
+        </form>
+        <div class="contact-form-success" id="formSuccess">
+          <i class="fas fa-check-circle"></i>
+          <h4>Message Sent Successfully!</h4>
+          <p>Thank you for reaching out. We'll get back to you within 24 hours.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== FOOTER ========== -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <div class="footer-brand">
+          <div class="logo-icon">E</div>
+          <span>ENABLE PROGRAM</span>
+        </div>
+        <p>Ex Navodayan Foundation (ENF) is a premier not-for-profit trust established in 2016 by JNV Alumni, registered under Indian Trust Act. Dedicated to empowering underprivileged students with quality education, mentorship, and technology-enabled learning programs across India.</p>
+        <div class="footer-social">
+          {% if social_youtube %}<a href="{{ social_youtube }}" target="_blank" rel="noopener" aria-label="YouTube"><i class="fab fa-youtube"></i></a>{% endif %}
+          {% if social_facebook %}<a href="{{ social_facebook }}" target="_blank" rel="noopener" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>{% endif %}
+          {% if social_twitter %}<a href="{{ social_twitter }}" target="_blank" rel="noopener" aria-label="Twitter"><i class="fab fa-twitter"></i></a>{% endif %}
+          {% if social_linkedin %}<a href="{{ social_linkedin }}" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>{% endif %}
+          {% if social_instagram %}<a href="{{ social_instagram }}" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>{% endif %}
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Quick Links</h4>
+        <ul class="footer-links">
+          <li><a href="/about/"><i class="fas fa-angle-right"></i> About Us</a></li>
+          <li><a href="/programs/"><i class="fas fa-angle-right"></i> Programs</a></li>
+          <li><a href="/partners/"><i class="fas fa-angle-right"></i> Partners</a></li>
+          <li><a href="/scholarships/"><i class="fas fa-angle-right"></i> Scholarships</a></li>
+          <li><a href="/news/"><i class="fas fa-angle-right"></i> News</a></li>
+          <li><a href="/founder/"><i class="fas fa-angle-right"></i> Founder</a></li>
+          <li><a href="/management/"><i class="fas fa-angle-right"></i> Management</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Our Programs</h4>
+        <ul class="footer-links">
+          <li><a href="/programs/"><i class="fas fa-angle-right"></i> CoE - Center of Excellence</a></li>
+          <li><a href="/programs/"><i class="fas fa-angle-right"></i> ENABLE</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Get in Touch</h4>
+        <div class="footer-contact">
+          <div class="footer-contact-item"><i class="fas fa-location-dot"></i><span>{{ contact_address }}</span></div>
+          <div class="footer-contact-item"><i class="fas fa-phone"></i><span>{{ contact_phone }}</span></div>
+          <div class="footer-contact-item"><i class="fas fa-envelope"></i><span>{{ contact_email }}</span></div>
+          <div class="footer-contact-item"><i class="fas fa-clock"></i><span>{{ office_hours }}</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>{{ footer_copyright }}</p>
+      <p>Design by <a href="{{ design_credit_url }}" target="_blank" rel="noopener">{{ design_credit }}</a></p>
+    </div>
+  </div>
+</footer>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Navbar scroll effect
+  window.addEventListener('scroll', function () {
+    document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 50);
+  });
+
+
+
+  // ===== Global Search =====
+  var searchPages = [
+    { title: 'Home', desc: 'Landing page with programs overview', url: '/', icon: 'fas fa-home', keywords: 'home landing main' },
+    { title: 'About ENF', desc: 'About Ex Navodayan Foundation', url: '/about/', icon: 'fas fa-building', keywords: 'about mission vision foundation enf' },
+    { title: 'Programs', desc: 'JEE, NEET & ENABLE programs', url: '/programs/', icon: 'fas fa-graduation-cap', keywords: 'programs jee neet enable coe courses' },
+    { title: 'Scholarships', desc: 'Engineering & Medical scholarships', url: '/scholarships/', icon: 'fas fa-award', keywords: 'scholarship engineering medical financial aid' },
+    { title: 'News & Updates', desc: 'Latest news, announcements and events', url: '/news/', icon: 'fas fa-newspaper', keywords: 'news updates announcements events' },
+    { title: 'Partners', desc: 'Our partner schools and organizations', url: '/partners/', icon: 'fas fa-handshake', keywords: 'partners schools organizations collaborate' },
+    { title: 'Photo Gallery', desc: 'Photos from events, classrooms & campus', url: '/gallery/', icon: 'fas fa-images', keywords: 'gallery photos images events campus classroom' },
+    { title: 'Contact Us', desc: 'Get in touch, enquiry form', url: '#contact', icon: 'fas fa-envelope', keywords: 'contact enquiry phone email address' },
+    { title: 'Student Login', desc: 'Access your student dashboard', url: '/login/?role=student', icon: 'fas fa-user-graduate', keywords: 'student login dashboard classes' },
+    { title: 'Teacher Login', desc: 'Access your teacher portal', url: '/login/?role=teacher', icon: 'fas fa-chalkboard-teacher', keywords: 'teacher login portal courses' },
+    { title: 'Founder & Trustees', desc: 'Meet the founders and trustees', url: '/founder/', icon: 'fas fa-user-tie', keywords: 'founder trustees leadership team' },
+    { title: 'Management Team', desc: 'Our management team', url: '/management/', icon: 'fas fa-users-cog', keywords: 'management team staff administration' },
+    { title: 'Live Classes', desc: 'Interactive online live classes', url: '/programs/', icon: 'fas fa-video', keywords: 'live classes online interactive video' },
+    { title: 'Mock Tests', desc: 'Practice tests for JEE & NEET', url: '/programs/', icon: 'fas fa-clipboard-check', keywords: 'mock test practice exam jee neet' },
+    { title: 'Study Materials', desc: 'E-books, notes and resources', url: '/programs/', icon: 'fas fa-book', keywords: 'study materials ebook notes resources pdf' },
+  ];
+
+  function openSearch() {
+    var overlay = document.getElementById('searchOverlay');
+    overlay.classList.add('active');
+    setTimeout(function() { document.getElementById('globalSearchInput').focus(); }, 100);
+    document.body.style.overflow = 'hidden';
+  }
+  function closeSearch() {
+    document.getElementById('searchOverlay').classList.remove('active');
+    document.getElementById('globalSearchInput').value = '';
+    document.getElementById('searchResults').classList.remove('visible');
+    document.getElementById('searchResults').innerHTML = '';
+    document.body.style.overflow = '';
+  }
+  document.getElementById('searchOverlay').addEventListener('click', function(e) {
+    if (e.target === this) closeSearch();
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && document.getElementById('searchOverlay').classList.contains('active')) closeSearch();
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); openSearch(); }
+  });
+
+  function handleGlobalSearch(query) {
+    var dropdown = document.getElementById('searchResults');
+    var q = query.toLowerCase().trim();
+    if (!q) { dropdown.classList.remove('visible'); dropdown.innerHTML = ''; return; }
+    var results = searchPages.filter(function(p) {
+      return p.title.toLowerCase().indexOf(q) !== -1 ||
+             p.desc.toLowerCase().indexOf(q) !== -1 ||
+             p.keywords.toLowerCase().indexOf(q) !== -1;
+    });
+    if (results.length === 0) {
+      dropdown.innerHTML = '<div style="padding:20px;text-align:center;color:#64748b;"><i class="fas fa-search" style="font-size:1.5rem;margin-bottom:8px;display:block;"></i>No results for &ldquo;' + q.replace(/</g, '&lt;') + '&rdquo;</div>';
+    } else {
+      var html = '';
+      results.forEach(function(r) {
+        html += '<a href="' + r.url + '" class="search-result-item" onclick="closeSearch()">' +
+                '<div class="search-result-icon"><i class="' + r.icon + '"></i></div>' +
+                '<div class="search-result-text"><h5>' + r.title + '</h5><p>' + r.desc + '</p></div></a>';
+      });
+      dropdown.innerHTML = html;
+    }
+    dropdown.classList.add('visible');
+  }
+
+  // Login Modal
+  function openLoginModal() {
+    document.getElementById('loginModal').classList.add('show');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeLoginModal() {
+    document.getElementById('loginModal').classList.remove('show');
+    document.body.style.overflow = '';
+  }
+  document.getElementById('loginModal').addEventListener('click', function (e) {
+    if (e.target === this) closeLoginModal();
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') { closeLoginModal(); closeLightbox(); }
+  });
+
+  // Mobile menu
+  function toggleMobileMenu() {
+    document.getElementById('navLinks').classList.toggle('show');
+  }
+
+  // Counter animation with easing
+  function animateCounters() {
+    document.querySelectorAll('[data-count]').forEach(function (el) {
+      if (el.dataset.animated) return;
+      el.dataset.animated = 'true';
+      var target = parseInt(el.getAttribute('data-count'));
+      var suffix = el.getAttribute('data-suffix') || '';
+      var duration = 2000;
+      var start = performance.now();
+      function update(now) {
+        var elapsed = now - start;
+        var progress = Math.min(elapsed / duration, 1);
+        var eased = 1 - Math.pow(1 - progress, 3);
+        el.textContent = Math.floor(target * eased).toLocaleString() + suffix;
+        if (progress < 1) requestAnimationFrame(update);
+      }
+      requestAnimationFrame(update);
+    });
+  }
+
+  // Intersection Observer
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        if (entry.target.querySelector('[data-count]')) animateCounters();
+      }
+    });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.hero-visual, .hero-stats-grid, [data-aos]').forEach(function (el) {
+    observer.observe(el);
+  });
+
+  // Smooth scroll
+  document.querySelectorAll('a[href^="#"]').forEach(function (anchor) {
+    anchor.addEventListener('click', function (e) {
+      var targetId = this.getAttribute('href');
+      if (targetId === '#') return;
+      e.preventDefault();
+      var target = document.querySelector(targetId);
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+
+  // Particles
+  (function() {
+    var container = document.getElementById('particlesContainer');
+    if (!container) return;
+    for (var i = 0; i < 30; i++) {
+      var p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.top = Math.random() * 100 + '%';
+      p.style.animationDelay = Math.random() * 8 + 's';
+      p.style.animationDuration = (6 + Math.random() * 8) + 's';
+      container.appendChild(p);
+    }
+  })();
+
+  // Gallery Filter
+  function filterGallery(category, btn) {
+    document.querySelectorAll('.gallery-filter-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    document.querySelectorAll('.gallery-item').forEach(function(item) {
+      if (category === 'all' || item.dataset.category === category) {
+        item.style.display = '';
+        item.style.animation = 'fadeInUp 0.4s ease forwards';
+      } else {
+        item.style.display = 'none';
+      }
+    });
+  }
+
+  // Gallery Lightbox
+  var galleryImages = [];
+  var currentLightboxIndex = 0;
+  document.querySelectorAll('.gallery-item').forEach(function(item) {
+    var img = item.querySelector('img');
+    var caption = item.querySelector('.gallery-overlay span');
+    if (img) galleryImages.push({ src: img.src.replace('w=400', 'w=1200').replace('w=600', 'w=1200'), caption: caption ? caption.textContent : '' });
+  });
+  function openLightbox(index) {
+    currentLightboxIndex = index;
+    document.getElementById('lightboxImage').src = galleryImages[index].src;
+    document.getElementById('lightboxCaption').textContent = galleryImages[index].caption;
+    document.getElementById('galleryLightbox').classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeLightbox() {
+    document.getElementById('galleryLightbox').classList.remove('active');
+    document.body.style.overflow = '';
+  }
+  function navigateLightbox(dir) {
+    currentLightboxIndex = (currentLightboxIndex + dir + galleryImages.length) % galleryImages.length;
+    document.getElementById('lightboxImage').src = galleryImages[currentLightboxIndex].src;
+    document.getElementById('lightboxCaption').textContent = galleryImages[currentLightboxIndex].caption;
+  }
+
+  // Contact Form AJAX
+  document.getElementById('contactForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var form = this;
+    fetch(form.action, { method: 'POST', body: new FormData(form), headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function() {
+        form.style.display = 'none';
+        document.getElementById('formSuccess').style.display = 'block';
+        setTimeout(function() { form.style.display = ''; form.reset(); document.getElementById('formSuccess').style.display = 'none'; }, 5000);
+      })
+      .catch(function() {
+        form.style.display = 'none';
+        document.getElementById('formSuccess').style.display = 'block';
+        setTimeout(function() { form.style.display = ''; form.reset(); document.getElementById('formSuccess').style.display = 'none'; }, 5000);
+      });
+  });
+
+
+</script>
+{% endblock %}

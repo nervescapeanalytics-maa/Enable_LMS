@@ -1,0 +1,54 @@
+{% load static %}
+<div class="friendly-json-widget key-value-widget" id="kvw-{{ widget.name }}">
+  <div class="fjw-kv-header">
+    <span class="fjw-kv-col-header">Parameter Name</span>
+    <span class="fjw-kv-col-header">Value</span>
+    <span class="fjw-kv-col-header" style="width:40px;"></span>
+  </div>
+
+  <div class="fjw-kv-rows" id="kvrows-{{ widget.name }}">
+    {% for key, val in widget.pairs %}
+    <div class="fjw-kv-row">
+      <input type="text" name="{{ widget.name }}_keys" value="{{ key }}" class="fjw-text-input fjw-kv-key"
+             placeholder="{{ widget.key_placeholder }}">
+      <input type="text" name="{{ widget.name }}_vals" value="{{ val }}" class="fjw-text-input fjw-kv-val"
+             placeholder="{{ widget.value_placeholder }}">
+      <button type="button" class="fjw-btn-icon fjw-btn-remove" onclick="this.parentElement.remove()" title="Remove row">
+        <i class="fas fa-trash-alt"></i>
+      </button>
+    </div>
+    {% empty %}
+    <div class="fjw-empty-state">
+      <i class="fas fa-inbox"></i>
+      <span>No parameters configured yet. Click "Add Row" to begin.</span>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="fjw-actions-bar">
+    <button type="button" class="fjw-btn fjw-btn-add" onclick="fjwAddKVRow('{{ widget.name }}', '{{ widget.key_placeholder }}', '{{ widget.value_placeholder }}')">
+      <i class="fas fa-plus"></i> Add Row
+    </button>
+  </div>
+
+  <p class="fjw-help"><i class="fas fa-info-circle"></i> Each row is a key-value pair. Numbers and true/false are auto-detected.</p>
+</div>
+
+<script>
+function fjwAddKVRow(name, keyPh, valPh) {
+  var container = document.getElementById('kvrows-' + name);
+  // Remove empty state if present
+  var empty = container.querySelector('.fjw-empty-state');
+  if (empty) empty.remove();
+
+  var row = document.createElement('div');
+  row.className = 'fjw-kv-row';
+  row.innerHTML =
+    '<input type="text" name="' + name + '_keys" value="" class="fjw-text-input fjw-kv-key" placeholder="' + keyPh + '">' +
+    '<input type="text" name="' + name + '_vals" value="" class="fjw-text-input fjw-kv-val" placeholder="' + valPh + '">' +
+    '<button type="button" class="fjw-btn-icon fjw-btn-remove" onclick="this.parentElement.remove()" title="Remove row">' +
+    '<i class="fas fa-trash-alt"></i></button>';
+  container.appendChild(row);
+  row.querySelector('input').focus();
+}
+</script>

@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Register – ENABLE PROGRAM{% endblock %}
+
+{% block body %}
+<div class="login-page">
+  <!-- Sidebar: changes color based on role -->
+  <div class="login-sidebar {{ role }}" id="loginSidebar">
+    <div class="sidebar-icon">
+      {% if role == 'student' %}<i class="fas fa-user-graduate"></i>
+      {% elif role == 'teacher' %}<i class="fas fa-chalkboard-teacher"></i>
+      {% else %}<i class="fas fa-user-shield"></i>{% endif %}
+    </div>
+    <h2>{% if role == 'student' %}Student Portal{% elif role == 'teacher' %}Teacher Portal{% else %}Admin Portal{% endif %}</h2>
+    <p>{% if role == 'student' %}Access your classes, tests, study materials...{% elif role == 'teacher' %}Manage classes, create tests...{% else %}System administration, manage users...{% endif %}</p>
+  </div>
+
+  <div class="login-form-area">
+    <div class="login-form-box">
+      <a href="/" class="brand">
+        <div class="logo-icon">E</div>
+        <span>ENABLE PROGRAM</span>
+      </a>
+
+      <h1>Create Account</h1>
+      <p class="login-subtitle">Register as a {{ role }}</p>
+
+      {% if error %}
+      <div class="alert-error"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+      {% endif %}
+      {% if success %}
+      <div class="alert-success"><i class="fas fa-check-circle"></i> {{ success }}</div>
+      {% endif %}
+
+      <form method="POST" action="/register/" id="registerForm">
+        {% csrf_token %}
+        <input type="hidden" name="user_type" value="{{ role|upper }}" id="userType">
+
+        <!-- Role selector pills -->
+        <div style="display:flex;gap:8px;margin-bottom:24px">
+          <button type="button" class="btn btn-sm {% if role == 'student' %}btn-primary{% else %}btn-secondary{% endif %}" onclick="switchRole('student')" style="flex:1">
+            <i class="fas fa-user-graduate"></i> Student
+          </button>
+          <button type="button" class="btn btn-sm {% if role == 'teacher' %}btn-primary{% else %}btn-secondary{% endif %}" onclick="switchRole('teacher')" style="flex:1">
+            <i class="fas fa-chalkboard-teacher"></i> Teacher
+          </button>
+          <button type="button" class="btn btn-sm {% if role == 'admin' %}btn-primary{% else %}btn-secondary{% endif %}" onclick="switchRole('admin')" style="flex:1">
+            <i class="fas fa-user-shield"></i> Admin
+          </button>
+        </div>
+
+        <div class="form-row" style="display:flex;gap:16px">
+          <div class="form-group" style="flex:1">
+            <label>First Name</label>
+            <input type="text" name="first_name" class="form-control" placeholder="First name" value="{{ first_name|default:'' }}" required>
+          </div>
+          <div class="form-group" style="flex:1">
+            <label>Last Name</label>
+            <input type="text" name="last_name" class="form-control" placeholder="Last name" value="{{ last_name|default:'' }}" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" name="email" class="form-control" placeholder="your@email.com" value="{{ email|default:'' }}" required>
+        </div>
+
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input type="tel" name="phone" class="form-control" placeholder="e.g. +251912345678" value="{{ phone|default:'' }}">
+        </div>
+
+        <div class="form-group">
+          <label>School / Tenant Code</label>
+          <input type="text" name="tenant_code" class="form-control" placeholder="e.g. DEFAULT" value="{{ tenant_code|default:'DEFAULT' }}">
+        </div>
+
+        <div class="form-group">
+          <label>Password</label>
+          <div style="position:relative">
+            <input type="password" name="password" id="password" class="form-control" placeholder="Create a password" required>
+            <button type="button" onclick="togglePassword('password','toggleIcon1')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--gray-400);cursor:pointer">
+              <i class="fas fa-eye" id="toggleIcon1"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Confirm Password</label>
+          <div style="position:relative">
+            <input type="password" name="confirm_password" id="confirmPassword" class="form-control" placeholder="Confirm your password" required>
+            <button type="button" onclick="togglePassword('confirmPassword','toggleIcon2')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--gray-400);cursor:pointer">
+              <i class="fas fa-eye" id="toggleIcon2"></i>
+            </button>
+          </div>
+          <small id="passwordError" style="color:#ef4444;display:none;margin-top:4px">Passwords do not match.</small>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg" style="width:100%;margin-top:8px">
+          <i class="fas fa-user-plus"></i> Create Account
+        </button>
+
+        <p style="text-align:center;margin-top:20px;font-size:.875rem;color:var(--gray-500)">
+          Already have an account? <a href="/login/?role={{ role }}" style="color:var(--primary);font-weight:600">Login here</a>
+        </p>
+        <p style="text-align:center;margin-top:12px">
+          <a href="/" style="color:var(--gray-500);font-size:.875rem"><i class="fas fa-arrow-left"></i> Back to Home</a>
+        </p>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function switchRole(role) {
+  window.location.href = '/register/?role=' + role;
+}
+function togglePassword(fieldId, iconId) {
+  const pw = document.getElementById(fieldId);
+  const icon = document.getElementById(iconId);
+  if (pw.type === 'password') { pw.type = 'text'; icon.className = 'fas fa-eye-slash'; }
+  else { pw.type = 'password'; icon.className = 'fas fa-eye'; }
+}
+document.getElementById('registerForm').addEventListener('submit', function(e) {
+  const pw = document.getElementById('password').value;
+  const cpw = document.getElementById('confirmPassword').value;
+  const err = document.getElementById('passwordError');
+  if (pw !== cpw) {
+    e.preventDefault();
+    err.style.display = 'block';
+    document.getElementById('confirmPassword').focus();
+  } else {
+    err.style.display = 'none';
+  }
+});
+document.getElementById('confirmPassword').addEventListener('input', function() {
+  const pw = document.getElementById('password').value;
+  const err = document.getElementById('passwordError');
+  err.style.display = (this.value && this.value !== pw) ? 'block' : 'none';
+});
+</script>
+{% endblock %}

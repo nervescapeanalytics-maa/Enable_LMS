@@ -1,0 +1,249 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Student Dashboard – ENABLE PROGRAM{% endblock %}
+{% block body %}
+<div class="dash-layout">
+  <!-- ═══════════ SIDEBAR ═══════════ -->
+  <aside class="dash-sidebar">
+    <div class="sidebar-brand">
+      <span class="logo-icon">E</span>
+      <span class="brand-text">ENF Online</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <span class="nav-label">MAIN</span>
+        <a href="#" class="nav-link active"><i class="fas fa-home"></i> Dashboard</a>
+        <a href="#" class="nav-link"><i class="fas fa-user"></i> My Profile</a>
+      </div>
+
+      <div class="nav-section">
+        <span class="nav-label">LEARNING</span>
+        <a href="#" class="nav-link"><i class="fas fa-video"></i> Live Classes</a>
+        <a href="#" class="nav-link"><i class="fas fa-play-circle"></i> Recorded Classes</a>
+        <a href="#" class="nav-link"><i class="fas fa-book-open"></i> Study Materials</a>
+        <a href="#" class="nav-link"><i class="fas fa-calendar"></i> Schedule</a>
+      </div>
+
+      <div class="nav-section">
+        <span class="nav-label">ASSESSMENT</span>
+        <a href="#" class="nav-link"><i class="fas fa-clipboard-check"></i> My Tests</a>
+        <a href="#" class="nav-link"><i class="fas fa-chart-bar"></i> Results</a>
+        <a href="#" class="nav-link"><i class="fas fa-brain"></i> Practice</a>
+      </div>
+
+      <div class="nav-section">
+        <span class="nav-label">OTHER</span>
+        <a href="#" class="nav-link"><i class="fas fa-calendar-check"></i> Attendance</a>
+        <a href="#" class="nav-link"><i class="fas fa-bell"></i> Announcements</a>
+        <a href="#" class="nav-link"><i class="fas fa-life-ring"></i> Support</a>
+      </div>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <a href="/logout/" class="nav-link logout-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+  </aside>
+
+  <!-- ═══════════ MAIN AREA ═══════════ -->
+  <main class="dash-main">
+    <!-- Topbar -->
+    <header class="dash-topbar">
+      <h1>Student Dashboard</h1>
+      <div class="topbar-right">
+        <button class="icon-btn"><i class="fas fa-bell"></i></button>
+        <div class="user-avatar">
+          <span class="avatar-initials">{{ user_name|truncatechars:2 }}</span>
+          <span class="avatar-name">{{ user_name }}</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <section class="dash-content">
+      <!-- Welcome Banner -->
+      <div class="welcome-banner">
+        <div>
+          <h2>Welcome back, {{ user_name }}!</h2>
+          <p class="welcome-date">{{ today_date|default:"February 14, 2026" }}</p>
+        </div>
+      </div>
+
+      <!-- ── Stat Cards ── -->
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-icon blue"><i class="fas fa-video"></i></div>
+          <div class="stat-info">
+            <span class="stat-value">{{ classes_attended|default:"24" }}</span>
+            <span class="stat-label">Classes Attended</span>
+            <span class="stat-change positive">+12% this month</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon green"><i class="fas fa-clipboard-check"></i></div>
+          <div class="stat-info">
+            <span class="stat-value">{{ tests_completed|default:"18" }}</span>
+            <span class="stat-label">Tests Completed</span>
+            <span class="stat-change positive">+8% this month</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon amber"><i class="fas fa-chart-line"></i></div>
+          <div class="stat-info">
+            <span class="stat-value">{{ avg_score|default:"78" }}%</span>
+            <span class="stat-label">Average Score</span>
+            <span class="stat-change positive">+5% improvement</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon purple"><i class="fas fa-calendar-check"></i></div>
+          <div class="stat-info">
+            <span class="stat-value">{{ attendance_rate|default:"92" }}%</span>
+            <span class="stat-label">Attendance Rate</span>
+            <span class="stat-change neutral">On track</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Two-Column Grid ── -->
+      <div class="content-grid two-col">
+        <!-- Upcoming Classes -->
+        <div class="data-card">
+          <div class="data-card-header">
+            <h3>Upcoming Classes</h3>
+          </div>
+          <div class="data-card-body">
+            <table class="dash-table">
+              <thead>
+                <tr>
+                  <th>Subject</th>
+                  <th>Teacher</th>
+                  <th>Time</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Physics</td>
+                  <td>Dr. Rajesh Kumar</td>
+                  <td>10:00 AM</td>
+                  <td><span class="badge badge-success">Live Now</span></td>
+                </tr>
+                <tr>
+                  <td>Chemistry</td>
+                  <td>Mrs. Priya Singh</td>
+                  <td>11:30 AM</td>
+                  <td><span class="badge badge-primary">Upcoming</span></td>
+                </tr>
+                <tr>
+                  <td>Mathematics</td>
+                  <td>Mr. Amit Verma</td>
+                  <td>2:00 PM</td>
+                  <td><span class="badge badge-primary">Upcoming</span></td>
+                </tr>
+                <tr>
+                  <td>Biology</td>
+                  <td>Dr. Neha Gupta</td>
+                  <td>3:30 PM</td>
+                  <td><span class="badge badge-accent">Scheduled</span></td>
+                </tr>
+                <tr>
+                  <td>English</td>
+                  <td>Mr. Rahul Sharma</td>
+                  <td>5:00 PM</td>
+                  <td><span class="badge badge-accent">Scheduled</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Recent Test Results -->
+        <div class="data-card">
+          <div class="data-card-header">
+            <h3>Recent Test Results</h3>
+          </div>
+          <div class="data-card-body">
+            <table class="dash-table">
+              <thead>
+                <tr>
+                  <th>Test</th>
+                  <th>Score</th>
+                  <th>Grade</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Physics Mock Test 5</td>
+                  <td>85/100</td>
+                  <td>A</td>
+                  <td>Feb 12, 2026</td>
+                </tr>
+                <tr>
+                  <td>Chemistry Unit Test 3</td>
+                  <td>72/100</td>
+                  <td>B+</td>
+                  <td>Feb 10, 2026</td>
+                </tr>
+                <tr>
+                  <td>Math Weekly Quiz</td>
+                  <td>92/100</td>
+                  <td>A+</td>
+                  <td>Feb 8, 2026</td>
+                </tr>
+                <tr>
+                  <td>Biology Practice Set</td>
+                  <td>68/100</td>
+                  <td>B</td>
+                  <td>Feb 5, 2026</td>
+                </tr>
+                <tr>
+                  <td>Combined Mock Test</td>
+                  <td>315/400</td>
+                  <td>A</td>
+                  <td>Feb 1, 2026</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Announcements ── -->
+      <div class="data-card">
+        <div class="data-card-header">
+          <h3>Announcements</h3>
+        </div>
+        <div class="data-card-body">
+          <div class="announcement-item" style="border-left: 4px solid var(--danger);">
+            <div class="announcement-content">
+              <h4>JEE Main 2026 Registration Open</h4>
+              <p>Registration for JEE Main 2026 April session is now open. Last date to apply is March 15, 2026. Visit the official NTA website for details.</p>
+              <span class="announcement-date">Feb 13, 2026</span>
+            </div>
+          </div>
+          <div class="announcement-item" style="border-left: 4px solid var(--primary);">
+            <div class="announcement-content">
+              <h4>Weekend Extra Classes for Physics</h4>
+              <p>Extra doubt-clearing sessions for Physics will be held this Saturday and Sunday from 10:00 AM to 12:00 PM.</p>
+              <span class="announcement-date">Feb 11, 2026</span>
+            </div>
+          </div>
+          <div class="announcement-item" style="border-left: 4px solid var(--accent);">
+            <div class="announcement-content">
+              <h4>Holiday Notice: Feb 26 – Republic Day</h4>
+              <p>Classes will remain suspended on February 26, 2026 on account of Republic Day. Regular schedule resumes on Feb 27.</p>
+              <span class="announcement-date">Feb 10, 2026</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </main>
+</div>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends 'dashboards/admin_base.html' %}
+
+{% block admin_content %}
+<div class="page-header">
+  <div><h2>Audit Log</h2><p>System activity and change history</p></div>
+</div>
+
+<!-- Stats -->
+<div class="stats-row">
+  <div class="stat-card"><div class="stat-value">{{ total_audits }}</div><div class="stat-label">Total Entries</div></div>
+  <div class="stat-card"><div class="stat-value" style="color:#ef4444;">{{ security_events }}</div><div class="stat-label">Security Events</div></div>
+  <div class="stat-card"><div class="stat-value" style="color:#f59e0b;">{{ today_audits }}</div><div class="stat-label">Today</div></div>
+  <div class="stat-card"><div class="stat-value" style="color:#3b82f6;">{{ audits|length }}</div><div class="stat-label">Showing</div></div>
+</div>
+
+<!-- Log Table -->
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fas fa-history"></i> Recent Activity</h3>
+    <span class="card-badge info">Last 200 Entries</span>
+  </div>
+  {% if audits %}
+  <div style="overflow-x:auto">
+    <table class="adm-table">
+      <thead><tr><th>Timestamp</th><th>User</th><th>Action</th><th>Resource</th><th>Severity</th><th>IP Address</th><th>Details</th></tr></thead>
+      <tbody>
+        {% for log in audits %}
+        <tr>
+          <td style="white-space:nowrap;font-size:0.82rem;">{{ log.timestamp }}</td>
+          <td style="font-weight:600;">{{ log.user|default:"System" }}</td>
+          <td><span style="font-family:monospace;font-size:0.82rem;background:#f1f5f9;padding:2px 8px;border-radius:4px;">{{ log.action }}</span></td>
+          <td style="font-size:0.85rem;">{{ log.resource_type|default:"-" }}</td>
+          <td>
+            {% if log.severity == 'CRITICAL' %}
+              <span class="status inactive" style="background:#fef2f2;color:#dc2626;border-color:#fecaca;"><i class="fas fa-exclamation-circle" style="font-size:0.7rem;"></i> Critical</span>
+            {% elif log.severity == 'WARNING' %}
+              <span class="status" style="background:#fffbeb;color:#d97706;border-color:#fde68a;"><i class="fas fa-exclamation-triangle" style="font-size:0.7rem;"></i> Warning</span>
+            {% else %}
+              <span class="status active"><i class="fas fa-info-circle" style="font-size:0.7rem;"></i> Info</span>
+            {% endif %}
+          </td>
+          <td style="font-family:monospace;font-size:0.82rem;color:#64748b;">{{ log.ip|default:"-" }}</td>
+          <td style="color:#64748b;font-size:0.82rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ log.description|default:"-" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><i class="fas fa-history"></i><p>No audit logs recorded yet</p></div>
+  {% endif %}
+{% endblock %}

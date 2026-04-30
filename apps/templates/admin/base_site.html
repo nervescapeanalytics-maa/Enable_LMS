@@ -1,0 +1,218 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="{% static 'css/admin_theme.css' %}?v=13">
+<link rel="stylesheet" href="{% static 'css/friendly_json_widgets.css' %}?v=13">
+<script src="{% static 'js/admin_enhancements.js' %}?v=13" defer></script>
+{% endblock %}
+
+{% block title %}{{ title }} — ENF Admin Console{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">
+  <a href="{% url 'admin:index' %}">ENABLE PROGRAM — Admin Console</a>
+</h1>
+{% endblock %}
+
+{% block usertools %}
+<div id="user-tools">
+  <span id="enf-header-clock"><i class="fas fa-clock" style="font-size:0.72rem;"></i> <span id="enf-header-clock-text"></span></span>
+
+  {% if all_tenants %}
+  <div class="enf-tenant-switcher" id="enf-tenant-switcher" style="position:relative;display:inline-flex;align-items:center;">
+    <button type="button" id="enf-tenant-toggle" class="enf-header-link"
+      style="cursor:pointer;white-space:nowrap;position:relative;">
+      <i class="fas fa-building" style="font-size:0.68rem;"></i>
+      <span id="enf-tenant-label">{% if selected_tenant %}{{ selected_tenant.name }}{% else %}All Tenants{% endif %}</span>
+      <i class="fas fa-chevron-down" style="font-size:0.5rem;"></i>
+    </button>
+    <div id="enf-tenant-dropdown"
+      style="display:none;position:absolute;top:100%;right:0;margin-top:6px;
+             min-width:260px;background:#1e293b;border:1px solid rgba(255,255,255,0.1);
+             border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,0.4);z-index:9999;
+             overflow:hidden;">
+      <div style="padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.08);">
+        <input type="text" id="enf-tenant-search" placeholder="Search tenants..."
+          style="width:100%;padding:6px 10px;border:1px solid rgba(255,255,255,0.15);
+                 border-radius:6px;background:rgba(255,255,255,0.06);color:#e2e8f0;
+                 font-size:0.78rem;outline:none;" autocomplete="off">
+      </div>
+      <div id="enf-tenant-list" style="max-height:240px;overflow-y:auto;">
+        <div class="enf-tenant-opt {% if not selected_tenant %}active{% endif %}"
+             data-tenant-id="all"
+             style="padding:8px 14px;cursor:pointer;display:flex;align-items:center;gap:8px;
+                    font-size:0.78rem;color:#e2e8f0;border-bottom:1px solid rgba(255,255,255,0.05);">
+          <i class="fas fa-layer-group" style="font-size:0.7rem;color:#818cf8;width:16px;text-align:center;"></i>
+          <span style="font-weight:600;">All Tenants</span>
+          {% if not selected_tenant %}<i class="fas fa-check" style="margin-left:auto;color:#10b981;font-size:0.65rem;"></i>{% endif %}
+        </div>
+        {% for t in all_tenants %}
+        <div class="enf-tenant-opt {% if selected_tenant.id == t.id %}active{% endif %}"
+             data-tenant-id="{{ t.id }}" data-tenant-name="{{ t.name }}"
+             style="padding:8px 14px;cursor:pointer;display:flex;align-items:center;gap:8px;
+                    font-size:0.78rem;color:#cbd5e1;">
+          <i class="fas fa-school" style="font-size:0.7rem;color:#f59e0b;width:16px;text-align:center;"></i>
+          <div>
+            <div style="font-weight:500;">{{ t.name }}</div>
+            <div style="font-size:0.65rem;color:#64748b;">{{ t.code }}</div>
+          </div>
+          {% if selected_tenant.id == t.id %}<i class="fas fa-check" style="margin-left:auto;color:#10b981;font-size:0.65rem;"></i>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <a href="{% url 'admin:index' %}" class="enf-header-link" title="Go to Home">
+    <i class="fas fa-home"></i> Home
+  </a>
+  <a href="/" class="enf-header-link" title="Go to website">
+    <i class="fas fa-globe"></i> Website
+  </a>
+  <a href="/staff/dashboard/" class="enf-header-link" title="Staff Dashboard">
+    <i class="fas fa-chart-line"></i> Dashboard
+  </a>
+  <div class="enf-profile-wrapper">
+    <div class="enf-profile-btn" id="enf-profile-toggle">
+      <div class="enf-avatar"><i class="fas fa-user" style="font-size:0.7rem;"></i></div>
+      <span>{% firstof user.get_short_name user.get_username "Admin" %}</span>
+      <i class="fas fa-chevron-down" style="font-size:0.55rem;margin-left:2px;"></i>
+    </div>
+    <div class="enf-profile-dropdown" id="enf-profile-dropdown">
+      <div class="enf-dropdown-header">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="enf-avatar-lg"><i class="fas fa-user-shield"></i></div>
+          <div>
+            <h4>{% firstof user.get_short_name user.get_username "Admin" %}</h4>
+            <p>Super Admin &bull; ENABLE PROGRAM</p>
+          </div>
+        </div>
+      </div>
+      <div class="enf-dropdown-section">
+        <div class="enf-dropdown-label">Theme</div>
+        <div class="enf-theme-options" id="enf-theme-options">
+          <label class="enf-theme-option active" data-theme-value="light">
+            <i class="fas fa-sun"></i>
+            <span>Light</span>
+            <span class="enf-theme-check"><i class="fas fa-check"></i></span>
+          </label>
+          <label class="enf-theme-option" data-theme-value="dark">
+            <i class="fas fa-moon"></i>
+            <span>Dark</span>
+            <span class="enf-theme-check"><i class="fas fa-check"></i></span>
+          </label>
+          <label class="enf-theme-option" data-theme-value="auto">
+            <i class="fas fa-desktop"></i>
+            <span>System</span>
+            <span class="enf-theme-check"><i class="fas fa-check"></i></span>
+          </label>
+        </div>
+      </div>
+      <div class="enf-dropdown-section">
+        <div class="enf-dropdown-label">Account</div>
+        <a href="/admin/auth/user/" class="enf-dropdown-item">
+          <i class="fas fa-user-edit"></i> My Profile
+        </a>
+      </div>
+      <div class="enf-dropdown-section">
+        <div class="enf-dropdown-label">Security</div>
+        <a href="/admin/password_change/" class="enf-dropdown-item">
+          <i class="fas fa-key"></i> Change Password
+        </a>
+        <a href="/admin/accounts/admin/" class="enf-dropdown-item">
+          <i class="fas fa-shield-alt"></i> Enable MFA
+        </a>
+      </div>
+      <div class="enf-dropdown-section enf-dropdown-signout">
+        <form method="post" action="{% url 'admin:logout' %}">
+          {% csrf_token %}
+          <button type="submit" class="enf-dropdown-item enf-signout-item">
+            <i class="fas fa-sign-out-alt"></i> Sign Out
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+{% endblock %}
+
+{% block footer %}
+<div style="display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:12px;">
+  <div style="display:flex;align-items:center;gap:16px;">
+    <span style="color:var(--text-muted);font-size:0.75rem;">Powered by Django</span>
+  </div>
+</div>
+<script>
+(function() {
+  function updateClock() {
+    var now = new Date();
+    var opts = { weekday:'short', year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:true };
+    var el = document.getElementById('enf-header-clock-text');
+    if (el) el.textContent = now.toLocaleString('en-IN', opts);
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  /* ── Tenant Switcher ── */
+  var toggle = document.getElementById('enf-tenant-toggle');
+  var dropdown = document.getElementById('enf-tenant-dropdown');
+  var search = document.getElementById('enf-tenant-search');
+  if (toggle && dropdown) {
+    toggle.addEventListener('click', function(e) {
+      e.stopPropagation();
+      dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+      if (dropdown.style.display === 'block' && search) search.focus();
+    });
+    document.addEventListener('click', function(e) {
+      if (!dropdown.contains(e.target) && e.target !== toggle) {
+        dropdown.style.display = 'none';
+      }
+    });
+    if (search) {
+      search.addEventListener('input', function() {
+        var q = this.value.toLowerCase();
+        document.querySelectorAll('.enf-tenant-opt').forEach(function(opt) {
+          var name = (opt.getAttribute('data-tenant-name') || opt.textContent).toLowerCase();
+          opt.style.display = name.indexOf(q) >= 0 ? '' : 'none';
+        });
+      });
+    }
+    document.querySelectorAll('.enf-tenant-opt').forEach(function(opt) {
+      opt.addEventListener('mouseenter', function() { this.style.background = 'rgba(99,102,241,0.15)'; });
+      opt.addEventListener('mouseleave', function() { this.style.background = ''; });
+      opt.addEventListener('click', function() {
+        var tid = this.getAttribute('data-tenant-id');
+        var csrf = document.querySelector('[name=csrfmiddlewaretoken]');
+        var token = csrf ? csrf.value : '';
+        if (!token) {
+          var cookies = document.cookie.split(';');
+          for (var i = 0; i < cookies.length; i++) {
+            var c = cookies[i].trim();
+            if (c.indexOf('csrftoken=') === 0) { token = c.substring(10); break; }
+          }
+        }
+        fetch('/admin/switch-tenant/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': token },
+          body: JSON.stringify({ tenant_id: tid }),
+          credentials: 'same-origin'
+        }).then(function(r) { return r.json(); }).then(function(d) {
+          if (d.success) window.location.reload();
+        });
+      });
+    });
+  }
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,21 @@
+[Unit]
+Description=Enable-LMS Application Stack
+Documentation=file:///u01/app/Enable-LMS/scripts/lms/lms-ctl.sh
+Requires=docker.service postgres.service
+After=docker.service postgres.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/u01/app/Enable-LMS/docker
+ExecStart=/usr/local/bin/lms-ctl start
+ExecStop=/usr/local/bin/lms-ctl stop
+ExecReload=/usr/local/bin/lms-ctl restart
+TimeoutStartSec=300
+TimeoutStopSec=180
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,233 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}Monitoring & Alerting Dashboard | {{ site_title|default:"Enable LMS" }}{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+  .mon-wrap { padding: 18px 22px; max-width: 1400px; }
+  .mon-head {
+    display:flex; align-items:center; gap:14px; margin-bottom:18px;
+    padding-bottom:14px; border-bottom:1px solid #e2e8f0;
+  }
+  .mon-head h1 { margin:0; font-size:1.3rem; color:#1e293b; }
+  .mon-head .sub { color:#64748b; font-size:0.82rem; }
+  .mon-section-title {
+    font-size:0.78rem; font-weight:700; color:#475569; letter-spacing:0.05em;
+    text-transform:uppercase; margin:24px 0 10px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .mon-section-title i { color:#6366f1; }
+  .mon-grid {
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:14px;
+  }
+  .mon-card {
+    background:#fff; border:1px solid #e2e8f0; border-radius:10px;
+    padding:14px 16px; transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .mon-card:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(15,23,42,0.06); }
+  .mon-card .label { font-size:0.72rem; color:#64748b; text-transform:uppercase; font-weight:600; letter-spacing:0.04em; }
+  .mon-card .value { font-size:1.7rem; font-weight:700; color:#1e293b; margin-top:4px; line-height:1.1; }
+  .mon-card .delta { font-size:0.72rem; margin-top:2px; }
+  .mon-card.ok    { border-left:4px solid #10b981; }
+  .mon-card.warn  { border-left:4px solid #f59e0b; }
+  .mon-card.err   { border-left:4px solid #ef4444; }
+  .mon-card.info  { border-left:4px solid #6366f1; }
+  .mon-table {
+    width:100%; border-collapse:collapse; background:#fff; border:1px solid #e2e8f0;
+    border-radius:10px; overflow:hidden; font-size:0.82rem;
+  }
+  .mon-table th { background:#f8fafc; color:#475569; padding:8px 12px; text-align:left; font-weight:600; }
+  .mon-table td { padding:8px 12px; border-top:1px solid #f1f5f9; color:#475569; }
+  .mon-status { display:inline-flex; align-items:center; gap:6px; padding:3px 10px; border-radius:5px; font-size:0.72rem; font-weight:600; }
+  .mon-status.up   { background:rgba(16,185,129,0.12); color:#15803d; }
+  .mon-status.down { background:rgba(239,68,68,0.12); color:#dc2626; }
+  .mon-pill {
+    display:inline-block; padding:2px 8px; border-radius:4px; font-size:0.72rem; font-weight:600;
+  }
+  .mon-pill.crit { background:rgba(239,68,68,0.15); color:#dc2626; }
+  .mon-pill.warn { background:rgba(245,158,11,0.15); color:#b45309; }
+  .mon-pill.info { background:rgba(59,130,246,0.15); color:#1d4ed8; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mon-wrap">
+  <div class="mon-head">
+    <h1><i class="fas fa-chart-line" style="color:#6366f1;"></i> Monitoring &amp; Alerting Dashboard</h1>
+    <span class="sub">As of {{ now|date:"D, d M Y H:i" }}. Auto-refreshes on reload.</span>
+    <span style="margin-left:auto;">
+      <a href="../" style="padding:6px 12px;border-radius:6px;border:1px solid #cbd5e1;color:#475569;text-decoration:none;font-size:0.78rem;">
+        <i class="fas fa-arrow-left"></i> Back to alerts
+      </a>
+      <a href="?" style="padding:6px 12px;border-radius:6px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;text-decoration:none;font-size:0.78rem;font-weight:600;margin-left:6px;">
+        <i class="fas fa-sync"></i> Refresh
+      </a>
+    </span>
+  </div>
+
+  <div class="mon-section-title"><i class="fas fa-users"></i> User Base</div>
+  <div class="mon-grid">
+    <div class="mon-card info">
+      <div class="label">Students total</div>
+      <div class="value">{{ counts.students_total|default:0 }}</div>
+      <div class="delta" style="color:#10b981;">{{ counts.students_active|default:0 }} active</div>
+    </div>
+    <div class="mon-card info">
+      <div class="label">Teachers total</div>
+      <div class="value">{{ counts.teachers_total|default:0 }}</div>
+      <div class="delta" style="color:#10b981;">{{ counts.teachers_active|default:0 }} active</div>
+    </div>
+    <div class="mon-card info">
+      <div class="label">Classes</div>
+      <div class="value">{{ counts.classes_total|default:0 }}</div>
+      <div class="delta" style="color:#64748b;">{{ counts.batches_total|default:0 }} batches</div>
+    </div>
+    <div class="mon-card info">
+      <div class="label">Tests</div>
+      <div class="value">{{ counts.tests_total|default:0 }}</div>
+    </div>
+  </div>
+
+  <div class="mon-section-title"><i class="fas fa-calendar-day"></i> Today &amp; Recent Activity</div>
+  <div class="mon-grid">
+    <div class="mon-card ok">
+      <div class="label">Attendance today</div>
+      <div class="value">{{ counts.attendance_pct|default:0 }}%</div>
+      <div class="delta" style="color:#64748b;">{{ counts.attendance_present|default:0 }} / {{ counts.attendance_today|default:0 }}</div>
+    </div>
+    <div class="mon-card info">
+      <div class="label">Logins (24h)</div>
+      <div class="value">{{ counts.logins_24h|default:0 }}</div>
+      <div class="delta" style="color:#10b981;">{{ counts.login_success_24h|default:0 }} ok</div>
+      <div class="delta" style="color:#dc2626;">{{ counts.login_fail_24h|default:0 }} failed</div>
+    </div>
+    <div class="mon-card info">
+      <div class="label">Access events (1h)</div>
+      <div class="value">{{ counts.access_logs_1h|default:0 }}</div>
+      <div class="delta" style="color:#64748b;">{{ counts.access_logs_24h|default:0 }} in 24h</div>
+    </div>
+    <div class="mon-card warn">
+      <div class="label">Access denied (24h)</div>
+      <div class="value">{{ counts.access_denied_24h|default:0 }}</div>
+    </div>
+    <div class="mon-card info">
+      <div class="label">Audit entries (24h)</div>
+      <div class="value">{{ counts.audit_24h|default:0 }}</div>
+    </div>
+  </div>
+
+  <div class="mon-section-title"><i class="fas fa-bell"></i> Alerts</div>
+  <div class="mon-grid">
+    <div class="mon-card info">
+      <div class="label">Rules total</div>
+      <div class="value">{{ alerts.rules_total }}</div>
+      <div class="delta" style="color:#10b981;">{{ alerts.rules_active }} active</div>
+    </div>
+    <div class="mon-card warn">
+      <div class="label">Triggered (24h)</div>
+      <div class="value">{{ alerts.logs_24h }}</div>
+    </div>
+    <div class="mon-card err">
+      <div class="label">Critical (24h)</div>
+      <div class="value">{{ alerts.critical_24h }}</div>
+    </div>
+    <div class="mon-card warn">
+      <div class="label">Unacknowledged</div>
+      <div class="value">{{ alerts.unacknowledged }}</div>
+    </div>
+  </div>
+
+  {% if alerts.recent %}
+  <div class="mon-section-title"><i class="fas fa-history"></i> Latest 10 Alerts</div>
+  <table class="mon-table">
+    <thead>
+      <tr><th>Time</th><th>Severity</th><th>Rule</th><th>Message</th><th>Ack</th></tr>
+    </thead>
+    <tbody>
+      {% for a in alerts.recent %}
+      <tr>
+        <td>{{ a.triggered_at|date:"d M H:i" }}</td>
+        <td>
+          {% if a.severity == 'CRITICAL' %}<span class="mon-pill crit">Critical</span>
+          {% elif a.severity == 'WARNING' %}<span class="mon-pill warn">Warning</span>
+          {% else %}<span class="mon-pill info">Info</span>{% endif %}
+        </td>
+        <td>{{ a.rule.name }}</td>
+        <td style="max-width:380px;">{{ a.message|truncatechars:100 }}</td>
+        <td>{% if a.is_acknowledged %}<i class="fas fa-check" style="color:#10b981;"></i>{% else %}<i class="fas fa-clock" style="color:#f59e0b;"></i>{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  <div class="mon-section-title"><i class="fas fa-server"></i> Backend &amp; Infra Health</div>
+  <div class="mon-grid">
+    <div class="mon-card {% if backend.cache == 'OK' %}ok{% else %}err{% endif %}">
+      <div class="label">Cache (Redis)</div>
+      <div class="value" style="font-size:1rem;">
+        <span class="mon-status {% if backend.cache == 'OK' %}up{% else %}down{% endif %}">
+          {% if backend.cache == 'OK' %}<i class="fas fa-check-circle"></i> Up{% else %}<i class="fas fa-times-circle"></i> {{ backend.cache }}{% endif %}
+        </span>
+      </div>
+    </div>
+    <div class="mon-card {% if backend.celery_broker == 'OK' %}ok{% else %}err{% endif %}">
+      <div class="label">Celery broker</div>
+      <div class="value" style="font-size:1rem;">
+        <span class="mon-status {% if backend.celery_broker == 'OK' %}up{% else %}down{% endif %}">
+          {% if backend.celery_broker == 'OK' %}<i class="fas fa-check-circle"></i> Up{% else %}<i class="fas fa-times-circle"></i> Down{% endif %}
+        </span>
+      </div>
+    </div>
+    <div class="mon-card info">
+      <div class="label">Models registered</div>
+      <div class="value">{{ backend.models_registered|default:0 }}</div>
+    </div>
+  </div>
+
+  <div class="mon-section-title"><i class="fas fa-globe"></i> Frontend / Sessions</div>
+  <div class="mon-grid">
+    <div class="mon-card info">
+      <div class="label">Active sessions</div>
+      <div class="value">{{ frontend.sessions_active }}</div>
+    </div>
+    <div class="mon-card info">
+      <div class="label">Sessions started (24h)</div>
+      <div class="value">{{ frontend.sessions_24h }}</div>
+    </div>
+  </div>
+
+  <div class="mon-section-title"><i class="fas fa-database"></i> Database</div>
+  <div class="mon-grid">
+    <div class="mon-card info">
+      <div class="label">Database size</div>
+      <div class="value" style="font-size:1.2rem;">{{ db_stats.db_size|default:"n/a" }}</div>
+    </div>
+    <div class="mon-card info">
+      <div class="label">Active connections</div>
+      <div class="value">{{ db_stats.active_connections|default:"n/a" }}</div>
+      <div class="delta" style="color:#64748b;">{{ db_stats.total_connections|default:"n/a" }} total</div>
+    </div>
+  </div>
+
+  {% if db_stats.top_tables %}
+  <div class="mon-section-title"><i class="fas fa-table"></i> Largest Tables</div>
+  <table class="mon-table">
+    <thead><tr><th>Table</th><th>Size</th><th>Rows</th></tr></thead>
+    <tbody>
+      {% for t in db_stats.top_tables %}
+      <tr><td>{{ t.name }}</td><td>{{ t.size }}</td><td>{{ t.rows }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  {% if db_stats.error %}
+  <div style="margin-top:14px;padding:10px;background:#fef2f2;border:1px solid #fecaca;color:#991b1b;border-radius:8px;font-size:0.78rem;">
+    <strong>Database stats unavailable:</strong> {{ db_stats.error }}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

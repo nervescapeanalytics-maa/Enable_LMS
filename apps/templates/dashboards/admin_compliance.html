@@ -1,0 +1,139 @@
+{% extends 'dashboards/admin_base.html' %}
+
+{% block admin_content %}
+<div class="page-header">
+  <div><h2><i class="fas fa-shield-alt"></i> Audit, Compliance & Sessions</h2><p>Consolidated view of audit trails, login activity, and session monitoring</p></div>
+</div>
+
+<!-- Summary Cards -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px;">
+  <div class="card" style="padding:20px;text-align:center;border-left:4px solid #6366f1;">
+    <div style="font-size:2rem;font-weight:800;color:#6366f1;">{{ total_logs }}</div>
+    <div style="font-size:0.82rem;color:#64748b;margin-top:4px;">Total Audit Logs</div>
+  </div>
+  <div class="card" style="padding:20px;text-align:center;border-left:4px solid #22c55e;">
+    <div style="font-size:2rem;font-weight:800;color:#22c55e;">{{ active_sessions }}</div>
+    <div style="font-size:0.82rem;color:#64748b;margin-top:4px;">Active Sessions</div>
+  </div>
+  <div class="card" style="padding:20px;text-align:center;border-left:4px solid #3b82f6;">
+    <div style="font-size:2rem;font-weight:800;color:#3b82f6;">{{ successful_logins }}</div>
+    <div style="font-size:0.82rem;color:#64748b;margin-top:4px;">✅ Today's Logins</div>
+  </div>
+  <div class="card" style="padding:20px;text-align:center;border-left:4px solid #ef4444;">
+    <div style="font-size:2rem;font-weight:800;color:#ef4444;">{{ failed_logins }}</div>
+    <div style="font-size:0.82rem;color:#64748b;margin-top:4px;">❌ Failed Attempts</div>
+  </div>
+  <div class="card" style="padding:20px;text-align:center;border-left:4px solid #f59e0b;">
+    <div style="font-size:2rem;font-weight:800;color:#f59e0b;">{{ total_sessions_today }}</div>
+    <div style="font-size:0.82rem;color:#64748b;margin-top:4px;">Sessions Today</div>
+  </div>
+</div>
+
+<!-- Login Trend Chart -->
+<div class="card" style="margin-bottom:24px;">
+  <div class="card-header"><h3><i class="fas fa-chart-line"></i> Login Trend (7 Days)</h3></div>
+  <div style="padding:24px;">
+    <div style="display:flex;align-items:flex-end;gap:12px;height:160px;">
+      {% for day in login_trend %}
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
+        <div style="font-size:0.72rem;font-weight:600;color:#0f172a;">{{ day.total }}</div>
+        <div style="width:100%;display:flex;flex-direction:column;gap:2px;">
+          {% if day.total > 0 %}
+          <div style="background:#22c55e;height:{% widthratio day.success day.total 120 %}px;border-radius:4px 4px 0 0;min-height:2px;" title="{{ day.success }} successful"></div>
+          {% if day.failed > 0 %}
+          <div style="background:#ef4444;height:{% widthratio day.failed day.total 120 %}px;border-radius:0 0 4px 4px;min-height:2px;" title="{{ day.failed }} failed"></div>
+          {% endif %}
+          {% else %}
+          <div style="background:#f1f5f9;height:4px;border-radius:4px;"></div>
+          {% endif %}
+        </div>
+        <div style="font-size:0.7rem;color:#94a3b8;">{{ day.date }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    <div style="margin-top:12px;display:flex;gap:16px;justify-content:center;">
+      <span style="font-size:0.78rem;color:#64748b;"><span style="display:inline-block;width:10px;height:10px;background:#22c55e;border-radius:2px;margin-right:4px;"></span>Successful</span>
+      <span style="font-size:0.78rem;color:#64748b;"><span style="display:inline-block;width:10px;height:10px;background:#ef4444;border-radius:2px;margin-right:4px;"></span>Failed</span>
+    </div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
+  <!-- Device Stats -->
+  <div class="card">
+    <div class="card-header"><h3><i class="fas fa-mobile-alt"></i> Device Distribution</h3></div>
+    <div style="padding:20px;">
+      {% for d in device_stats %}
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;{% if not forloop.last %}border-bottom:1px solid #f1f5f9;{% endif %}">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <i class="fas {% if d.device_type == 'MOBILE' %}fa-mobile-alt{% elif d.device_type == 'TABLET' %}fa-tablet-alt{% elif d.device_type == 'DESKTOP' %}fa-desktop{% else %}fa-question{% endif %}" style="color:#6366f1;width:20px;text-align:center;"></i>
+          <span style="font-weight:600;">{{ d.device_type }}</span>
+        </div>
+        <span style="background:#f1f5f9;padding:2px 10px;border-radius:10px;font-size:0.82rem;font-weight:700;color:#475569;">{{ d.count }}</span>
+      </div>
+      {% empty %}
+      <div style="text-align:center;padding:20px;color:#94a3b8;">No device data available</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Action Breakdown -->
+  <div class="card">
+    <div class="card-header"><h3><i class="fas fa-tasks"></i> Audit Actions (7 Days)</h3></div>
+    <div style="padding:20px;">
+      {% for a in action_breakdown %}
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;{% if not forloop.last %}border-bottom:1px solid #f1f5f9;{% endif %}">
+        <span style="font-weight:600;font-size:0.85rem;">{{ a.action }}</span>
+        <span style="background:#6366f1;color:#fff;padding:2px 10px;border-radius:10px;font-size:0.78rem;font-weight:700;">{{ a.count }}</span>
+      </div>
+      {% empty %}
+      <div style="text-align:center;padding:20px;color:#94a3b8;">No recent actions</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Recent Audit Logs -->
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fas fa-history"></i> Recent Audit Logs</h3>
+    <div style="display:flex;gap:8px;">
+      <span class="card-badge info">{{ audit_logs|length }} Recent</span>
+      <a href="/staff/audit/" style="color:#3b82f6;font-size:0.82rem;text-decoration:none;font-weight:600;"><i class="fas fa-external-link-alt"></i> Full Log</a>
+    </div>
+  </div>
+  {% if audit_logs %}
+  <div style="overflow-x:auto">
+    <table class="adm-table">
+      <thead><tr><th>Time</th><th>Action</th><th>Entity</th><th>User</th><th>IP</th><th>Details</th></tr></thead>
+      <tbody>
+        {% for log in audit_logs %}
+        <tr>
+          <td>
+            <div style="font-size:0.78rem;color:#64748b;">{{ log.time }}</div>
+            <div style="font-size:0.68rem;color:#cbd5e1;">{{ log.timestamp }}</div>
+          </td>
+          <td>
+            <span style="background:{% if 'CREATE' in log.action %}#dcfce7{% elif 'UPDATE' in log.action %}#dbeafe{% elif 'DELETE' in log.action %}#fef2f2{% elif 'LOGIN' in log.action %}#fef3c7{% else %}#f1f5f9{% endif %};color:{% if 'CREATE' in log.action %}#166534{% elif 'UPDATE' in log.action %}#1e40af{% elif 'DELETE' in log.action %}#dc2626{% elif 'LOGIN' in log.action %}#92400e{% else %}#475569{% endif %};padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:600;">{{ log.action }}</span>
+          </td>
+          <td>
+            {% if log.entity_type %}<span style="font-size:0.82rem;font-weight:600;">{{ log.entity_type }}</span>
+            {% if log.entity_id %}<span style="font-size:0.72rem;color:#94a3b8;"> #{{ log.entity_id }}</span>{% endif %}
+            {% else %}<span style="color:#cbd5e1;">—</span>{% endif %}
+          </td>
+          <td>
+            {% if log.user_type %}<span style="background:#f1f5f9;padding:1px 6px;border-radius:3px;font-size:0.72rem;">{{ log.user_type }}</span>{% endif %}
+            {% if log.user_id %}<span style="font-size:0.72rem;color:#94a3b8;">{{ log.user_id }}</span>{% endif %}
+          </td>
+          <td style="font-family:monospace;font-size:0.78rem;color:#64748b;">{{ log.ip|default:"—" }}</td>
+          <td style="font-size:0.78rem;color:#94a3b8;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ log.details|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><i class="fas fa-history"></i><p>No audit logs found</p></div>
+  {% endif %}
+</div>
+{% endblock %}

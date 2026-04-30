@@ -1,0 +1,171 @@
+{% load static %}
+<div class="friendly-json-widget schedule-picker-widget" id="spw-{{ widget.name }}">
+  <style>
+    .spw-container { border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
+    .spw-header { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
+    .spw-header i { color: #2563eb; }
+    .spw-header-title { font-weight: 600; font-size: 13px; color: #334155; }
+    .spw-body { padding: 16px; }
+    .spw-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+    .spw-label { font-size: 13px; font-weight: 500; color: #475569; min-width: 100px; }
+    .spw-select { padding: 7px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 13px; color: #334155; background: #fff; cursor: pointer; outline: none; }
+    .spw-select:focus { border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,0.12); }
+    .spw-time-input { padding: 7px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 13px; color: #334155; outline: none; width: 110px; }
+    .spw-time-input:focus { border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,0.12); }
+    .spw-days-grid { display: flex; gap: 6px; flex-wrap: wrap; }
+    .spw-day-btn { padding: 6px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 12px; font-weight: 500; color: #64748b; background: #fff; cursor: pointer; transition: all 0.15s; user-select: none; }
+    .spw-day-btn:hover { border-color: #2563eb; color: #2563eb; }
+    .spw-day-btn.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+    .spw-preview { margin-top: 12px; padding: 10px 14px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; }
+    .spw-preview-label { font-size: 11px; color: #2563eb; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .spw-preview-text { font-size: 13px; color: #1e40af; font-weight: 500; }
+    .spw-help { font-size: 11px; color: #94a3b8; margin-top: 6px; padding: 0 4px; }
+    .spw-help i { color: #2563eb; margin-right: 4px; }
+    .spw-monthly-opts { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .spw-hidden { display: none; }
+  </style>
+
+  <div class="spw-container">
+    <div class="spw-header">
+      <i class="fas fa-calendar-alt"></i>
+      <span class="spw-header-title">Schedule Settings</span>
+    </div>
+
+    <div class="spw-body">
+      <!-- Frequency -->
+      <div class="spw-row">
+        <span class="spw-label">Repeat Every:</span>
+        <select class="spw-select" id="spw-freq-{{ widget.name }}" onchange="spwFreqChanged('{{ widget.name }}')">
+          <option value="daily" {% if widget.frequency == "daily" %}selected{% endif %}>Day (Daily)</option>
+          <option value="weekly" {% if widget.frequency == "weekly" %}selected{% endif %}>Week (Weekly)</option>
+          <option value="monthly" {% if widget.frequency == "monthly" %}selected{% endif %}>Month (Monthly)</option>
+        </select>
+      </div>
+
+      <!-- Time -->
+      <div class="spw-row">
+        <span class="spw-label">At Time:</span>
+        <input type="time" class="spw-time-input" id="spw-time-{{ widget.name }}" value="{{ widget.time_value }}"
+               onchange="spwUpdatePreview('{{ widget.name }}')">
+      </div>
+
+      <!-- Weekly: Day selection -->
+      <div class="spw-row" id="spw-weekly-{{ widget.name }}" {% if widget.frequency != "weekly" %}style="display:none;"{% endif %}>
+        <span class="spw-label">On Days:</span>
+        <div class="spw-days-grid">
+          {% for dval, dlabel, dshort in widget.day_choices %}
+          <button type="button" class="spw-day-btn {% if dval in widget.selected_days %}active{% endif %}"
+                  data-day="{{ dval }}" onclick="spwToggleDay(this, '{{ widget.name }}')">
+            {{ dshort }}
+          </button>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Monthly: Day of month -->
+      <div class="spw-row" id="spw-monthly-{{ widget.name }}" {% if widget.frequency != "monthly" %}style="display:none;"{% endif %}>
+        <span class="spw-label">On Day:</span>
+        <div class="spw-monthly-opts">
+          <select class="spw-select" id="spw-monthday-{{ widget.name }}" onchange="spwUpdatePreview('{{ widget.name }}')">
+            {% for d in widget.month_days %}
+            <option value="{{ d }}" {% if d == widget.selected_monthday %}selected{% endif %}>{{ d }}{% if d == 1 %}st{% elif d == 2 %}nd{% elif d == 3 %}rd{% else %}th{% endif %}</option>
+            {% endfor %}
+            <option value="L" {% if widget.selected_monthday == "L" %}selected{% endif %}>Last day</option>
+          </select>
+          <span style="font-size:12px;color:#64748b;">of every month</span>
+        </div>
+      </div>
+
+      <!-- Hidden field to store the cron expression -->
+      <input type="hidden" name="{{ widget.name }}" id="spw-cron-{{ widget.name }}" value="{{ widget.cron_value }}">
+
+      <!-- Preview -->
+      <div class="spw-preview">
+        <div class="spw-preview-label"><i class="fas fa-eye"></i> Schedule Preview</div>
+        <div class="spw-preview-text" id="spw-preview-{{ widget.name }}">{{ widget.preview_text }}</div>
+      </div>
+    </div>
+  </div>
+
+  <p class="spw-help"><i class="fas fa-info-circle"></i> Set how often this report should be automatically generated and sent to the recipients listed below.</p>
+</div>
+
+<script>
+(function(){
+  var dayLabels = {'1':'Monday','2':'Tuesday','3':'Wednesday','4':'Thursday','5':'Friday','6':'Saturday','0':'Sunday'};
+  var dayShort = {'1':'Mon','2':'Tue','3':'Wed','4':'Thu','5':'Fri','6':'Sat','0':'Sun'};
+
+  window.spwFreqChanged = function(name) {
+    var freq = document.getElementById('spw-freq-' + name).value;
+    document.getElementById('spw-weekly-' + name).style.display = freq === 'weekly' ? '' : 'none';
+    document.getElementById('spw-monthly-' + name).style.display = freq === 'monthly' ? '' : 'none';
+    spwUpdatePreview(name);
+  };
+
+  window.spwToggleDay = function(btn, name) {
+    btn.classList.toggle('active');
+    spwUpdatePreview(name);
+  };
+
+  window.spwUpdatePreview = function(name) {
+    var freq = document.getElementById('spw-freq-' + name).value;
+    var timeVal = document.getElementById('spw-time-' + name).value || '09:00';
+    var parts = timeVal.split(':');
+    var hour = parseInt(parts[0]);
+    var minute = parseInt(parts[1] || '0');
+    var cron = '';
+    var preview = '';
+
+    // Format time for display
+    var ampm = hour >= 12 ? 'PM' : 'AM';
+    var displayHour = hour % 12 || 12;
+    var timeDisplay = displayHour + ':' + (minute < 10 ? '0' : '') + minute + ' ' + ampm;
+
+    if (freq === 'daily') {
+      cron = minute + ' ' + hour + ' * * *';
+      preview = 'Runs every day at ' + timeDisplay;
+    }
+    else if (freq === 'weekly') {
+      var selectedBtns = document.getElementById('spw-weekly-' + name).querySelectorAll('.spw-day-btn.active');
+      var days = [];
+      var dayNames = [];
+      selectedBtns.forEach(function(b) {
+        days.push(b.getAttribute('data-day'));
+        dayNames.push(dayShort[b.getAttribute('data-day')]);
+      });
+      if (days.length === 0) {
+        days = ['1'];
+        dayNames = ['Mon'];
+        // Auto-select Monday
+        var monBtn = document.getElementById('spw-weekly-' + name).querySelector('[data-day="1"]');
+        if (monBtn) monBtn.classList.add('active');
+      }
+      cron = minute + ' ' + hour + ' * * ' + days.join(',');
+      preview = 'Runs every ' + dayNames.join(', ') + ' at ' + timeDisplay;
+    }
+    else if (freq === 'monthly') {
+      var monthDay = document.getElementById('spw-monthday-' + name).value;
+      if (monthDay === 'L') {
+        cron = minute + ' ' + hour + ' L * *';
+        preview = 'Runs on the last day of every month at ' + timeDisplay;
+      } else {
+        cron = minute + ' ' + hour + ' ' + monthDay + ' * *';
+        var suffix = 'th';
+        var md = parseInt(monthDay);
+        if (md === 1 || md === 21 || md === 31) suffix = 'st';
+        else if (md === 2 || md === 22) suffix = 'nd';
+        else if (md === 3 || md === 23) suffix = 'rd';
+        preview = 'Runs on the ' + md + suffix + ' of every month at ' + timeDisplay;
+      }
+    }
+
+    document.getElementById('spw-cron-' + name).value = cron;
+    document.getElementById('spw-preview-' + name).textContent = preview;
+  };
+
+  // Initialize preview on load
+  setTimeout(function() {
+    spwUpdatePreview('{{ widget.name }}');
+  }, 100);
+})();
+</script>

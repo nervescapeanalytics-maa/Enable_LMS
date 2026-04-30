@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}My Schedule – Student Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+  body{background:#f3f4f6;}
+  .sch-shell{max-width:1100px;margin:0 auto;padding:24px 20px;}
+  .sch-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;}
+  .sch-header h1{font-size:26px;font-weight:700;color:#111827;margin:0;}
+  .nav-pill{display:flex;gap:10px;}
+  .user-pill{background:#fff;border:1px solid #e5e7eb;border-radius:999px;padding:8px 18px;font-weight:500;color:#374151;}
+  .user-pill a{color:#2563eb;margin-left:14px;text-decoration:none;font-size:13px;}
+  .tab-bar{display:flex;gap:0;margin-bottom:24px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;}
+  .tab{flex:1;text-align:center;padding:12px;font-size:13px;font-weight:600;color:#6b7280;text-decoration:none;border-right:1px solid #e5e7eb;transition:all .15s;}
+  .tab:last-child{border-right:none;}
+  .tab.active,.tab:hover{background:#dbeafe;color:#1d4ed8;}
+  .panel{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px 24px;margin-bottom:20px;box-shadow:0 1px 2px rgba(0,0,0,.04);}
+  .panel h2{margin:0 0 16px;font-size:16px;font-weight:600;color:#111827;display:flex;align-items:center;gap:8px;}
+  .panel h2 i{color:#2563eb;}
+  table.x{width:100%;border-collapse:collapse;}
+  table.x th{font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:#6b7280;font-weight:600;padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:left;}
+  table.x td{padding:13px 12px;border-bottom:1px solid #f3f4f6;font-size:14px;color:#374151;vertical-align:middle;}
+  table.x tr:last-child td{border-bottom:none;}
+  .badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600;}
+  .b-green{background:#d1fae5;color:#065f46;}
+  .b-blue{background:#dbeafe;color:#1e40af;}
+  .b-gray{background:#f3f4f6;color:#374151;}
+  .b-red{background:#fee2e2;color:#991b1b;}
+  .b-yellow{background:#fef3c7;color:#92400e;}
+  .empty{text-align:center;padding:48px 20px;color:#6b7280;}
+  .empty i{font-size:40px;color:#d1d5db;margin-bottom:12px;display:block;}
+  .week-nav{display:flex;align-items:center;gap:14px;margin-bottom:20px;}
+  .week-nav button{background:#fff;border:1px solid #d1d5db;border-radius:8px;padding:7px 14px;cursor:pointer;font-weight:500;font-size:13px;}
+  .week-nav button:hover{background:#f3f4f6;}
+  .week-label{font-weight:600;font-size:15px;color:#111827;}
+  .meta{color:#6b7280;font-size:12px;}
+  .today-row td{background:#eff6ff;}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="sch-shell">
+
+  <div class="sch-header">
+    <h1><i class="fas fa-calendar-alt"></i> My Schedule</h1>
+    <div class="user-pill">
+      <i class="fas fa-user-circle"></i> {{ user_name }}
+      <a href="/student/dashboard/"><i class="fas fa-th-large"></i> Dashboard</a>
+      <a href="/student/exams/"><i class="fas fa-clipboard-check"></i> My Exams</a>
+      <a href="/logout/"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+  </div>
+
+  <div class="tab-bar">
+    <a href="?view=upcoming" class="tab {% if view == 'upcoming' or not view %}active{% endif %}">
+      <i class="fas fa-forward"></i> Upcoming Classes
+    </a>
+    <a href="?view=tests" class="tab {% if view == 'tests' %}active{% endif %}">
+      <i class="fas fa-clipboard-list"></i> Upcoming Tests
+    </a>
+    <a href="?view=all" class="tab {% if view == 'all' %}active{% endif %}">
+      <i class="fas fa-list"></i> All Classes
+    </a>
+  </div>
+
+  {% if view == 'tests' %}
+  <!-- ── Upcoming Tests ── -->
+  <div class="panel">
+    <h2><i class="fas fa-clipboard-list"></i> Upcoming Tests</h2>
+    {% if upcoming_tests %}
+    <table class="x">
+      <thead>
+        <tr>
+          <th>Test</th>
+          <th>Subject</th>
+          <th>Chapter</th>
+          <th>Type</th>
+          <th>Starts</th>
+          <th>Duration</th>
+          <th>Marks</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in upcoming_tests %}
+        <tr>
+          <td><strong>{{ t.title }}</strong><br><span class="meta">{{ t.test_code }}</span></td>
+          <td>{% if t.subject %}{{ t.subject.name }}{% else %}—{% endif %}</td>
+          <td>{% if t.chapter %}{{ t.chapter.name }}{% else %}—{% endif %}</td>
+          <td><span class="badge b-blue">{{ t.get_test_type_display }}</span></td>
+          <td>{{ t.start_datetime|date:"M j, Y H:i" }}</td>
+          <td>{{ t.total_duration_minutes }} min</td>
+          <td>{{ t.total_marks }}</td>
+          <td><a href="/student/exams/" class="badge b-blue">View Exams</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty">
+      <i class="fas fa-clipboard-list"></i>
+      <p><strong>No upcoming tests scheduled.</strong></p>
+      <p>Your teacher hasn't scheduled any upcoming tests yet. Check <a href="/student/exams/">My Exams</a> for available tests.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  {% elif view == 'all' %}
+  <!-- ── All Classes ── -->
+  <div class="panel">
+    <h2><i class="fas fa-list"></i> All Classes</h2>
+    {% if all_classes %}
+    <table class="x">
+      <thead>
+        <tr>
+          <th>Subject</th>
+          <th>Teacher</th>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Status</th>
+          <th>Type</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in all_classes %}
+        <tr {% if c.scheduled_date == today %}class="today-row"{% endif %}>
+          <td><strong>{{ c.subject|default:"—" }}</strong></td>
+          <td>{{ c.teacher_name|default:"—" }}</td>
+          <td>{{ c.scheduled_date|date:"M j, Y" }}{% if c.scheduled_date == today %} <span class="badge b-green">Today</span>{% endif %}</td>
+          <td>{{ c.start_time|time:"H:i" }}{% if c.end_time %} – {{ c.end_time|time:"H:i" }}{% endif %}</td>
+          <td>
+            {% if c.status == 'LIVE' %}<span class="badge b-green">Live Now</span>
+            {% elif c.status == 'SCHEDULED' %}<span class="badge b-blue">Scheduled</span>
+            {% elif c.status == 'COMPLETED' %}<span class="badge b-gray">Completed</span>
+            {% elif c.status == 'CANCELLED' %}<span class="badge b-red">Cancelled</span>
+            {% else %}<span class="badge b-gray">{{ c.status }}</span>
+            {% endif %}
+          </td>
+          <td>{{ c.class_type|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty">
+      <i class="fas fa-calendar-times"></i>
+      <p><strong>No classes found.</strong></p>
+      <p>No classes have been scheduled yet. Your teacher or admin will add them here.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  {% else %}
+  <!-- ── Upcoming Classes (default) ── -->
+  <div class="panel">
+    <h2><i class="fas fa-forward"></i> Upcoming Classes</h2>
+    {% if upcoming_classes %}
+    <table class="x">
+      <thead>
+        <tr>
+          <th>Subject</th>
+          <th>Teacher</th>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Status</th>
+          <th>Type</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in upcoming_classes %}
+        <tr {% if c.scheduled_date == today %}class="today-row"{% endif %}>
+          <td><strong>{{ c.subject|default:"—" }}</strong></td>
+          <td>{{ c.teacher_name|default:"—" }}</td>
+          <td>{{ c.scheduled_date|date:"M j, Y" }}{% if c.scheduled_date == today %} <span class="badge b-green">Today</span>{% endif %}</td>
+          <td>{{ c.start_time|time:"H:i" }}{% if c.end_time %} – {{ c.end_time|time:"H:i" }}{% endif %}</td>
+          <td>
+            {% if c.status == 'LIVE' %}<span class="badge b-green">Live Now</span>
+            {% elif c.status == 'SCHEDULED' %}<span class="badge b-blue">Scheduled</span>
+            {% else %}<span class="badge b-gray">{{ c.status }}</span>
+            {% endif %}
+          </td>
+          <td>{{ c.class_type|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty">
+      <i class="fas fa-calendar-alt"></i>
+      <p><strong>No upcoming classes.</strong></p>
+      <p>Your teacher hasn't scheduled any upcoming classes yet.<br>
+         Check back here — classes will appear automatically once your admin or teacher adds them.</p>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends 'dashboards/admin_base.html' %}
+
+{% block admin_content %}
+<div class="page-header">
+  <div><h2>All Students</h2><p>Manage student accounts</p></div>
+</div>
+
+<div class="stat-row">
+  <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-users"></i></div><div class="stat-info"><div class="stat-value">{{ total_students }}</div><div class="stat-label">Total Students</div></div></div>
+  <div class="stat-card"><div class="stat-icon green"><i class="fas fa-check-circle"></i></div><div class="stat-info"><div class="stat-value">{{ active_students }}</div><div class="stat-label">Active</div></div></div>
+  <div class="stat-card"><div class="stat-icon red"><i class="fas fa-times-circle"></i></div><div class="stat-info"><div class="stat-value">{{ inactive_students }}</div><div class="stat-label">Inactive</div></div></div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fas fa-users"></i> Student Directory</h3>
+    <span class="card-badge info">{{ total_students }} Total</span>
+  </div>
+  {% if students %}
+  <div style="overflow-x:auto">
+    <table class="adm-table">
+      <thead><tr><th>Name</th><th>Student Code</th><th>Email</th><th>Phone</th><th>Center</th><th>Joined</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for s in students %}
+        <tr>
+          <td style="font-weight:600;">{{ s.name }}</td>
+          <td><span style="font-family:monospace;font-size:0.82rem;color:#64748b;">{{ s.code }}</span></td>
+          <td>{{ s.email }}</td>
+          <td>{{ s.phone|default:"—" }}</td>
+          <td>{{ s.tenant }}</td>
+          <td style="white-space:nowrap;">{{ s.joined }}</td>
+          <td><span class="status {% if s.status == 'ACTIVE' %}active{% else %}inactive{% endif %}">{{ s.status }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><i class="fas fa-users"></i><p>No students found</p></div>
+  {% endif %}
+</div>
+{% endblock %}

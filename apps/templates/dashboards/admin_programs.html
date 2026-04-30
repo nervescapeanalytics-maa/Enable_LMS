@@ -1,0 +1,33 @@
+{% extends 'dashboards/admin_base.html' %}
+
+{% block admin_content %}
+<div class="page-header">
+  <div><h2>Programs</h2><p>Manage program groups and categories</p></div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fas fa-graduation-cap"></i> Program Groups</h3>
+    <span class="card-badge info">{{ total_groups }} Total</span>
+  </div>
+  {% if groups %}
+  <div style="overflow-x:auto">
+    <table class="adm-table">
+      <thead><tr><th>Program Name</th><th>Description</th><th>Categories</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for g in groups %}
+        <tr>
+          <td style="font-weight:600;">{{ g.name }}</td>
+          <td style="color:#64748b;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ g.description|default:"—" }}</td>
+          <td><strong>{{ g.categories }}</strong></td>
+          <td><span class="status {% if g.status == 'Active' %}active{% else %}inactive{% endif %}">{{ g.status }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><i class="fas fa-graduation-cap"></i><p>No programs found. Create your first program group.</p></div>
+  {% endif %}
+</div>
+{% endblock %}

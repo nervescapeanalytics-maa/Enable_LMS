@@ -1,0 +1,130 @@
+{% extends "admin/change_list.html" %}
+{% load static %}
+
+{% block extrahead %}
+{{ block.super }}
+<script>
+  window.ENF_FILTER_FIELDS = {{ enf_filter_fields_json|default:"{}"|safe }};
+  window.ENF_PAGE_CTX = {app:'{{ cl.opts.app_label|default:"" }}', model:'{{ cl.opts.model_name|default:"" }}'};
+</script>
+<style>
+  .enf-cp-trigger { display:inline-flex; align-items:center; gap:8px; padding:9px 16px 9px 14px; height:36px; box-sizing:border-box; background:linear-gradient(135deg,#844FC1 0%,#6366f1 50%,#EC4899 100%) !important; color:#fff !important; border:none; border-radius:999px; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; cursor:pointer; white-space:nowrap; line-height:1.2; box-shadow:0 4px 14px rgba(132,79,193,0.4); transition:transform .15s ease, box-shadow .15s ease, filter .15s ease; }
+  .enf-cp-trigger:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(132,79,193,0.5); filter:brightness(1.05); }
+  .enf-cp-trigger kbd { background:rgba(255,255,255,0.22); border:1px solid rgba(255,255,255,0.35); color:#fff; padding:1px 6px; border-radius:4px; font-family:ui-monospace,monospace; font-size:0.65rem; font-weight:600; }
+  .enf-cp-backdrop { position:fixed; inset:0; background:rgba(15,23,42,0.45); backdrop-filter:blur(3px); z-index:1099; opacity:0; pointer-events:none; transition:opacity .15s ease; }
+  .enf-cp-backdrop.open { opacity:1; pointer-events:auto; }
+  .enf-cp { position:fixed; top:18vh; left:50%; transform:translateX(-50%) translateY(-8px); width:min(620px,calc(100vw - 32px)); background:#fff; border-radius:14px; box-shadow:0 24px 70px rgba(15,23,42,0.4),0 0 0 1px rgba(132,79,193,0.18); z-index:1100; opacity:0; pointer-events:none; transition:opacity .15s ease, transform .2s cubic-bezier(.34,1.56,.64,1); overflow:hidden; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+  .enf-cp.open { opacity:1; pointer-events:auto; transform:translateX(-50%) translateY(0); }
+  .enf-cp-head { display:flex; align-items:center; gap:10px; padding:10px 14px; border-bottom:1px solid #f1f5f9; cursor:grab; user-select:none; background:linear-gradient(180deg,#fff 0%,#fafafa 100%); }
+  .enf-cp-head:active { cursor:grabbing; }
+  .enf-cp-head .enf-cp-grip { color:#cbd5e1; font-size:0.85rem; }
+  .enf-cp-head input { flex:1; border:none; outline:none; background:transparent; font-size:0.95rem; color:#0f172a; padding:6px 0; }
+  .enf-cp-head input::placeholder { color:#94a3b8; }
+  .enf-cp-head .enf-cp-hint { color:#94a3b8; font-size:0.7rem; background:#f1f5f9; border-radius:4px; padding:2px 6px; font-family:ui-monospace,monospace; }
+  .enf-cp-list { max-height:50vh; overflow-y:auto; padding:6px 6px 8px; }
+  .enf-cp-section { font-size:0.62rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#94a3b8; padding:10px 12px 4px; }
+  .enf-cp-section:first-child { padding-top:6px; }
+  .enf-cp-item { display:flex !important; align-items:center; gap:12px; padding:10px 12px !important; border-radius:8px; color:#1e293b !important; text-decoration:none !important; cursor:pointer; background:transparent !important; border:1px solid transparent !important; box-shadow:none !important; text-transform:none !important; font-size:0.85rem !important; font-weight:500 !important; letter-spacing:normal !important; }
+  .enf-cp-item.is-active, .enf-cp-item:hover { background:linear-gradient(135deg,#f5f3ff,#fdf2f8) !important; border-color:#ddd6fe !important; color:#0f172a !important; }
+  .enf-cp-icon { flex:0 0 30px; height:30px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; font-size:0.85rem; color:#fff; background:linear-gradient(135deg,#6366f1,#844FC1); }
+  .enf-cp-item.t-import .enf-cp-icon { background:linear-gradient(135deg,#10b981,#059669); }
+  .enf-cp-item.t-export .enf-cp-icon { background:linear-gradient(135deg,#3b82f6,#2563eb); }
+  .enf-cp-item.t-monitor .enf-cp-icon { background:linear-gradient(135deg,#ec4899,#be185d); }
+  .enf-cp-item.t-premium .enf-cp-icon { background:linear-gradient(135deg,#f59e0b,#d97706); }
+  .enf-cp-body { display:flex; flex-direction:column; gap:1px; min-width:0; flex:1; }
+  .enf-cp-title { font-weight:600; font-size:0.85rem; color:#0f172a; line-height:1.2; }
+  .enf-cp-desc { font-size:0.7rem; color:#64748b; font-weight:400; line-height:1.3; }
+  .enf-cp-empty { padding:32px 16px; text-align:center; color:#94a3b8; font-size:0.85rem; }
+  .enf-cp-foot { padding:8px 14px; background:#f8fafc; border-top:1px solid #e2e8f0; font-size:0.68rem; color:#64748b; display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .enf-cp-foot kbd { background:#fff; border:1px solid #cbd5e1; border-radius:4px; padding:1px 5px; font-family:ui-monospace,monospace; font-size:0.65rem; }
+</style>
+{% endblock %}
+
+{% block object-tools-items %}
+{{ block.super }}
+{% if not enf_disable_tools %}
+<li>
+  <button type="button" class="enf-cp-trigger" data-enf-cp-trigger aria-haspopup="dialog" title="Open Command Palette (Ctrl+K)">
+    <i class="fas fa-bolt"></i> Tools <kbd>Ctrl K</kbd>
+  </button>
+</li>
+
+<div class="enf-cp-backdrop" data-enf-cp-backdrop></div>
+<div class="enf-cp" data-enf-cp role="dialog" aria-label="Command palette">
+  <div class="enf-cp-head" data-enf-cp-drag>
+    <i class="fas fa-grip-vertical enf-cp-grip"></i>
+    <i class="fas fa-search" style="color:#94a3b8;font-size:0.85rem;"></i>
+    <input type="text" data-enf-cp-input placeholder="Type a command or search…" autocomplete="off" spellcheck="false">
+    <span class="enf-cp-hint">Esc</span>
+  </div>
+  <div class="enf-cp-list" data-enf-cp-list></div>
+  {% block enf_tools_extra %}{% endblock %}
+  <div class="enf-cp-foot">
+    <span><kbd>↑</kbd> <kbd>↓</kbd> navigate · <kbd>Enter</kbd> run · <kbd>Esc</kbd> close · drag header to move</span>
+    <span>Enable LMS</span>
+  </div>
+</div>
+
+<script>
+(function() {
+  if (window.__enfCpInit) return;
+  window.__enfCpInit = true;
+  var ctx = window.ENF_PAGE_CTX || {};
+  var IS_ALERTRULE = (ctx.app === 'alerts' && ctx.model === 'alertrule');
+  var IS_ALERTLOG  = (ctx.app === 'alerts' && ctx.model === 'alertlog');
+  var COMMANDS = [];
+  if (IS_ALERTRULE) {
+    // Alert Rule page: ONLY monitoring commands (no import/export).
+    COMMANDS = [
+      {id:'mon-dash',title:'Monitoring Dashboard',desc:'Live KPIs & system health',icon:'fa-tachometer-alt',cls:'t-monitor',section:'Alerts & Monitoring',href:'/admin/alerts/alertrule/monitoring/',keys:['monitor','dashboard','kpi','metrics','health']},
+      {id:'mon-metrics',title:'Alert Metrics',desc:'Counts & charts of alerts',icon:'fa-chart-line',cls:'t-monitor',section:'Alerts & Monitoring',href:'/admin/alerts/alertlog/',keys:['metrics','alerts','logs','chart']},
+      {id:'eval-now',title:'Evaluate Rules Now',desc:'Trigger immediate evaluation',icon:'fa-bolt',cls:'t-monitor',section:'Alerts & Monitoring',href:'/admin/alerts/alertrule/evaluate-now/',keys:['evaluate','run','trigger','now']},
+      {id:'alert-logs',title:'Alert Logs',desc:'Recent triggered alerts',icon:'fa-bell',cls:'t-monitor',section:'Alerts & Monitoring',href:'/admin/alerts/alertlog/',keys:['logs','history','alerts']}
+    ];
+  } else {
+    // Default: only Bulk Actions (Import/Export).
+    COMMANDS = [
+      {id:'import-csv',title:'Import CSV',desc:'Upload .csv with auto-mapping',icon:'fa-file-csv',cls:'t-import',section:'Bulk Actions',href:'import-csv/',keys:['import','csv','upload']},
+      {id:'import-excel',title:'Import Excel',desc:'.xlsx bulk loader',icon:'fa-file-excel',cls:'t-import',section:'Bulk Actions',href:'import-excel/',keys:['import','xlsx','excel']},
+      {id:'export-csv',title:'Export CSV',desc:'All matching records',icon:'fa-file-csv',cls:'t-export',section:'Bulk Actions',href:'export-all-csv/',keys:['export','csv','download']},
+      {id:'export-excel',title:'Export Excel',desc:'Styled .xlsx with headers',icon:'fa-file-excel',cls:'t-export',section:'Bulk Actions',href:'export-all-excel/',keys:['export','xlsx','excel']}
+    ];
+  }
+  if (window.ENF_CP_EXTRA && Array.isArray(window.ENF_CP_EXTRA)) COMMANDS = COMMANDS.concat(window.ENF_CP_EXTRA);
+  var $cp=function(){return document.querySelector('[data-enf-cp]');},$bd=function(){return document.querySelector('[data-enf-cp-backdrop]');},$in=function(){return document.querySelector('[data-enf-cp-input]');},$ls=function(){return document.querySelector('[data-enf-cp-list]');};
+  var activeIdx=0,visible=[];
+  function score(cmd,q){if(!q)return 1;q=q.toLowerCase();var hay=(cmd.title+' '+(cmd.desc||'')+' '+(cmd.keys||[]).join(' ')).toLowerCase();if(hay.indexOf(q)===-1)return 0;return cmd.title.toLowerCase().indexOf(q)===0?100:cmd.title.toLowerCase().indexOf(q)>-1?50:10;}
+  function escapeHtml(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function render(){
+    var q=($in()&&$in().value||'').trim();
+    visible=COMMANDS.map(function(c){return{c:c,s:score(c,q)};}).filter(function(x){return x.s>0;}).sort(function(a,b){return b.s-a.s;}).map(function(x){return x.c;});
+    if(activeIdx>=visible.length)activeIdx=0;
+    var html='';
+    if(visible.length===0){
+      html='<div class="enf-cp-empty">No matching command for &ldquo;'+escapeHtml(q)+'&rdquo;</div>';
+    }else{
+      var lastSection=null;
+      visible.forEach(function(c,i){
+        if(c.section && c.section!==lastSection){
+          html+='<div class="enf-cp-section">'+escapeHtml(c.section)+'</div>';
+          lastSection=c.section;
+        }
+        html+='<a class="enf-cp-item '+(c.cls||'')+(i===activeIdx?' is-active':'')+'" data-enf-cp-item data-idx="'+i+'" href="'+(c.href||'#')+'"'+(c.action?' data-enf-action="'+c.action+'"':'')+'><span class="enf-cp-icon"><i class="fas '+(c.icon||'fa-bolt')+'"></i></span><span class="enf-cp-body"><span class="enf-cp-title">'+escapeHtml(c.title)+'</span><span class="enf-cp-desc">'+escapeHtml(c.desc||'')+'</span></span></a>';
+      });
+    }
+    $ls().innerHTML=html;
+    var act=$ls().querySelector('.enf-cp-item.is-active');if(act)act.scrollIntoView({block:'nearest'});
+  }
+  function open(){$cp().classList.add('open');$bd().classList.add('open');activeIdx=0;render();setTimeout(function(){$in().focus();$in().select();},30);}
+  function close(){$cp().classList.remove('open');$bd().classList.remove('open');}
+  function isOpen(){return $cp()&&$cp().classList.contains('open');}
+  function runCommand(cmd){if(!cmd)return;if(cmd.href)window.location.href=cmd.href;}
+  function enableDrag(){var handle=document.querySelector('[data-enf-cp-drag]'),panel=$cp();if(!handle||!panel)return;var sx,sy,ox,oy,dragging=false;handle.addEventListener('mousedown',function(e){if(e.target.tagName==='INPUT')return;dragging=true;var rect=panel.getBoundingClientRect();panel.style.left=rect.left+'px';panel.style.top=rect.top+'px';panel.style.transform='none';sx=e.clientX;sy=e.clientY;ox=rect.left;oy=rect.top;e.preventDefault();});document.addEventListener('mousemove',function(e){if(!dragging)return;panel.style.left=(ox+e.clientX-sx)+'px';panel.style.top=(oy+e.clientY-sy)+'px';});document.addEventListener('mouseup',function(){dragging=false;});}
+  document.addEventListener('click',function(e){if(e.target.closest('[data-enf-cp-trigger]')){e.preventDefault();isOpen()?close():open();return;}if(e.target.closest('[data-enf-cp-backdrop]')){e.preventDefault();close();return;}var item=e.target.closest('[data-enf-cp-item]');if(item&&isOpen()){var idx=parseInt(item.getAttribute('data-idx'),10);var cmd=visible[idx];if(cmd&&cmd.action){e.preventDefault();runCommand(cmd);}}},true);
+  document.addEventListener('keydown',function(e){if((e.ctrlKey||e.metaKey)&&(e.key==='k'||e.key==='K')){e.preventDefault();isOpen()?close():open();return;}if(!isOpen())return;if(e.key==='Escape'){e.preventDefault();close();return;}if(e.key==='ArrowDown'){e.preventDefault();activeIdx=Math.min(visible.length-1,activeIdx+1);render();}else if(e.key==='ArrowUp'){e.preventDefault();activeIdx=Math.max(0,activeIdx-1);render();}else if(e.key==='Enter'){e.preventDefault();var cmd=visible[activeIdx];if(cmd){if(cmd.action)runCommand(cmd);else if(cmd.href)window.location.href=cmd.href;}}});
+  document.addEventListener('input',function(e){if(e.target&&e.target.matches('[data-enf-cp-input]')){activeIdx=0;render();}});
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){render();enableDrag();});else{render();enableDrag();}
+})();
+</script>
+{% endif %}
+{% endblock %}

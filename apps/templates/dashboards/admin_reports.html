@@ -1,0 +1,129 @@
+{% extends 'dashboards/admin_base.html' %}
+
+{% block admin_content %}
+<div class="page-header">
+  <div><h2><i class="fas fa-chart-bar"></i> Reports Center</h2><p>Generate, filter, and export comprehensive reports</p></div>
+  <a href="/admin/system_config/reporttemplate/add/" class="btn-primary"><i class="fas fa-plus"></i> Create Report Template</a>
+</div>
+
+<!-- Quick Stats -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:24px;">
+  <div class="card" style="padding:20px;text-align:center;">
+    <div style="font-size:2rem;font-weight:800;color:#8b5cf6;">{{ total_students }}</div>
+    <div style="font-size:0.82rem;color:#64748b;margin-top:4px;">Students</div>
+  </div>
+  <div class="card" style="padding:20px;text-align:center;">
+    <div style="font-size:2rem;font-weight:800;color:#2563eb;">{{ total_teachers }}</div>
+    <div style="font-size:0.82rem;color:#64748b;margin-top:4px;">Teachers</div>
+  </div>
+  <div class="card" style="padding:20px;text-align:center;">
+    <div style="font-size:2rem;font-weight:800;color:#ef4444;">{{ total_tests }}</div>
+    <div style="font-size:0.82rem;color:#64748b;margin-top:4px;">Tests</div>
+  </div>
+  <div class="card" style="padding:20px;text-align:center;">
+    <div style="font-size:2rem;font-weight:800;color:#f59e0b;">{{ total_attempts }}</div>
+    <div style="font-size:0.82rem;color:#64748b;margin-top:4px;">Attempts</div>
+  </div>
+  <div class="card" style="padding:20px;text-align:center;">
+    <div style="font-size:2rem;font-weight:800;color:#16a34a;">{{ today_attendance }}</div>
+    <div style="font-size:0.82rem;color:#64748b;margin-top:4px;">Today's Attendance</div>
+  </div>
+</div>
+
+<!-- Quick Report Generation -->
+<div class="card" style="margin-bottom:24px;">
+  <div class="card-header"><h3><i class="fas fa-bolt"></i> Quick Report Generation</h3></div>
+  <div style="padding:24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;">
+    {% for rt in report_types %}
+    <div style="background:#fff;border:2px solid #e2e8f0;border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='{{ rt.color }}';this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 16px rgba(0,0,0,0.08)'" onmouseout="this.style.borderColor='#e2e8f0';this.style.transform='';this.style.boxShadow=''">
+      <div style="width:48px;height:48px;background:{{ rt.color }}15;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+        <i class="fas {{ rt.icon }}" style="color:{{ rt.color }};font-size:1.2rem;"></i>
+      </div>
+      <div style="font-weight:700;color:#0f172a;margin-bottom:4px;">{{ rt.label }}</div>
+      <div style="font-size:0.78rem;color:#94a3b8;">Click to generate</div>
+      <div style="margin-top:12px;display:flex;gap:6px;justify-content:center;">
+        <span style="background:#f1f5f9;padding:2px 8px;border-radius:4px;font-size:0.7rem;color:#475569;">📄 CSV</span>
+        <span style="background:#f1f5f9;padding:2px 8px;border-radius:4px;font-size:0.7rem;color:#475569;">📊 Excel</span>
+        <span style="background:#f1f5f9;padding:2px 8px;border-radius:4px;font-size:0.7rem;color:#475569;">📕 PDF</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Report Templates -->
+<div class="card" style="margin-bottom:24px;">
+  <div class="card-header">
+    <h3><i class="fas fa-file-invoice"></i> Saved Report Templates</h3>
+    <span class="card-badge info">{{ total_templates }} Templates</span>
+  </div>
+  {% if templates %}
+  <div style="overflow-x:auto">
+    <table class="adm-table">
+      <thead><tr><th>Name</th><th>Type</th><th>Format</th><th>Schedule</th><th>Description</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for t in templates %}
+        <tr>
+          <td style="font-weight:700;color:#0f172a;">{{ t.name }}</td>
+          <td>
+            <span style="background:{% if t.type == 'STUDENT' %}#8b5cf6{% elif t.type == 'TEACHER' %}#2563eb{% elif t.type == 'ATTENDANCE' %}#f59e0b{% elif t.type == 'EXAM' %}#ef4444{% elif t.type == 'CENTER' %}#16a34a{% elif t.type == 'FINANCIAL' %}#ec4899{% else %}#0891b2{% endif %};color:#fff;padding:2px 8px;border-radius:4px;font-size:0.75rem;">{{ t.type_label }}</span>
+          </td>
+          <td>
+            {% if t.format == 'CSV' %}📄{% elif t.format == 'EXCEL' %}📊{% elif t.format == 'PDF' %}📕{% else %}📋{% endif %} {{ t.format_label }}
+          </td>
+          <td>
+            {% if t.is_scheduled %}<span style="color:#22c55e;font-weight:600;">⏰ {{ t.schedule }}</span>
+            {% else %}<span style="color:#94a3b8;">Manual</span>{% endif %}
+          </td>
+          <td style="font-size:0.82rem;color:#64748b;">{{ t.description|truncatechars:50 }}</td>
+          <td>
+            <div style="display:flex;gap:8px;">
+              <a href="#" style="color:#22c55e;font-size:0.82rem;text-decoration:none;font-weight:600;"><i class="fas fa-play"></i> Run</a>
+              <a href="/admin/system_config/reporttemplate/{{ t.id }}/change/" style="color:#3b82f6;font-size:0.82rem;text-decoration:none;font-weight:600;"><i class="fas fa-edit"></i> Edit</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <i class="fas fa-file-invoice"></i>
+    <p>No report templates saved yet</p>
+    <p style="font-size:0.82rem;color:#94a3b8;">Create templates for recurring reports</p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Export Actions -->
+<div class="card">
+  <div class="card-header"><h3><i class="fas fa-download"></i> Bulk Export</h3></div>
+  <div style="padding:24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;">
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:20px;">
+      <div style="font-weight:700;margin-bottom:8px;"><i class="fas fa-user-graduate" style="color:#8b5cf6;"></i> Export All Students</div>
+      <p style="font-size:0.82rem;color:#64748b;margin-bottom:12px;">All student data with enrollment, attendance, and scores</p>
+      <div style="display:flex;gap:8px;">
+        <a href="/admin/accounts/student/?export=csv" style="background:#22c55e;color:#fff;padding:6px 14px;border-radius:6px;font-size:0.78rem;font-weight:600;text-decoration:none;">📄 CSV</a>
+        <a href="/admin/accounts/student/?export=json" style="background:#3b82f6;color:#fff;padding:6px 14px;border-radius:6px;font-size:0.78rem;font-weight:600;text-decoration:none;">📋 JSON</a>
+      </div>
+    </div>
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:20px;">
+      <div style="font-weight:700;margin-bottom:8px;"><i class="fas fa-chalkboard-teacher" style="color:#2563eb;"></i> Export All Teachers</div>
+      <p style="font-size:0.82rem;color:#64748b;margin-bottom:12px;">Teacher profiles, subjects, attendance records</p>
+      <div style="display:flex;gap:8px;">
+        <a href="/admin/accounts/teacher/?export=csv" style="background:#22c55e;color:#fff;padding:6px 14px;border-radius:6px;font-size:0.78rem;font-weight:600;text-decoration:none;">📄 CSV</a>
+        <a href="/admin/accounts/teacher/?export=json" style="background:#3b82f6;color:#fff;padding:6px 14px;border-radius:6px;font-size:0.78rem;font-weight:600;text-decoration:none;">📋 JSON</a>
+      </div>
+    </div>
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:20px;">
+      <div style="font-weight:700;margin-bottom:8px;"><i class="fas fa-file-alt" style="color:#ef4444;"></i> Export All Test Results</div>
+      <p style="font-size:0.82rem;color:#64748b;margin-bottom:12px;">Test attempts, scores, and analysis data</p>
+      <div style="display:flex;gap:8px;">
+        <a href="/admin/assessments/testattempt/?export=csv" style="background:#22c55e;color:#fff;padding:6px 14px;border-radius:6px;font-size:0.78rem;font-weight:600;text-decoration:none;">📄 CSV</a>
+        <a href="/admin/assessments/testattempt/?export=json" style="background:#3b82f6;color:#fff;padding:6px 14px;border-radius:6px;font-size:0.78rem;font-weight:600;text-decoration:none;">📋 JSON</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

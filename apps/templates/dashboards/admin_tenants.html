@@ -1,0 +1,33 @@
+{% extends 'dashboards/admin_base.html' %}
+
+{% block admin_content %}
+<div class="page-header">
+  <div><h2>Tenants / Centers</h2><p>Manage multi-tenant configuration</p></div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fas fa-building"></i> All Tenants</h3>
+    <span class="card-badge info">{{ total_tenants }} Registered</span>
+  </div>
+  {% if tenants %}
+  <div style="overflow-x:auto">
+    <table class="adm-table">
+      <thead><tr><th>Tenant Name</th><th>Code</th><th>Students</th><th>Teachers</th></tr></thead>
+      <tbody>
+        {% for t in tenants %}
+        <tr>
+          <td style="font-weight:600;">{{ t.name }}</td>
+          <td><span style="font-family:monospace;font-size:0.82rem;color:#64748b;">{{ t.code }}</span></td>
+          <td><strong>{{ t.students }}</strong></td>
+          <td>{{ t.teachers }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><i class="fas fa-building"></i><p>No tenants configured</p></div>
+  {% endif %}
+</div>
+{% endblock %}

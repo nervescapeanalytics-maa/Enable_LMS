@@ -1,0 +1,319 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ test.title }} – Exam in Progress{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root{
+    --bg:#0f172a; --card:#1e293b; --card-2:#334155; --border:#334155;
+    --text:#f1f5f9; --muted:#94a3b8;
+    --primary:#6366f1; --primary-soft:rgba(99,102,241,.15);
+    --green:#10b981; --green-soft:rgba(16,185,129,.15);
+    --amber:#f59e0b; --amber-soft:rgba(245,158,11,.15);
+    --rose:#ef4444; --rose-soft:rgba(239,68,68,.18);
+  }
+  *{box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;margin:0;}
+
+  /* ── Top bar ───────────────────────────────────────────────────── */
+  .topbar{position:sticky;top:0;z-index:100;background:rgba(15,23,42,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;justify-content:space-between;align-items:center;gap:20px;}
+  .topbar .title{display:flex;align-items:center;gap:12px;min-width:0;flex:1;}
+  .topbar .title .ico{width:36px;height:36px;background:linear-gradient(135deg,var(--primary),#8b5cf6);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+  .topbar h1{font-size:15px;font-weight:600;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .topbar .meta-line{font-size:11px;color:var(--muted);margin-top:2px;}
+  .timer-wrap{display:flex;align-items:center;gap:12px;}
+  .timer{font-size:22px;font-weight:700;background:var(--card);padding:10px 18px;border-radius:10px;color:var(--amber);font-variant-numeric:tabular-nums;border:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+  .timer.warn{color:var(--amber);border-color:var(--amber);background:var(--amber-soft);}
+  .timer.danger{color:#fff;background:var(--rose);border-color:var(--rose);animation:pulse 1s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;} 50%{opacity:.7;}}
+
+  /* ── Progress bar ─────────────────────────────────────────────── */
+  .pbar{height:3px;background:#1e293b;}
+  .pbar .fill{height:100%;background:linear-gradient(90deg,var(--primary),#8b5cf6);transition:width .3s;}
+
+  /* ── Main layout ───────────────────────────────────────────────── */
+  .layout{display:grid;grid-template-columns:1fr 280px;gap:24px;max-width:1280px;margin:0 auto;padding:24px;}
+
+  /* ── Question card ─────────────────────────────────────────────── */
+  .q-stage{display:flex;flex-direction:column;gap:16px;}
+  .q-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px 28px;animation:fadeIn .25s ease;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px);} to{opacity:1;transform:none;}}
+  .q-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border);}
+  .q-head .num{display:flex;align-items:center;gap:10px;}
+  .q-head .num-badge{width:38px;height:38px;background:var(--primary-soft);color:var(--primary);border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;}
+  .q-head .num-text{font-size:13px;color:var(--muted);}
+  .q-head .num-text strong{color:var(--text);font-size:14px;display:block;}
+  .q-head .marks{display:flex;gap:8px;}
+  .marks-chip{padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;}
+  .pos-marks{background:var(--green-soft);color:var(--green);}
+  .neg-marks{background:var(--rose-soft);color:var(--rose);}
+
+  .q-text{font-size:16px;line-height:1.7;color:var(--text);margin:0 0 22px;white-space:pre-wrap;}
+
+  .opt{display:flex;align-items:flex-start;gap:14px;background:var(--bg);border:2px solid var(--border);border-radius:11px;padding:14px 18px;margin-bottom:10px;cursor:pointer;transition:all .15s;}
+  .opt:hover{border-color:var(--primary);background:var(--primary-soft);}
+  .opt input{margin-top:2px;width:18px;height:18px;accent-color:var(--primary);flex-shrink:0;cursor:pointer;}
+  .opt .opt-letter{display:inline-flex;width:28px;height:28px;background:var(--card-2);color:var(--text);border-radius:8px;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;}
+  .opt .opt-text{flex:1;line-height:1.5;font-size:14.5px;}
+  .opt:has(input:checked){border-color:var(--primary);background:var(--primary-soft);}
+  .opt:has(input:checked) .opt-letter{background:var(--primary);color:#fff;}
+
+  /* ── Bottom navigation ─────────────────────────────────────────── */
+  .nav-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:8px;padding:18px 0;}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 22px;border-radius:9px;font-size:14px;font-weight:600;border:none;cursor:pointer;transition:all .15s;text-decoration:none;}
+  .btn-primary{background:linear-gradient(135deg,var(--primary),#8b5cf6);color:#fff;box-shadow:0 4px 12px rgba(99,102,241,.3);}
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(99,102,241,.4);}
+  .btn-secondary{background:var(--card);color:var(--text);border:1px solid var(--border);}
+  .btn-secondary:hover{background:var(--card-2);}
+  .btn-secondary:disabled{opacity:.4;cursor:not-allowed;}
+  .btn-success{background:linear-gradient(135deg,var(--green),#059669);color:#fff;box-shadow:0 4px 12px rgba(16,185,129,.3);}
+  .btn-success:hover{transform:translateY(-1px);}
+  .btn-warn{background:rgba(245,158,11,.15);color:var(--amber);border:1px solid var(--amber);}
+  .btn-warn:hover{background:rgba(245,158,11,.25);}
+
+  /* ── Sidebar (question navigator) ──────────────────────────────── */
+  .sidebar{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;height:fit-content;position:sticky;top:90px;}
+  .sidebar h3{font-size:13px;font-weight:600;color:var(--text);margin:0 0 12px;display:flex;justify-content:space-between;}
+  .sidebar h3 .count{color:var(--muted);font-weight:400;font-size:12px;}
+
+  .legend{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;font-size:11px;color:var(--muted);}
+  .legend .ldot{display:inline-flex;align-items:center;gap:4px;}
+  .legend .swatch{width:10px;height:10px;border-radius:3px;border:1px solid var(--border);}
+
+  .qgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:16px;}
+  .qbtn{aspect-ratio:1;border:2px solid var(--border);background:var(--bg);color:var(--muted);border-radius:7px;font-weight:600;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;font-family:inherit;}
+  .qbtn:hover{border-color:var(--primary);}
+  .qbtn.current{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
+  .qbtn.answered{background:var(--green);color:#fff;border-color:var(--green);}
+  .qbtn.flagged{background:var(--amber);color:#fff;border-color:var(--amber);}
+  .qbtn.flagged.answered{background:linear-gradient(135deg,var(--green) 50%,var(--amber) 50%);}
+
+  .progress-info{font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.7;}
+  .progress-info .row{display:flex;justify-content:space-between;}
+  .progress-info strong{color:var(--text);}
+
+  .sb-actions{display:flex;flex-direction:column;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);}
+
+  /* Hide all questions except the visible one */
+  .q-card{display:none;}
+  .q-card.active{display:block;}
+
+  /* Warning banner */
+  .warn-banner{background:rgba(245,158,11,.1);border:1px solid var(--amber);color:var(--amber);padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+
+  @media (max-width:900px){
+    .layout{grid-template-columns:1fr;}
+    .sidebar{position:static;}
+  }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="topbar">
+  <div class="title">
+    <span class="ico"><i class="fas fa-edit"></i></span>
+    <div style="min-width:0;">
+      <h1>{{ test.title }}</h1>
+      <div class="meta-line">{{ test.test_code }} · {{ test.total_questions }} questions · {{ test.total_marks }} marks · Attempt #{{ attempt.attempt_number }}</div>
+    </div>
+  </div>
+  <div class="timer-wrap">
+    <span style="color:var(--muted);font-size:12px;font-weight:500;"><i class="far fa-clock"></i> Time Left</span>
+    <div class="timer" id="timer" data-remaining="{{ remaining_seconds }}"><i class="fas fa-hourglass-half"></i> <span id="timerVal">--:--</span></div>
+  </div>
+</div>
+
+<div class="pbar"><div class="fill" id="pbarFill" style="width:0%;"></div></div>
+
+<div class="layout">
+
+  <!-- Question stage -->
+  <div class="q-stage">
+
+    <div class="warn-banner">
+      <i class="fas fa-exclamation-triangle"></i>
+      <span>Stay on this tab. Your progress is saved per question. The test auto-submits when the timer ends.</span>
+    </div>
+
+    <form id="examForm" method="post" action="{% url 'student-exam-take' test_id=test.id %}">
+      {% csrf_token %}
+
+      {% for row in q_rows %}
+      <div class="q-card" data-qidx="{{ row.index }}" id="qcard-{{ row.index }}">
+        <div class="q-head">
+          <div class="num">
+            <span class="num-badge">{{ row.index }}</span>
+            <div class="num-text">Question <strong>{{ row.index }} of {{ q_rows|length }}</strong></div>
+          </div>
+          <div class="marks">
+            <span class="marks-chip pos-marks">+{{ row.q.positive_marks }}</span>
+            {% if row.q.negative_marks and row.q.negative_marks != 0 %}
+              <span class="marks-chip neg-marks">{{ row.q.negative_marks }}</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <p class="q-text">{{ row.q.question_text }}</p>
+
+        {% for o in row.options %}
+        <label class="opt">
+          <input type="radio" name="q_{{ row.q.id }}" value="{{ o.letter }}" data-qidx="{{ row.index }}"
+            {% if o.checked %}checked{% endif %}>
+          <span class="opt-letter">{{ o.letter }}</span>
+          <span class="opt-text">{{ o.text }}</span>
+        </label>
+        {% endfor %}
+      </div>
+      {% endfor %}
+
+      <div class="nav-bar">
+        <button type="button" class="btn btn-secondary" id="prevBtn"><i class="fas fa-chevron-left"></i> Previous</button>
+        <div style="display:flex;gap:8px;">
+          <button type="button" class="btn btn-warn" id="flagBtn"><i class="far fa-flag"></i> <span id="flagLabel">Mark for Review</span></button>
+          <button type="button" class="btn btn-secondary" id="clearBtn"><i class="fas fa-eraser"></i> Clear</button>
+        </div>
+        <button type="button" class="btn btn-primary" id="nextBtn">Save & Next <i class="fas fa-chevron-right"></i></button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Sidebar: Question Navigator -->
+  <aside class="sidebar">
+    <h3>Question Navigator <span class="count" id="navCount">0/{{ q_rows|length }}</span></h3>
+
+    <div class="legend">
+      <span class="ldot"><span class="swatch" style="background:var(--green);"></span> Answered</span>
+      <span class="ldot"><span class="swatch" style="background:var(--amber);"></span> Marked</span>
+      <span class="ldot"><span class="swatch" style="background:var(--bg);border-color:var(--primary);"></span> Current</span>
+      <span class="ldot"><span class="swatch" style="background:var(--bg);"></span> Unseen</span>
+    </div>
+
+    <div class="qgrid" id="qgrid">
+      {% for row in q_rows %}
+        <button type="button" class="qbtn" data-goto="{{ row.index }}">{{ row.index }}</button>
+      {% endfor %}
+    </div>
+
+    <div class="progress-info">
+      <div class="row"><span>Answered</span><strong id="cAns">0</strong></div>
+      <div class="row"><span>Not Answered</span><strong id="cUnans">{{ q_rows|length }}</strong></div>
+      <div class="row"><span>Marked</span><strong id="cFlag">0</strong></div>
+      <div class="row"><span>Total</span><strong>{{ q_rows|length }}</strong></div>
+    </div>
+
+    <div class="sb-actions">
+      <button type="button" class="btn btn-success" id="submitBtn" style="width:100%;justify-content:center;">
+        <i class="fas fa-check-circle"></i> Submit Test
+      </button>
+    </div>
+  </aside>
+</div>
+
+<script>
+(function(){
+  const TOTAL = {{ q_rows|length }};
+  const form = document.getElementById('examForm');
+  const cards = Array.from(document.querySelectorAll('.q-card'));
+  const navBtns = Array.from(document.querySelectorAll('.qbtn'));
+  const timerEl = document.getElementById('timer');
+  const timerVal = document.getElementById('timerVal');
+  const pbarFill = document.getElementById('pbarFill');
+  const flagged = new Set();
+  let current = 1;
+  let submitted = false;
+
+  // ── Timer ────────────────────────────────────────────────────────
+  let remaining = parseInt(timerEl.dataset.remaining || '0', 10);
+  function fmt(s){
+    if (s < 0) s = 0;
+    const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+    const pad = n => String(n).padStart(2,'0');
+    return h>0 ? `${pad(h)}:${pad(m)}:${pad(sec)}` : `${pad(m)}:${pad(sec)}`;
+  }
+  function tick(){
+    timerVal.textContent = fmt(remaining);
+    timerEl.classList.toggle('warn', remaining <= 300 && remaining > 60);
+    timerEl.classList.toggle('danger', remaining > 0 && remaining <= 60);
+    if (remaining <= 0 && !submitted){ submitted = true; form.submit(); return; }
+    remaining--;
+  }
+  tick(); setInterval(tick, 1000);
+
+  // ── Show question N ──────────────────────────────────────────────
+  function show(n){
+    if (n < 1) n = 1; if (n > TOTAL) n = TOTAL;
+    current = n;
+    cards.forEach(c => c.classList.toggle('active', parseInt(c.dataset.qidx,10) === n));
+    navBtns.forEach(b => b.classList.toggle('current', parseInt(b.dataset.goto,10) === n));
+    document.getElementById('prevBtn').disabled = n === 1;
+    const next = document.getElementById('nextBtn');
+    if (n === TOTAL){ next.innerHTML = '<i class="fas fa-flag-checkered"></i> Last Question'; }
+    else { next.innerHTML = 'Save & Next <i class="fas fa-chevron-right"></i>'; }
+    const fLbl = document.getElementById('flagLabel');
+    fLbl.textContent = flagged.has(n) ? 'Unmark' : 'Mark for Review';
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+
+  // ── Update nav grid colors + counters ───────────────────────────
+  function refresh(){
+    let answered = 0;
+    navBtns.forEach(b => {
+      const n = parseInt(b.dataset.goto, 10);
+      const card = cards[n-1];
+      const has = !!card.querySelector('input[type=radio]:checked');
+      b.classList.toggle('answered', has);
+      b.classList.toggle('flagged', flagged.has(n));
+      if (has) answered++;
+    });
+    document.getElementById('cAns').textContent = answered;
+    document.getElementById('cUnans').textContent = TOTAL - answered;
+    document.getElementById('cFlag').textContent = flagged.size;
+    document.getElementById('navCount').textContent = `${answered}/${TOTAL}`;
+    pbarFill.style.width = (answered / TOTAL * 100) + '%';
+  }
+  form.addEventListener('change', refresh);
+
+  // ── Wiring ───────────────────────────────────────────────────────
+  navBtns.forEach(b => b.addEventListener('click', () => show(parseInt(b.dataset.goto,10))));
+  document.getElementById('prevBtn').addEventListener('click', () => show(current - 1));
+  document.getElementById('nextBtn').addEventListener('click', () => show(current + 1));
+  document.getElementById('clearBtn').addEventListener('click', () => {
+    cards[current-1].querySelectorAll('input[type=radio]').forEach(i => { i.checked = false; });
+    refresh();
+  });
+  document.getElementById('flagBtn').addEventListener('click', () => {
+    if (flagged.has(current)) flagged.delete(current); else flagged.add(current);
+    refresh();
+    document.getElementById('flagLabel').textContent = flagged.has(current) ? 'Unmark' : 'Mark for Review';
+  });
+
+  // Keyboard navigation
+  document.addEventListener('keydown', e => {
+    if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+    if (e.key === 'ArrowRight') show(current + 1);
+    else if (e.key === 'ArrowLeft') show(current - 1);
+  });
+
+  // ── Submit ───────────────────────────────────────────────────────
+  document.getElementById('submitBtn').addEventListener('click', () => {
+    if (submitted) return;
+    const answered = parseInt(document.getElementById('cAns').textContent, 10);
+    const unanswered = TOTAL - answered;
+    let msg = `Submit your test? You answered ${answered} of ${TOTAL} questions.`;
+    if (unanswered > 0) msg += `\n\n⚠ ${unanswered} question(s) will be left blank.`;
+    if (flagged.size > 0) msg += `\n\n${flagged.size} question(s) marked for review.`;
+    if (!confirm(msg)) return;
+    submitted = true;
+    form.submit();
+  });
+
+  window.addEventListener('beforeunload', e => {
+    if (submitted) return;
+    e.preventDefault(); e.returnValue = '';
+  });
+
+  // Initial state
+  show(1); refresh();
+})();
+</script>
+{% endblock %}

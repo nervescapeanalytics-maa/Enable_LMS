@@ -1,0 +1,123 @@
+{% extends 'dashboards/admin_base.html' %}
+
+{% block admin_content %}
+<!-- Stats Row -->
+<div class="stat-row">
+  <div class="stat-card">
+    <div class="stat-icon blue"><i class="fas fa-users"></i></div>
+    <div class="stat-info">
+      <div class="stat-value">{{ total_students }}</div>
+      <div class="stat-label">Total Students</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon green"><i class="fas fa-chalkboard-teacher"></i></div>
+    <div class="stat-info">
+      <div class="stat-value">{{ total_teachers }}</div>
+      <div class="stat-label">Total Teachers</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon purple"><i class="fas fa-sign-in-alt"></i></div>
+    <div class="stat-info">
+      <div class="stat-value">{{ today_logins }}</div>
+      <div class="stat-label">Logins Today</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon amber"><i class="fas fa-user-plus"></i></div>
+    <div class="stat-info">
+      <div class="stat-value">{{ new_students_week }}</div>
+      <div class="stat-label">New Students (7d)</div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts Grid -->
+<div class="grid-2">
+  <!-- Daily Logins -->
+  <div class="card">
+    <div class="card-header">
+      <h3><i class="fas fa-sign-in-alt"></i> Daily Logins (Last 7 Days)</h3>
+    </div>
+    <div class="card-body">
+      {% for d in daily_logins %}
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+        <span style="width:70px;font-size:0.82rem;color:#64748b;font-weight:500;">{{ d.date }}</span>
+        <div style="flex:1;background:#f1f5f9;border-radius:6px;height:28px;overflow:hidden;">
+          <div style="width:{{ d.pct }}%;background:linear-gradient(90deg,#3b82f6,#6366f1);height:100%;border-radius:6px;min-width:{% if d.count > 0 %}4px{% else %}0{% endif %};display:flex;align-items:center;justify-content:flex-end;padding-right:8px;">
+            {% if d.pct > 15 %}<span style="color:#fff;font-size:0.72rem;font-weight:700;">{{ d.count }}</span>{% endif %}
+          </div>
+        </div>
+        {% if d.pct <= 15 %}<span style="font-size:0.78rem;font-weight:600;color:#334155;">{{ d.count }}</span>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Student Growth -->
+  <div class="card">
+    <div class="card-header">
+      <h3><i class="fas fa-chart-line"></i> Student Growth (Last 7 Days)</h3>
+    </div>
+    <div class="card-body">
+      {% for d in daily_students %}
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+        <span style="width:70px;font-size:0.82rem;color:#64748b;font-weight:500;">{{ d.date }}</span>
+        <div style="flex:1;background:#f1f5f9;border-radius:6px;height:28px;overflow:hidden;">
+          <div style="width:{{ d.pct }}%;background:linear-gradient(90deg,#22c55e,#14b8a6);height:100%;border-radius:6px;min-width:{% if d.count > 0 %}4px{% else %}0{% endif %};display:flex;align-items:center;justify-content:flex-end;padding-right:8px;">
+            {% if d.pct > 15 %}<span style="color:#fff;font-size:0.72rem;font-weight:700;">{{ d.count }}</span>{% endif %}
+          </div>
+        </div>
+        {% if d.pct <= 15 %}<span style="font-size:0.78rem;font-weight:600;color:#334155;">{{ d.count }}</span>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <!-- Enrollment by Batch -->
+  <div class="card">
+    <div class="card-header">
+      <h3><i class="fas fa-layer-group"></i> Enrollment by Batch</h3>
+    </div>
+    <div class="card-body">
+      {% if enrollment_by_batch %}
+        {% for e in enrollment_by_batch %}
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+          <span style="width:120px;font-size:0.82rem;color:#334155;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ e.name }}</span>
+          <div style="flex:1;background:#f1f5f9;border-radius:6px;height:28px;overflow:hidden;">
+            <div style="width:{{ e.pct }}%;background:linear-gradient(90deg,#f59e0b,#f97316);height:100%;border-radius:6px;min-width:{% if e.count > 0 %}4px{% else %}0{% endif %};display:flex;align-items:center;justify-content:flex-end;padding-right:8px;">
+              {% if e.pct > 15 %}<span style="color:#fff;font-size:0.72rem;font-weight:700;">{{ e.count }}</span>{% endif %}
+            </div>
+          </div>
+          {% if e.pct <= 15 %}<span style="font-size:0.78rem;font-weight:600;color:#334155;">{{ e.count }}</span>{% endif %}
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state"><i class="fas fa-layer-group"></i><p>No active batches</p></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Students by Center -->
+  <div class="card">
+    <div class="card-header">
+      <h3><i class="fas fa-school"></i> Students by Center</h3>
+    </div>
+    <div class="card-body">
+      {% if students_by_tenant %}
+        {% for t in students_by_tenant %}
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f1f5f9;">
+          <span style="font-size:0.88rem;font-weight:600;color:#0f172a;">{{ t.name }}</span>
+          <span style="font-size:1.1rem;font-weight:800;color:#3b82f6;">{{ t.count }}</span>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state"><i class="fas fa-school"></i><p>No centers found</p></div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,1247 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+/* ========== Programs Page Styles ========== */
+
+/* Page Hero */
+.page-hero {
+  position: relative;
+  padding: 160px 0 100px;
+  background: linear-gradient(135deg, #020617 0%, #0f172a 30%, #1e3a8a 70%, #1e40af 100%);
+  overflow: hidden;
+}
+.page-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 70% 50%, rgba(59,130,246,0.15) 0%, transparent 60%),
+              radial-gradient(ellipse at 30% 80%, rgba(168,85,247,0.1) 0%, transparent 50%);
+  z-index: 1;
+}
+.page-hero::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100px;
+  background: linear-gradient(to top, var(--gray-50) 0%, transparent 100%);
+  z-index: 2;
+}
+.page-hero .container {
+  position: relative;
+  z-index: 3;
+}
+.page-hero-content {
+  text-align: center;
+  max-width: 760px;
+  margin: 0 auto;
+}
+.page-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(59,130,246,0.15);
+  border: 1px solid rgba(59,130,246,0.3);
+  color: #93c5fd;
+  padding: 8px 20px;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+  backdrop-filter: blur(8px);
+}
+.page-hero h1 {
+  font-size: clamp(2.2rem, 5vw, 3.4rem);
+  font-weight: 900;
+  color: white;
+  line-height: 1.15;
+  margin-bottom: 20px;
+  letter-spacing: -0.02em;
+}
+.page-hero h1 .gradient-text {
+  background: linear-gradient(135deg, #60a5fa, #a78bfa, #38bdf8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.page-hero p {
+  font-size: 1.15rem;
+  line-height: 1.8;
+  color: rgba(255,255,255,0.8);
+  margin-bottom: 24px;
+  max-width: 620px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 0.9rem;
+}
+.breadcrumb a {
+  color: rgba(255,255,255,0.6);
+  text-decoration: none;
+  transition: color 0.3s;
+}
+.breadcrumb a:hover { color: #60a5fa; }
+.breadcrumb i { color: rgba(255,255,255,0.3); }
+.breadcrumb span { color: #93c5fd; font-weight: 600; }
+
+/* Floating shapes */
+.hero-shape {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.08;
+  z-index: 0;
+}
+.hero-shape-1 {
+  width: 400px; height: 400px;
+  background: #3b82f6;
+  top: -100px; right: -100px;
+}
+.hero-shape-2 {
+  width: 300px; height: 300px;
+  background: #8b5cf6;
+  bottom: -50px; left: -80px;
+}
+
+/* Stats Bar */
+.stats-bar {
+  position: relative;
+  z-index: 5;
+  margin-top: -50px;
+  margin-bottom: 60px;
+}
+.stats-bar-inner {
+  background: white;
+  border-radius: 20px;
+  padding: 32px 40px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 32px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+  border: 1px solid var(--gray-100);
+}
+.stat-item {
+  text-align: center;
+  position: relative;
+}
+.stat-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: -16px;
+  top: 10%;
+  height: 80%;
+  width: 1px;
+  background: var(--gray-200);
+}
+.stat-item .stat-number {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--gray-900);
+  line-height: 1;
+  margin-bottom: 6px;
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.stat-item .stat-label {
+  font-size: 0.9rem;
+  color: var(--gray-500);
+  font-weight: 500;
+}
+
+/* Program Section */
+.programs-page-section {
+  padding: 40px 0 100px;
+  background: var(--gray-50);
+}
+.program-block {
+  margin-bottom: 80px;
+}
+.program-block:last-child {
+  margin-bottom: 0;
+}
+
+/* Program Card */
+.program-detail-card {
+  background: white;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid var(--gray-100);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+}
+.program-detail-card:hover {
+  box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+  transform: translateY(-4px);
+}
+
+/* Program Banner Image */
+.program-banner {
+  width: 100%;
+  height: 280px;
+  overflow: hidden;
+  position: relative;
+}
+.program-banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.program-detail-card:hover .program-banner img {
+  transform: scale(1.05);
+}
+.program-banner::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: linear-gradient(to top, rgba(255,255,255,0.9) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+/* Program Header */
+.program-header {
+  padding: 28px 44px 32px;
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  border-bottom: 1px solid var(--gray-100);
+}
+.program-icon-lg {
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  color: white;
+  flex-shrink: 0;
+}
+.program-icon-lg.blue { background: linear-gradient(135deg, #3b82f6, #1e40af); }
+.program-icon-lg.green { background: linear-gradient(135deg, #10b981, #059669); }
+.program-icon-lg.amber { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.program-icon-lg.purple { background: linear-gradient(135deg, #8b5cf6, #6366f1); }
+.program-icon-lg.rose { background: linear-gradient(135deg, #f43f5e, #e11d48); }
+.program-header-info { flex: 1; }
+.program-header-info .program-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  border-radius: 50px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 10px;
+}
+.badge-blue { background: #eff6ff; color: #1e40af; }
+.badge-green { background: #f0fdf4; color: #166534; }
+.badge-amber { background: #fef3c7; color: #92400e; }
+.badge-purple { background: #f3e8ff; color: #6b21a8; }
+.badge-rose { background: #fff1f2; color: #9f1239; }
+.program-header-info h2 {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--gray-900);
+  margin-bottom: 6px;
+  letter-spacing: -0.02em;
+}
+.program-header-info .program-tagline {
+  font-size: 1rem;
+  color: var(--gray-500);
+  line-height: 1.6;
+}
+
+/* Program Body */
+.program-body {
+  padding: 36px 44px;
+}
+.program-description {
+  font-size: 1rem;
+  color: var(--gray-600);
+  line-height: 1.85;
+  margin-bottom: 32px;
+  max-width: 900px;
+}
+
+/* Features Grid */
+.program-features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-bottom: 32px;
+}
+.program-feature-card {
+  background: var(--gray-50);
+  border-radius: 16px;
+  padding: 24px 20px;
+  border: 1px solid var(--gray-100);
+  transition: all 0.3s;
+}
+.program-feature-card:hover {
+  background: white;
+  border-color: rgba(59,130,246,0.2);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+  transform: translateY(-3px);
+}
+.program-feature-card .pf-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  color: white;
+  margin-bottom: 14px;
+}
+.program-feature-card h4 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: 6px;
+}
+.program-feature-card p {
+  font-size: 0.85rem;
+  color: var(--gray-500);
+  line-height: 1.6;
+}
+
+/* Info Pills */
+.program-info-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.info-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  padding: 8px 18px;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--gray-700);
+  transition: all 0.3s;
+}
+.info-pill:hover {
+  border-color: rgba(59,130,246,0.3);
+  background: #eff6ff;
+}
+.info-pill i {
+  color: #3b82f6;
+  font-size: 0.8rem;
+}
+
+/* Location Tags */
+.program-locations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+.loc-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  color: #1e40af;
+  padding: 8px 16px;
+  border-radius: 50px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.loc-tag i {
+  font-size: 0.75rem;
+}
+
+/* Partner Info */
+.partner-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 24px;
+  background: var(--gray-50);
+  border-radius: 14px;
+  border: 1px solid var(--gray-100);
+  margin-bottom: 24px;
+}
+.partner-info-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+.partner-info-text h4 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: 2px;
+}
+.partner-info-text p {
+  font-size: 0.85rem;
+  color: var(--gray-500);
+}
+
+/* Program Actions */
+.program-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--gray-100);
+  margin-top: 8px;
+  padding-top: 24px;
+}
+.btn-program {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 28px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+.btn-program-primary {
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 16px rgba(59,130,246,0.3);
+}
+.btn-program-primary:hover {
+  box-shadow: 0 8px 28px rgba(59,130,246,0.45);
+  transform: translateY(-2px);
+}
+.btn-program-outline {
+  background: transparent;
+  color: var(--gray-700);
+  border: 2px solid var(--gray-200);
+}
+.btn-program-outline:hover {
+  border-color: #3b82f6;
+  color: #3b82f6;
+  background: #eff6ff;
+}
+
+/* Section Header (reused) */
+.page-section {
+  padding: 80px 0;
+  position: relative;
+}
+.page-section-header {
+  text-align: center;
+  max-width: 660px;
+  margin: 0 auto 50px;
+}
+.page-section-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  color: #1e40af;
+  padding: 8px 20px;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 16px;
+}
+.page-section-header h2 {
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
+  font-weight: 800;
+  color: var(--gray-900);
+  margin-bottom: 16px;
+  letter-spacing: -0.02em;
+}
+.page-section-header p {
+  font-size: 1.1rem;
+  color: var(--gray-500);
+  line-height: 1.7;
+}
+.section-divider {
+  width: 60px;
+  height: 4px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  border-radius: 4px;
+  margin: 20px auto 0;
+}
+
+/* CTA Section */
+.cta-section {
+  padding: 80px 0;
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #1e40af 100%);
+  position: relative;
+  overflow: hidden;
+}
+.cta-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 30% 50%, rgba(59,130,246,0.15), transparent 50%),
+              radial-gradient(circle at 70% 50%, rgba(139,92,246,0.1), transparent 50%);
+}
+.cta-content {
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+.cta-content h2 {
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  font-weight: 800;
+  color: white;
+  margin-bottom: 16px;
+}
+.cta-content p {
+  color: rgba(255,255,255,0.75);
+  font-size: 1.1rem;
+  margin-bottom: 32px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.cta-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.cta-buttons .btn-cta {
+  padding: 14px 32px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 14px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+.btn-cta-primary {
+  background: linear-gradient(135deg, #3b82f6, #0ea5e9);
+  color: white;
+  border: none;
+  box-shadow: 0 8px 24px rgba(59,130,246,0.4);
+}
+.btn-cta-primary:hover {
+  box-shadow: 0 12px 32px rgba(59,130,246,0.55);
+  transform: translateY(-2px);
+}
+.btn-cta-outline {
+  background: transparent;
+  color: white;
+  border: 2px solid rgba(255,255,255,0.3);
+}
+.btn-cta-outline:hover {
+  border-color: rgba(255,255,255,0.6);
+  background: rgba(255,255,255,0.05);
+}
+
+/* Login Modal */
+.login-modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.login-modal-overlay.show { display: flex; }
+.login-modal {
+  background: white;
+  border-radius: 24px;
+  padding: 48px;
+  max-width: 600px;
+  width: 100%;
+  position: relative;
+  box-shadow: 0 32px 72px rgba(0,0,0,0.2);
+  animation: modalPopIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes modalPopIn {
+  0% { opacity: 0; transform: scale(0.9) translateY(20px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+.login-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: var(--gray-100);
+  color: var(--gray-600);
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+}
+.login-modal-close:hover { background: var(--gray-200); transform: rotate(90deg); }
+.login-modal-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+.login-modal-header h2 {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--gray-900);
+  margin-bottom: 8px;
+}
+.login-modal-header p {
+  color: var(--gray-500);
+  font-size: 1rem;
+}
+.login-role-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.login-role-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 28px 20px;
+  border-radius: 20px;
+  border: 2px solid var(--gray-100);
+  text-decoration: none;
+  color: var(--gray-700);
+  transition: all 0.4s;
+  background: var(--gray-50);
+}
+.login-role-card:hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(59,130,246,0.15);
+}
+.role-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: white;
+}
+.role-icon.student { background: linear-gradient(135deg, #3b82f6, #1e40af); }
+.role-icon.teacher { background: linear-gradient(135deg, #10b981, #059669); }
+.role-icon.admin { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.login-role-card h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+.login-role-card span {
+  font-size: 0.85rem;
+  color: var(--gray-400);
+}
+
+/* Footer */
+.footer {
+  background: #020617;
+  color: rgba(255,255,255,0.7);
+  padding: 80px 0 0;
+}
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 1.3fr;
+  gap: 48px;
+  padding-bottom: 48px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.footer-brand .logo-icon {
+  width: 42px;
+  height: 42px;
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 1.2rem;
+  color: white;
+}
+.footer-brand span {
+  font-weight: 800;
+  font-size: 1.2rem;
+  color: white;
+}
+.footer-col p {
+  font-size: 0.9rem;
+  line-height: 1.7;
+  margin-bottom: 20px;
+}
+.footer-social {
+  display: flex;
+  gap: 12px;
+}
+.footer-social a {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,0.6);
+  text-decoration: none;
+  transition: all 0.3s;
+  font-size: 1rem;
+}
+.footer-social a:hover {
+  background: #3b82f6;
+  color: white;
+  transform: translateY(-3px);
+}
+.footer-col h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 20px;
+}
+.footer-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.footer-links li { margin-bottom: 12px; }
+.footer-links a {
+  color: rgba(255,255,255,0.6);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: all 0.3s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.footer-links a:hover { color: #60a5fa; transform: translateX(4px); }
+.footer-contact {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.footer-contact-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 0.9rem;
+}
+.footer-contact-item i {
+  color: #60a5fa;
+  font-size: 0.9rem;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+.footer-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 0;
+  font-size: 0.85rem;
+}
+.footer-bottom a { color: #60a5fa; text-decoration: none; }
+
+/* Scroll Animations */
+[data-aos] {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+[data-aos="fade-up"].visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+[data-aos="fade-right"] {
+  transform: translateX(-30px);
+}
+[data-aos="fade-right"].visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+[data-aos="fade-left"] {
+  transform: translateX(30px);
+}
+[data-aos="fade-left"].visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+[data-aos="zoom-in"] {
+  transform: scale(0.9);
+}
+[data-aos="zoom-in"].visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .stats-bar-inner { grid-template-columns: repeat(2, 1fr); }
+  .program-features-grid { grid-template-columns: repeat(2, 1fr); }
+  .program-header { padding: 32px; }
+  .program-body { padding: 28px 32px; }
+  .footer-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 768px) {
+  .page-hero { padding: 120px 0 80px; }
+  .page-hero h1 { font-size: 1.8rem; }
+  .stats-bar-inner {
+    grid-template-columns: repeat(2, 1fr);
+    padding: 24px 20px;
+    gap: 20px;
+  }
+  .stat-item:not(:last-child)::after { display: none; }
+  .program-header {
+    flex-direction: column;
+    padding: 24px 20px;
+  }
+  .program-body { padding: 24px 20px; }
+  .program-features-grid { grid-template-columns: 1fr; }
+  .program-actions { flex-direction: column; }
+  .btn-program { justify-content: center; }
+  .footer-grid { grid-template-columns: 1fr; }
+  .footer-bottom { flex-direction: column; gap: 8px; text-align: center; }
+  .login-role-grid { grid-template-columns: 1fr; }
+  .cta-buttons { flex-direction: column; align-items: center; }
+  .program-info-bar { flex-direction: column; }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+
+<!-- ========== NAVBAR ========== -->
+<nav class="navbar" id="navbar">
+  <div class="container">
+    <a href="/" class="nav-brand">
+      <div class="logo-icon">E</div>
+      <span>ENABLE PROGRAM</span>
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="/">Home</a></li>
+      <li class="nav-dropdown">
+        <a href="#">About <i class="fas fa-chevron-down" style="font-size:.625rem;margin-left:4px"></i></a>
+        <div class="dropdown-menu">
+          <a href="/about/"><i class="fas fa-building"></i> About ENF</a>
+          <a href="/founder/"><i class="fas fa-user-tie"></i> Founder &amp; Trustees</a>
+          <a href="/management/"><i class="fas fa-users-cog"></i> Management Team</a>
+        </div>
+      </li>
+      <li><a href="/programs/" class="active">Programs</a></li>
+      <li><a href="/partners/">Partners</a></li>
+      <li><a href="/scholarships/">Scholarships</a></li>
+      <li><a href="/news/">News</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="javascript:void(0)" class="btn btn-primary btn-sm" onclick="openLoginModal()"><i class="fas fa-sign-in-alt"></i> Login</a>
+    </div>
+    <button class="mobile-menu-btn" onclick="toggleMobileMenu()"><i class="fas fa-bars"></i></button>
+  </div>
+</nav>
+
+<!-- ========== LOGIN MODAL ========== -->
+<div class="login-modal-overlay" id="loginModal">
+  <div class="login-modal" style="position:relative">
+    <button class="login-modal-close" onclick="closeLoginModal()"><i class="fas fa-times"></i></button>
+    <div class="login-modal-header">
+      <h2>Welcome Back</h2>
+      <p>Select your role to continue</p>
+    </div>
+    <div class="login-role-grid">
+      <a href="/login/?role=student" class="login-role-card">
+        <div class="role-icon student"><i class="fas fa-user-graduate"></i></div>
+        <h3>Student</h3>
+        <span>Access your classes</span>
+      </a>
+      <a href="/login/?role=teacher" class="login-role-card">
+        <div class="role-icon teacher"><i class="fas fa-chalkboard-teacher"></i></div>
+        <h3>Teacher</h3>
+        <span>Manage your courses</span>
+      </a>
+      <a href="/login/?role=admin" class="login-role-card">
+        <div class="role-icon admin"><i class="fas fa-user-shield"></i></div>
+        <h3>Admin</h3>
+        <span>System management</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- ========== PAGE HERO ========== -->
+<section class="page-hero">
+  <div class="hero-shape hero-shape-1"></div>
+  <div class="hero-shape hero-shape-2"></div>
+  <div class="container">
+    <div class="page-hero-content" data-aos="fade-up">
+      <span class="page-hero-badge"><i class="fas fa-graduation-cap"></i> ENF Education Programs</span>
+      <h1>Transforming Lives Through <span class="gradient-text">Quality Education</span></h1>
+      <p>Ex Navodayan Foundation runs two flagship programs across India — empowering thousands of students from Navodaya Vidyalayas and underserved communities to achieve their dreams of cracking JEE &amp; NEET.</p>
+      <div class="breadcrumb">
+        <a href="/">Home</a>
+        <i class="fas fa-chevron-right" style="font-size:.625rem"></i>
+        <span>Programs</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== STATS BAR ========== -->
+<div class="container">
+  <div class="stats-bar" data-aos="fade-up">
+    <div class="stats-bar-inner">
+      <div class="stat-item">
+        <div class="stat-number">2</div>
+        <div class="stat-label">Programs</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">350+</div>
+        <div class="stat-label">JNVs Covered</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">15,000+</div>
+        <div class="stat-label">Students Impacted</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">50+</div>
+        <div class="stat-label">Expert Faculty</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== PROGRAMS SECTION ========== -->
+<section class="programs-page-section">
+  <div class="container">
+
+    <div class="page-section-header" data-aos="fade-up">
+      <span class="page-section-badge"><i class="fas fa-layer-group"></i> Our Programs</span>
+      <h2>Two Flagship Initiatives</h2>
+      <p>Each program is designed to address specific educational needs — from intensive residential coaching to technology-enabled online learning at scale.</p>
+      <div class="section-divider"></div>
+    </div>
+
+    <!-- ===== 1. CoE ===== -->
+    <div class="program-block" data-aos="fade-up">
+      <div class="program-detail-card">
+        <div class="program-banner">
+          <img src="https://images.unsplash.com/photo-1562774053-701939374585?w=1200&h=560&fit=crop&q=85" alt="Center of Excellence JNV Campus" loading="lazy">
+        </div>
+        <div class="program-header">
+          <div class="program-icon-lg blue"><i class="fas fa-university"></i></div>
+          <div class="program-header-info">
+            <span class="program-badge badge-blue"><i class="fas fa-star"></i> 2-Year Residential Program</span>
+            <h2>Center of Excellence (CoE)</h2>
+            <p class="program-tagline">Intensive classroom coaching for JEE &amp; NEET inside Jawahar Navodaya Vidyalayas</p>
+          </div>
+        </div>
+        <div class="program-body">
+          <p class="program-description">Ex Navodayan Foundation offers a comprehensive 2-year coaching program exclusively to students of Jawahar Navodaya Vidyalayas (JNVs). Students enroll by qualifying the Navodaya Dakshana Selection Test (NDST) organized by Dakshana Foundation. Selected students are relocated to designated JNV centres where ENF conducts its CoE classes with a dedicated team of expert faculty in Physics, Chemistry, Mathematics, and Biology, alongside program coordinators who reside at the centres full-time. ENF also assists students with counseling for their desired institutes and provides scholarships to deserving students.</p>
+
+          <div class="program-info-bar">
+            <div class="info-pill"><i class="fas fa-clock"></i> 2-Year Duration</div>
+            <div class="info-pill"><i class="fas fa-users"></i> 60–80 Students per Batch</div>
+            <div class="info-pill"><i class="fas fa-home"></i> Fully Residential</div>
+            <div class="info-pill"><i class="fas fa-award"></i> Scholarship Support</div>
+          </div>
+
+          <div class="program-locations">
+            <span class="loc-tag"><i class="fas fa-map-marker-alt"></i> JNV Meja, Prayagraj (UP)</span>
+            <span class="loc-tag"><i class="fas fa-map-marker-alt"></i> JNV Gajokhar, Varanasi (UP)</span>
+            <span class="loc-tag"><i class="fas fa-map-marker-alt"></i> JNV Rajgir, Nalanda (Bihar)</span>
+          </div>
+
+          <div class="program-features-grid">
+            <div class="program-feature-card">
+              <div class="pf-icon" style="background:linear-gradient(135deg,#3b82f6,#1e40af)"><i class="fas fa-chalkboard-teacher"></i></div>
+              <h4>Expert Faculty</h4>
+              <p>Dedicated teachers in PCM &amp; Biology residing on-campus, delivering structured classroom sessions daily.</p>
+            </div>
+            <div class="program-feature-card">
+              <div class="pf-icon" style="background:linear-gradient(135deg,#10b981,#059669)"><i class="fas fa-calendar-check"></i></div>
+              <h4>Structured Schedule</h4>
+              <p>Rigorous daily timetable with morning to evening study sessions, doubt-clearing, and revision slots.</p>
+            </div>
+            <div class="program-feature-card">
+              <div class="pf-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706)"><i class="fas fa-clipboard-list"></i></div>
+              <h4>Regular Mock Tests</h4>
+              <p>Frequent practice tests and performance analytics to track progress and identify improvement areas.</p>
+            </div>
+            <div class="program-feature-card">
+              <div class="pf-icon" style="background:linear-gradient(135deg,#8b5cf6,#6366f1)"><i class="fas fa-user-friends"></i></div>
+              <h4>Personal Mentoring</h4>
+              <p>One-on-one mentoring and counseling to support academic growth and emotional well-being.</p>
+            </div>
+            <div class="program-feature-card">
+              <div class="pf-icon" style="background:linear-gradient(135deg,#f43f5e,#e11d48)"><i class="fas fa-book-open"></i></div>
+              <h4>Complete Study Material</h4>
+              <p>Curated study packages, reference books, and practice sets aligned with JEE &amp; NEET syllabi.</p>
+            </div>
+            <div class="program-feature-card">
+              <div class="pf-icon" style="background:linear-gradient(135deg,#06b6d4,#0891b2)"><i class="fas fa-hands-helping"></i></div>
+              <h4>College Counseling</h4>
+              <p>Guidance for institute selection, admission processes, and scholarship applications for deserving students.</p>
+            </div>
+          </div>
+
+          <div class="partner-info">
+            <div class="partner-info-icon"><i class="fas fa-handshake"></i></div>
+            <div class="partner-info-text">
+              <h4>In Partnership with Dakshana Foundation &amp; NVS</h4>
+              <p>Students qualify through the NDST entrance test conducted by Dakshana Foundation and study at JNV campuses.</p>
+            </div>
+          </div>
+
+          <div class="program-actions">
+            <a href="#" class="btn-program btn-program-primary"><i class="fas fa-paper-plane"></i> Apply Now</a>
+            <a href="#" class="btn-program btn-program-outline"><i class="fas fa-file-pdf"></i> Download Brochure</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 2. ENABLE ===== -->
+    <div class="program-block" data-aos="fade-up">
+      <div class="program-detail-card">
+        <div class="program-banner">
+          <img src="https://images.unsplash.com/photo-1588196749597-9ff075ee6b5b?w=1200&h=560&fit=crop&q=85" alt="ENABLE Online Learning Platform" loading="lazy">
+        </div>
+        <div class="program-header">
+          <div class="program-icon-lg green"><i class="fas fa-globe"></i></div>
+          <div class="program-header-info">
+            <span class="program-badge badge-green"><i class="fas fa-satellite-dish"></i> Online Learning at Scale</span>
+            <h2>ENABLE</h2>
+            <p class="program-tagline">Engineering NEET Admission Bridge Accelerated Learning Engagement — reaching 325+ EMRS across India</p>
+          </div>
+        </div>
+        <div class="program-body">
+          <p class="program-description">ENABLE is a joint initiative of Tata Motors, National Education Society for Tribal Students (NESTS), and Ex Navodayan Foundation, launched in January 2021. As the knowledge partner, ENF conducts regular online classes for JEE &amp; NEET aspirants in Class 11 and Class 12 across 325+ Eklavya Model Residential Schools. ENABLE serves as the umbrella program covering five regional zones — providing equitable access to quality competitive exam preparation for students who would otherwise have limited resources.</p>
+
+          <div class="program-info-bar">
+            <div class="info-pill"><i class="fas fa-school"></i> 325+ EMRS</div>
+            <div class="info-pill"><i class="fas fa-laptop"></i> Online Classes</div>
+            <div class="info-pill"><i class="fas fa-user-graduate"></i> Class 11 &amp; 12</div>
+            <div class="info-pill"><i class="fas fa-calendar-alt"></i> Since January 2021</div>
+          </div>
+
+          <div class="program-locations">
+            <span class="loc-tag"><i class="fas fa-map-marker-alt"></i> North — Chandigarh &amp; Jaipur</span>
+            <span class="loc-tag"><i class="fas fa-map-marker-alt"></i> South</span>
+            <span class="loc-tag"><i class="fas fa-map-marker-alt"></i> East — Patna</span>
+            <span class="loc-tag"><i class="fas fa-map-marker-alt"></i> West</span>
+            <span class="loc-tag"><i class="fas fa-map-marker-alt"></i> Central — Bhopal &amp; Lucknow</span>
+          </div>
+
+          <div class="program-features-grid">
+            <div class="program-feature-card">
+              <div class="pf-icon" style="background:linear-gradient(135deg,#10b981,#059669)"><i class="fas fa-broadcast-tower"></i></div>
+              <h4>Live Interactive Classes</h4>
+              <p>Regular online sessions delivered by expert faculty covering Physics, Chemistry, Mathematics, and Biology.</p>
+            </div>
+            <div class="program-feature-card">
+              <div class="pf-icon" style="background:linear-gradient(135deg,#3b82f6,#1e40af)"><i class="fas fa-map-marked-alt"></i></div>
+              <h4>Pan-India Reach</h4>
+              <p>Covering five major regions — ensuring no EMRS student is left behind regardless of geographic location.</p>
+            </div>
+            <div class="program-feature-card">
+              <div class="pf-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706)"><i class="fas fa-atom"></i></div>
+              <h4>JEE &amp; NEET Focus</h4>
+              <p>Curriculum designed specifically for competitive exam preparation in Physics, Chemistry, Maths, and Biology.</p>
+            </div>
+          </div>
+
+          <div class="partner-info">
+            <div class="partner-info-icon" style="background:linear-gradient(135deg,#10b981,#059669)"><i class="fas fa-building"></i></div>
+            <div class="partner-info-text">
+              <h4>Joint Initiative with Tata Motors &amp; EMRS</h4>
+              <p>A tri-party collaboration between Tata Motors, Eklavya Model Residential Schools, and Ex Navodayan Foundation.</p>
+            </div>
+          </div>
+
+          <div class="program-actions">
+            <a href="#" class="btn-program btn-program-primary"><i class="fas fa-paper-plane"></i> Apply Now</a>
+            <a href="#" class="btn-program btn-program-outline"><i class="fas fa-file-pdf"></i> Download Brochure</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+
+  </div>
+</section>
+
+<!-- ========== CTA SECTION ========== -->
+<section class="cta-section" data-aos="fade-up">
+  <div class="container">
+    <div class="cta-content">
+      <h2>Ready to Transform Your Future?</h2>
+      <p>Join thousands of students already benefiting from ENF's education programs. Take the first step towards cracking JEE &amp; NEET today.</p>
+      <div class="cta-buttons">
+        <a href="#" class="btn-cta btn-cta-primary"><i class="fas fa-rocket"></i> Apply Now</a>
+        <a href="#contact" class="btn-cta btn-cta-outline"><i class="fas fa-envelope"></i> Contact Us</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== FOOTER ========== -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <!-- Col 1: Brand -->
+      <div class="footer-col">
+        <div class="footer-brand">
+          <div class="logo-icon">E</div>
+          <span>ENABLE PROGRAM</span>
+        </div>
+        <p>Ex Navodayan Foundation (ENF) is a premier not-for-profit organization dedicated to empowering Navodaya alumni and students through quality education, mentorship, and technology-enabled learning programs across India.</p>
+        <div class="footer-social">
+          <a href="https://youtube.com" target="_blank" rel="noopener" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+          <a href="https://facebook.com" target="_blank" rel="noopener" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+          <a href="https://twitter.com" target="_blank" rel="noopener" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+          <a href="https://linkedin.com" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+          <a href="https://instagram.com" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        </div>
+      </div>
+
+      <!-- Col 2: Quick Links -->
+      <div class="footer-col">
+        <h4>Quick Links</h4>
+        <ul class="footer-links">
+          <li><a href="/about/">About Us</a></li>
+          <li><a href="/programs/">Programs</a></li>
+          <li><a href="/partners/">Partners</a></li>
+          <li><a href="/scholarships/">Scholarships</a></li>
+          <li><a href="/news/">News</a></li>
+          <li><a href="/gallery/">Gallery</a></li>
+        </ul>
+      </div>
+
+      <!-- Col 3: Programs -->
+      <div class="footer-col">
+        <h4>Programs</h4>
+        <ul class="footer-links">
+          <li><a href="/programs/">CoE</a></li>
+          <li><a href="/programs/">ENABLE</a></li>
+        </ul>
+      </div>
+
+      <!-- Col 4: Get in Touch -->
+      <div class="footer-col">
+        <h4>Get in Touch</h4>
+        <div class="footer-contact">
+          <div class="footer-contact-item">
+            <i class="fas fa-location-dot"></i>
+            <span>B-36/43-46M, Brahmanand Colony, Durgakund, Varanasi, UP (221005)</span>
+          </div>
+          <div class="footer-contact-item">
+            <i class="fas fa-phone"></i>
+            <span>+91-76070 02100</span>
+          </div>
+          <div class="footer-contact-item">
+            <i class="fas fa-envelope"></i>
+            <span>exnavodayanfoundation1@gmail.com</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Bottom -->
+    <div class="footer-bottom">
+      <p>&copy; 2026 Ex Navodayan Foundation. All rights reserved.</p>
+      <p>Design by <a href="https://erpdsoft.com" target="_blank" rel="noopener">ERPDSOFT</a></p>
+    </div>
+  </div>
+</footer>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Navbar scroll effect
+  window.addEventListener('scroll', function () {
+    document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 50);
+  });
+
+  // Login Modal
+  function openLoginModal() {
+    document.getElementById('loginModal').classList.add('show');
+  }
+  function closeLoginModal() {
+    document.getElementById('loginModal').classList.remove('show');
+  }
+  document.getElementById('loginModal').addEventListener('click', function (e) {
+    if (e.target === this) closeLoginModal();
+  });
+
+  // Mobile menu toggle
+  function toggleMobileMenu() {
+    var links = document.getElementById('navLinks');
+    links.classList.toggle('show');
+  }
+
+  // Intersection Observer for scroll animations
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('[data-aos]').forEach(function (el) {
+    observer.observe(el);
+  });
+
+  // Smooth scroll for anchor links
+  document.querySelectorAll('a[href^="#"]').forEach(function (anchor) {
+    anchor.addEventListener('click', function (e) {
+      var targetId = this.getAttribute('href');
+      if (targetId === '#') return;
+      e.preventDefault();
+      var target = document.querySelector(targetId);
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,1123 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+/* ========== Scholarships Page Styles ========== */
+
+/* Page Hero */
+.page-hero {
+  position: relative;
+  padding: 160px 0 100px;
+  background: linear-gradient(135deg, #020617 0%, #0f172a 30%, #1e3a8a 70%, #1e40af 100%);
+  overflow: hidden;
+}
+.page-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 70% 50%, rgba(59,130,246,0.15) 0%, transparent 60%),
+              radial-gradient(ellipse at 30% 80%, rgba(168,85,247,0.1) 0%, transparent 50%);
+  z-index: 1;
+}
+.page-hero::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100px;
+  background: linear-gradient(to top, var(--gray-50) 0%, transparent 100%);
+  z-index: 2;
+}
+.page-hero .container {
+  position: relative;
+  z-index: 3;
+}
+.page-hero-content {
+  text-align: center;
+  max-width: 760px;
+  margin: 0 auto;
+}
+.page-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(59,130,246,0.15);
+  border: 1px solid rgba(59,130,246,0.3);
+  color: #93c5fd;
+  padding: 8px 20px;
+  border-radius: 50px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 20px;
+  backdrop-filter: blur(10px);
+}
+.page-hero-title {
+  font-size: 3rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.15;
+  margin-bottom: 20px;
+}
+.page-hero-title span {
+  background: linear-gradient(135deg, #3b82f6, #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.page-hero-desc {
+  font-size: 1.15rem;
+  color: #94a3b8;
+  line-height: 1.7;
+  margin-bottom: 30px;
+}
+.hero-stats {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  margin-top: 30px;
+}
+.hero-stat {
+  text-align: center;
+}
+.hero-stat-number {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #3b82f6;
+}
+.hero-stat-label {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin-top: 4px;
+}
+
+/* Filter & Search Section */
+.filter-section {
+  padding: 40px 0 20px;
+  background: var(--gray-50, #f8fafc);
+}
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+.filter-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.filter-tab {
+  padding: 10px 24px;
+  border-radius: 50px;
+  border: 2px solid #e2e8f0;
+  background: #fff;
+  color: #475569;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.filter-tab:hover {
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+.filter-tab.active {
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 15px rgba(59,130,246,0.3);
+}
+.filter-tab .tab-count {
+  display: inline-block;
+  background: rgba(255,255,255,0.2);
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  margin-left: 6px;
+}
+.filter-tab.active .tab-count {
+  background: rgba(255,255,255,0.25);
+}
+.search-box {
+  position: relative;
+  min-width: 280px;
+}
+.search-box input {
+  width: 100%;
+  padding: 12px 20px 12px 44px;
+  border-radius: 50px;
+  border: 2px solid #e2e8f0;
+  background: #fff;
+  font-size: 0.9rem;
+  color: #1e293b;
+  transition: all 0.3s ease;
+  outline: none;
+}
+.search-box input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59,130,246,0.1);
+}
+.search-box i {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+.results-count {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+/* Scholarships Grid */
+.scholarships-section {
+  padding: 20px 0 80px;
+  background: var(--gray-50, #f8fafc);
+}
+.category-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 30px 0 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #e2e8f0;
+}
+.category-header i {
+  font-size: 1.4rem;
+  color: #3b82f6;
+}
+.category-header h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+.category-header .cat-count {
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
+  color: #fff;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.scholarship-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+.scholarship-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.scholarship-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #3b82f6, #a78bfa);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.scholarship-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.1);
+  border-color: rgba(59,130,246,0.3);
+}
+.scholarship-card:hover::before {
+  opacity: 1;
+}
+.card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.card-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 1rem;
+}
+.card-icon.engineering {
+  background: rgba(59,130,246,0.1);
+  color: #3b82f6;
+}
+.card-icon.medical {
+  background: rgba(16,185,129,0.1);
+  color: #10b981;
+}
+.card-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1e293b;
+  line-height: 1.4;
+  flex: 1;
+}
+.card-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+}
+.card-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.card-badge.engineering {
+  background: rgba(59,130,246,0.1);
+  color: #3b82f6;
+}
+.card-badge.medical {
+  background: rgba(16,185,129,0.1);
+  color: #10b981;
+}
+.card-apply {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #3b82f6;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+.card-apply:hover {
+  color: #1e40af;
+  gap: 8px;
+}
+.card-apply i {
+  font-size: 0.7rem;
+  transition: transform 0.3s ease;
+}
+.card-apply:hover i {
+  transform: translateX(3px);
+}
+
+/* No Results */
+.no-results {
+  text-align: center;
+  padding: 60px 20px;
+  display: none;
+}
+.no-results i {
+  font-size: 3rem;
+  color: #cbd5e1;
+  margin-bottom: 16px;
+}
+.no-results h3 {
+  font-size: 1.3rem;
+  color: #475569;
+  margin-bottom: 8px;
+}
+.no-results p {
+  color: #94a3b8;
+}
+
+/* Application Tips Section */
+.tips-section {
+  padding: 80px 0;
+  background: #fff;
+}
+.tips-header {
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto 50px;
+}
+.tips-header h2 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 12px;
+}
+.tips-header p {
+  color: #64748b;
+  font-size: 1.05rem;
+}
+.tips-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+.tip-card {
+  background: white;
+  border-radius: 16px;
+  padding: 0;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+.tip-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+}
+.tip-card-img {
+  width: 100%;
+  height: 140px;
+  overflow: hidden;
+}
+.tip-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.tip-card:hover .tip-card-img img {
+  transform: scale(1.08);
+}
+.tip-card-body {
+  padding: 24px;
+}
+.tip-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  margin-bottom: 16px;
+}
+.tip-card h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 8px;
+}
+.tip-card p {
+  color: #64748b;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+/* CTA Section */
+.cta-section {
+  padding: 80px 0;
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #1e40af 100%);
+  position: relative;
+  overflow: hidden;
+}
+.cta-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 50%, rgba(59,130,246,0.15), transparent 70%);
+}
+.cta-content {
+  position: relative;
+  text-align: center;
+  max-width: 650px;
+  margin: 0 auto;
+  z-index: 1;
+}
+.cta-content h2 {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 16px;
+}
+.cta-content p {
+  color: #94a3b8;
+  font-size: 1.05rem;
+  margin-bottom: 30px;
+  line-height: 1.7;
+}
+.cta-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.btn-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 32px;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+.btn-cta-primary {
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(59,130,246,0.4);
+}
+.btn-cta-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(59,130,246,0.5);
+}
+.btn-cta-outline {
+  background: transparent;
+  color: #fff;
+  border: 2px solid rgba(255,255,255,0.3);
+}
+.btn-cta-outline:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.5);
+}
+
+/* Footer */
+.footer {
+  background: #020617;
+  padding: 60px 0 0;
+  color: #94a3b8;
+}
+.footer-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1.5fr;
+  gap: 40px;
+  margin-bottom: 40px;
+}
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+.footer-brand .logo-icon {
+  width: 36px;
+  height: 36px;
+  font-size: 1rem;
+}
+.footer p {
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+.footer-social {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+.footer-social a {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  transition: all 0.3s ease;
+  font-size: 0.85rem;
+}
+.footer-social a:hover {
+  background: #3b82f6;
+  color: #fff;
+  border-color: #3b82f6;
+}
+.footer-col h4 {
+  color: #fff;
+  font-size: 1rem;
+  margin-bottom: 16px;
+}
+.footer-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.footer-links li {
+  margin-bottom: 8px;
+}
+.footer-links a {
+  color: #94a3b8;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.3s ease;
+}
+.footer-links a:hover {
+  color: #3b82f6;
+}
+.footer-contact-item {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-size: 0.85rem;
+}
+.footer-contact-item i {
+  color: #3b82f6;
+  margin-top: 3px;
+}
+.footer-bottom {
+  border-top: 1px solid rgba(255,255,255,0.05);
+  padding: 20px 0;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+}
+.footer-bottom a {
+  color: #3b82f6;
+  text-decoration: none;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .scholarship-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .tips-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 768px) {
+  .page-hero {
+    padding: 130px 0 80px;
+  }
+  .page-hero-title {
+    font-size: 2rem;
+  }
+  .hero-stats {
+    gap: 24px;
+  }
+  .hero-stat-number {
+    font-size: 1.5rem;
+  }
+  .scholarship-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .tips-grid {
+    grid-template-columns: 1fr;
+  }
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .filter-tabs {
+    justify-content: center;
+  }
+  .search-box {
+    min-width: unset;
+  }
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .footer-bottom {
+    flex-direction: column;
+    text-align: center;
+    gap: 8px;
+  }
+  .cta-content h2 {
+    font-size: 1.6rem;
+  }
+}
+@media (max-width: 480px) {
+  .scholarship-grid {
+    grid-template-columns: 1fr;
+  }
+  .hero-stats {
+    flex-direction: column;
+    gap: 16px;
+  }
+  .footer-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* AOS Animations */
+[data-aos] {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.6s ease;
+}
+[data-aos="fade-up"].visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+[data-aos="fade-right"] {
+  transform: translateX(-30px);
+}
+[data-aos="fade-right"].visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+[data-aos="fade-left"] {
+  transform: translateX(30px);
+}
+[data-aos="fade-left"].visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+</style>
+{% endblock %}
+
+{% block body %}
+
+<!-- ========== NAVBAR ========== -->
+<nav class="navbar" id="navbar">
+  <div class="container">
+    <a href="/" class="nav-brand">
+      <div class="logo-icon">E</div>
+      <span>ENABLE PROGRAM</span>
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="/">Home</a></li>
+      <li class="nav-dropdown">
+        <a href="#">About <i class="fas fa-chevron-down" style="font-size:.625rem;margin-left:4px"></i></a>
+        <div class="dropdown-menu">
+          <a href="/about/"><i class="fas fa-building"></i> About ENF</a>
+          <a href="/founder/"><i class="fas fa-user-tie"></i> Founder &amp; Trustees</a>
+          <a href="/management/"><i class="fas fa-users-cog"></i> Management Team</a>
+        </div>
+      </li>
+      <li><a href="/programs/">Programs</a></li>
+      <li><a href="/partners/">Partners</a></li>
+      <li><a href="/scholarships/" class="active">Scholarships</a></li>
+      <li><a href="/news/">News</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="/login/" class="btn btn-primary btn-sm"><i class="fas fa-sign-in-alt"></i> Login</a>
+    </div>
+    <button class="mobile-menu-btn" onclick="toggleMobileMenu()"><i class="fas fa-bars"></i></button>
+  </div>
+</nav>
+
+<!-- ========== HERO SECTION ========== -->
+<section class="page-hero">
+  <div class="container">
+    <div class="page-hero-content" data-aos="fade-up">
+      <div class="page-hero-badge"><i class="fas fa-graduation-cap"></i> Financial Aid Portal</div>
+      <h1 class="page-hero-title">Scholarships &amp; <span>Financial Aid</span></h1>
+      <p class="page-hero-desc">Explore {{ total_count|default:"76" }} scholarship opportunities across Engineering and Medical streams. ENF curates and connects students with the best financial aid programs to make quality education accessible to all.</p>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="hero-stat-number">{{ total_count|default:"76" }}</div>
+          <div class="hero-stat-label">Total Scholarships</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-number">{{ eng_count|default:"46" }}</div>
+          <div class="hero-stat-label">Engineering</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-number">{{ med_count|default:"30" }}</div>
+          <div class="hero-stat-label">Medical</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== FILTER & SEARCH ========== -->
+<section class="filter-section">
+  <div class="container">
+    <div class="filter-bar" data-aos="fade-up">
+      <div class="filter-tabs">
+        <button class="filter-tab active" data-filter="all" onclick="filterScholarships('all', this)">
+          All <span class="tab-count">{{ total_count|default:"76" }}</span>
+        </button>
+        <button class="filter-tab" data-filter="engineering" onclick="filterScholarships('engineering', this)">
+          <i class="fas fa-cogs"></i> Engineering <span class="tab-count">{{ eng_count|default:"46" }}</span>
+        </button>
+        <button class="filter-tab" data-filter="medical" onclick="filterScholarships('medical', this)">
+          <i class="fas fa-stethoscope"></i> Medical <span class="tab-count">{{ med_count|default:"30" }}</span>
+        </button>
+      </div>
+      <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" id="scholarshipSearch" placeholder="Search scholarships..." oninput="searchScholarships(this.value)">
+      </div>
+    </div>
+    <div class="results-count" id="resultsCount">Showing all {{ total_count|default:"76" }} scholarships</div>
+  </div>
+</section>
+
+<!-- ========== SCHOLARSHIPS GRID ========== -->
+<section class="scholarships-section">
+  <div class="container">
+
+    {% if scholarships %}
+    <!-- Dynamic scholarships from database -->
+    {% if engineering %}
+    <div class="category-block" data-category="engineering" data-aos="fade-up">
+      <div class="category-header">
+        <i class="fas fa-cogs"></i>
+        <h2>Engineering Scholarships</h2>
+        <span class="cat-count">{{ eng_count }}</span>
+      </div>
+      <div class="scholarship-grid">
+        {% for s in engineering %}
+        <div class="scholarship-card" data-type="engineering" data-name="{{ s.title }}">
+          <div class="card-top">
+            <div class="card-icon engineering"><i class="fas fa-graduation-cap"></i></div>
+            <div class="card-name">{{ s.title }}</div>
+          </div>
+          <div class="card-bottom">
+            <span class="card-badge engineering">Engineering</span>
+            {% if s.apply_url %}
+            <a href="{{ s.apply_url }}" target="_blank" rel="noopener" class="card-apply">Apply <i class="fas fa-arrow-right"></i></a>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if medical %}
+    <div class="category-block" data-category="medical" data-aos="fade-up">
+      <div class="category-header">
+        <i class="fas fa-stethoscope"></i>
+        <h2>Medical Scholarships</h2>
+        <span class="cat-count">{{ med_count }}</span>
+      </div>
+      <div class="scholarship-grid">
+        {% for s in medical %}
+        <div class="scholarship-card" data-type="medical" data-name="{{ s.title }}">
+          <div class="card-top">
+            <div class="card-icon medical"><i class="fas fa-heartbeat"></i></div>
+            <div class="card-name">{{ s.title }}</div>
+          </div>
+          <div class="card-bottom">
+            <span class="card-badge medical">Medical</span>
+            {% if s.apply_url %}
+            <a href="{{ s.apply_url }}" target="_blank" rel="noopener" class="card-apply">Apply <i class="fas fa-arrow-right"></i></a>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- No scholarships in database — show message -->
+    <div style="text-align:center; padding:80px 20px; color:#64748b;">
+      <i class="fas fa-graduation-cap" style="font-size:3.5rem; margin-bottom:16px; display:block; color:#cbd5e1;"></i>
+      <h3 style="color:#0f172a; margin-bottom:8px; font-size:1.4rem;">No Scholarships Available Yet</h3>
+      <p style="max-width:500px; margin:0 auto;">Scholarship listings will appear here once they are added from the admin panel. Please check back later.</p>
+    </div>
+    {% endif %}
+
+    <!-- No Results Message for search -->
+    <div class="no-results" id="noResults">
+      <i class="fas fa-search"></i>
+      <h3>No scholarships found</h3>
+      <p>Try a different search term or filter category.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ========== APPLICATION TIPS ========== -->
+<section class="tips-section" data-aos="fade-up">
+  <div class="container">
+    <div class="tips-header">
+      <h2>Application Tips</h2>
+      <p>Maximize your chances of securing a scholarship with these essential tips.</p>
+    </div>
+    <div class="tips-grid">
+      <div class="tip-card" data-aos="fade-up">
+        <div class="tip-card-img">
+          <img src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=600&h=300&fit=crop&q=85" alt="Apply Early for Scholarships" loading="lazy">
+        </div>
+        <div class="tip-card-body">
+          <div class="tip-icon"><i class="fas fa-clock"></i></div>
+          <h3>Apply Early</h3>
+          <p>Start your application well before the deadline. Many scholarships have limited seats and follow a first-come, first-served basis.</p>
+        </div>
+      </div>
+      <div class="tip-card" data-aos="fade-up">
+        <div class="tip-card-img">
+          <img src="https://images.unsplash.com/photo-1618044619888-009e412ff12a?w=600&h=300&fit=crop&q=85" alt="Prepare Your Documents" loading="lazy">
+        </div>
+        <div class="tip-card-body">
+          <div class="tip-icon"><i class="fas fa-file-alt"></i></div>
+          <h3>Prepare Documents</h3>
+          <p>Keep all necessary documents ready — marksheets, income certificates, caste certificates, Aadhaar, and bank details.</p>
+        </div>
+      </div>
+      <div class="tip-card" data-aos="fade-up">
+        <div class="tip-card-img">
+          <img src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=600&h=300&fit=crop&q=85" alt="Double Check Application Details" loading="lazy">
+        </div>
+        <div class="tip-card-body">
+          <div class="tip-icon"><i class="fas fa-check-double"></i></div>
+          <h3>Double-Check Details</h3>
+          <p>Ensure all information entered is accurate. Small errors in names, dates, or account numbers can lead to rejection.</p>
+        </div>
+      </div>
+      <div class="tip-card" data-aos="fade-up">
+        <div class="tip-card-img">
+          <img src="https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=600&h=300&fit=crop&q=85" alt="Match Eligibility Criteria" loading="lazy">
+        </div>
+        <div class="tip-card-body">
+          <div class="tip-icon"><i class="fas fa-bullseye"></i></div>
+          <h3>Match Eligibility</h3>
+          <p>Read the eligibility criteria carefully before applying. Focus on scholarships that match your category, stream, and location.</p>
+        </div>
+      </div>
+      <div class="tip-card" data-aos="fade-up">
+        <div class="tip-card-img">
+          <img src="https://images.unsplash.com/photo-1455390582262-044cdead277a?w=600&h=300&fit=crop&q=85" alt="Write Strong Scholarship Essays" loading="lazy">
+        </div>
+        <div class="tip-card-body">
+          <div class="tip-icon"><i class="fas fa-pen-fancy"></i></div>
+          <h3>Write Strong Essays</h3>
+          <p>If the scholarship requires an essay or statement of purpose, take time to craft a compelling and authentic narrative.</p>
+        </div>
+      </div>
+      <div class="tip-card" data-aos="fade-up">
+        <div class="tip-card-img">
+          <img src="https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=600&h=300&fit=crop&q=85" alt="Track Scholarship Deadlines" loading="lazy">
+        </div>
+        <div class="tip-card-body">
+          <div class="tip-icon"><i class="fas fa-bell"></i></div>
+          <h3>Track Deadlines</h3>
+          <p>Set reminders for application deadlines and renewal dates. Missing a deadline means missing an opportunity.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== CTA SECTION ========== -->
+<section class="cta-section" data-aos="fade-up">
+  <div class="container">
+    <div class="cta-content">
+      <h2>Need Help Finding the Right Scholarship?</h2>
+      <p>Our team can guide you through the application process and help identify the best financial aid opportunities for your academic journey.</p>
+      <div class="cta-buttons">
+        <a href="#contact" class="btn-cta btn-cta-primary"><i class="fas fa-envelope"></i> Contact Us</a>
+        <a href="/programs/" class="btn-cta btn-cta-outline"><i class="fas fa-book-reader"></i> Explore Programs</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== FOOTER ========== -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <!-- Col 1: Brand -->
+      <div class="footer-col">
+        <div class="footer-brand">
+          <div class="logo-icon">E</div>
+          <span>ENABLE PROGRAM</span>
+        </div>
+        <p>Ex Navodayan Foundation (ENF) is a premier not-for-profit organization dedicated to empowering Navodaya alumni and students through quality education, mentorship, and technology-enabled learning programs across India.</p>
+        <div class="footer-social">
+          <a href="https://youtube.com" target="_blank" rel="noopener" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+          <a href="https://facebook.com" target="_blank" rel="noopener" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+          <a href="https://twitter.com" target="_blank" rel="noopener" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+          <a href="https://linkedin.com" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+          <a href="https://instagram.com" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        </div>
+      </div>
+
+      <!-- Col 2: Quick Links -->
+      <div class="footer-col">
+        <h4>Quick Links</h4>
+        <ul class="footer-links">
+          <li><a href="/about/">About Us</a></li>
+          <li><a href="/programs/">Programs</a></li>
+          <li><a href="/partners/">Partners</a></li>
+          <li><a href="/scholarships/">Scholarships</a></li>
+          <li><a href="/news/">News</a></li>
+          <li><a href="/gallery/">Gallery</a></li>
+        </ul>
+      </div>
+
+      <!-- Col 3: Programs -->
+      <div class="footer-col">
+        <h4>Programs</h4>
+        <ul class="footer-links">
+          <li><a href="/programs/">CoE</a></li>
+          <li><a href="/programs/">ENABLE</a></li>
+        </ul>
+      </div>
+
+      <!-- Col 4: Get in Touch -->
+      <div class="footer-col">
+        <h4>Get in Touch</h4>
+        <div class="footer-contact">
+          <div class="footer-contact-item">
+            <i class="fas fa-location-dot"></i>
+            <span>B-36/43-46M, Brahmanand Colony, Durgakund, Varanasi, UP (221005)</span>
+          </div>
+          <div class="footer-contact-item">
+            <i class="fas fa-phone"></i>
+            <span>+91-76070 02100</span>
+          </div>
+          <div class="footer-contact-item">
+            <i class="fas fa-envelope"></i>
+            <span>exnavodayanfoundation1@gmail.com</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Bottom -->
+    <div class="footer-bottom">
+      <p>&copy; 2026 Ex Navodayan Foundation. All rights reserved.</p>
+      <p>Design by <a href="https://erpdsoft.com" target="_blank" rel="noopener">ERPDSOFT</a></p>
+    </div>
+  </div>
+</footer>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Navbar scroll effect
+  window.addEventListener('scroll', function () {
+    document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 50);
+  });
+
+  // Mobile menu toggle
+  function toggleMobileMenu() {
+    var links = document.getElementById('navLinks');
+    links.classList.toggle('show');
+  }
+
+  // Filter scholarships by category
+  function filterScholarships(type, btn) {
+    // Update active tab
+    document.querySelectorAll('.filter-tab').forEach(function (t) { t.classList.remove('active'); });
+    btn.classList.add('active');
+
+    var cards = document.querySelectorAll('.scholarship-card');
+    var engBlock = document.querySelector('[data-category="engineering"]');
+    var medBlock = document.querySelector('[data-category="medical"]');
+    var searchVal = document.getElementById('scholarshipSearch').value.toLowerCase();
+
+    if (type === 'all') {
+      if (engBlock) engBlock.style.display = '';
+      if (medBlock) medBlock.style.display = '';
+    } else if (type === 'engineering') {
+      if (engBlock) engBlock.style.display = '';
+      if (medBlock) medBlock.style.display = 'none';
+    } else if (type === 'medical') {
+      if (engBlock) engBlock.style.display = 'none';
+      if (medBlock) medBlock.style.display = '';
+    }
+
+    // Re-apply search filter
+    if (searchVal) {
+      searchScholarships(searchVal);
+    } else {
+      // Show all cards in visible categories
+      cards.forEach(function (card) {
+        var cardType = card.getAttribute('data-type');
+        if (type === 'all' || cardType === type) {
+          card.style.display = '';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+      updateCount();
+    }
+  }
+
+  // Search scholarships by name
+  function searchScholarships(query) {
+    var q = query.toLowerCase().trim();
+    var cards = document.querySelectorAll('.scholarship-card');
+    var activeFilter = document.querySelector('.filter-tab.active').getAttribute('data-filter');
+    var visibleCount = 0;
+
+    cards.forEach(function (card) {
+      var name = card.getAttribute('data-name').toLowerCase();
+      var type = card.getAttribute('data-type');
+      var matchesSearch = !q || name.indexOf(q) !== -1;
+      var matchesFilter = activeFilter === 'all' || type === activeFilter;
+
+      if (matchesSearch && matchesFilter) {
+        card.style.display = '';
+        visibleCount++;
+      } else {
+        card.style.display = 'none';
+      }
+    });
+
+    // Show/hide category headers based on visible cards
+    var engBlock = document.querySelector('[data-category="engineering"]');
+    var medBlock = document.querySelector('[data-category="medical"]');
+    var engVisible = engBlock ? engBlock.querySelectorAll('.scholarship-card:not([style*="display: none"])').length : 0;
+    var medVisible = medBlock ? medBlock.querySelectorAll('.scholarship-card:not([style*="display: none"])').length : 0;
+
+    if (activeFilter === 'all' || activeFilter === 'engineering') {
+      if (engBlock) engBlock.style.display = engVisible > 0 ? '' : 'none';
+    }
+    if (activeFilter === 'all' || activeFilter === 'medical') {
+      if (medBlock) medBlock.style.display = medVisible > 0 ? '' : 'none';
+    }
+
+    // No results message
+    var noResults = document.getElementById('noResults');
+    noResults.style.display = visibleCount === 0 ? 'block' : 'none';
+
+    // Update count
+    var totalCount = document.querySelectorAll('.scholarship-card').length || {{ total_count|default:"0" }};
+    document.getElementById('resultsCount').textContent = 'Showing ' + visibleCount + ' of ' + totalCount + ' scholarships';
+  }
+
+  // Update visible count
+  function updateCount() {
+    var activeFilter = document.querySelector('.filter-tab.active').getAttribute('data-filter');
+    var cards = document.querySelectorAll('.scholarship-card');
+    var count = 0;
+    cards.forEach(function(c) {
+      var t = c.getAttribute('data-type');
+      if (activeFilter === 'all' || t === activeFilter) count++;
+    });
+    document.getElementById('resultsCount').textContent = 'Showing all ' + count + ' scholarships';
+    document.getElementById('noResults').style.display = count === 0 ? 'block' : 'none';
+  }
+
+  // Intersection Observer for scroll animations
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('[data-aos]').forEach(function (el) {
+    observer.observe(el);
+  });
+
+  // Smooth scroll for anchor links
+  document.querySelectorAll('a[href^="#"]').forEach(function (anchor) {
+    anchor.addEventListener('click', function (e) {
+      var targetId = this.getAttribute('href');
+      if (targetId === '#') return;
+      e.preventDefault();
+      var target = document.querySelector(targetId);
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
+</script>
+{% endblock %}

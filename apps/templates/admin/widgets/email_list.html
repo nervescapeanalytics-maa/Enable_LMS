@@ -1,0 +1,68 @@
+{% load static %}
+<div class="friendly-json-widget email-list-widget" id="elw-{{ widget.name }}">
+  <div class="fjw-tags-container" id="emails-{{ widget.name }}">
+    {% for email in widget.emails %}
+    <span class="fjw-tag fjw-tag-email">
+      <i class="fas fa-envelope" style="font-size:0.7rem;opacity:0.6;"></i>
+      <span class="fjw-tag-text">{{ email }}</span>
+      <input type="hidden" name="{{ widget.name }}_items" value="{{ email }}">
+      <button type="button" class="fjw-tag-remove" onclick="this.parentElement.remove()" title="Remove">&times;</button>
+    </span>
+    {% endfor %}
+  </div>
+
+  <div class="fjw-input-row">
+    <input type="email" class="fjw-text-input" id="input-{{ widget.name }}"
+           placeholder="Enter email address…"
+           autocomplete="off">
+    <button type="button" class="fjw-btn fjw-btn-add" onclick="fjwAddEmail('{{ widget.name }}')">
+      <i class="fas fa-plus"></i> Add Email
+    </button>
+  </div>
+
+  <p class="fjw-help"><i class="fas fa-info-circle"></i> Enter a valid email address and click Add. Click × to remove.</p>
+</div>
+
+<script>
+(function() {
+  var input = document.getElementById('input-{{ widget.name }}');
+  if (input) {
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        fjwAddEmail('{{ widget.name }}');
+      }
+    });
+  }
+})();
+
+function fjwAddEmail(name) {
+  var input = document.getElementById('input-' + name);
+  var container = document.getElementById('emails-' + name);
+  var val = input.value.trim();
+  if (!val) return;
+
+  // Basic email validation
+  var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(val)) {
+    input.style.borderColor = '#ef4444';
+    input.style.boxShadow = '0 0 0 2px rgba(239,68,68,0.2)';
+    setTimeout(function() {
+      input.style.borderColor = '';
+      input.style.boxShadow = '';
+    }, 2000);
+    return;
+  }
+
+  var span = document.createElement('span');
+  span.className = 'fjw-tag fjw-tag-email';
+  span.innerHTML =
+    '<i class="fas fa-envelope" style="font-size:0.7rem;opacity:0.6;"></i> ' +
+    '<span class="fjw-tag-text">' + val.replace(/</g, '&lt;') + '</span>' +
+    '<input type="hidden" name="' + name + '_items" value="' + val.replace(/"/g, '&quot;') + '">' +
+    '<button type="button" class="fjw-tag-remove" onclick="this.parentElement.remove()" title="Remove">&times;</button>';
+  container.appendChild(span);
+  input.value = '';
+  input.focus();
+}
+</script>

@@ -1,0 +1,236 @@
+# =============================================================================
+# Enable-LMS Enterprise — Docker Compose (Production-Portable)
+#
+# Architecture:
+#   ┌────────────────────────────────────────────────────────────────────────┐
+#   │  Cloudflare Tunnel (cloudflared container)                            │
+#   │  Connects lms.automatebot.shop → nginx:80 inside the stack           │
+#   └──────┬─────────────────────────────────────────────────────────────────┘
+#          │
+#   ┌──────┴─────────────────────────────────────────────────────────────────┐
+#   │                    Nginx (:80 internal, :8080 published)               │
+#   │  Static/Media files + Reverse Proxy + Rate Limiting                    │
+#   └──────┬─────────────────────────────┬───────────────────────────────────┘
+#          │                             │
+#   ┌──────┴───────┐             ┌───────┴──────┐
+#   │  Gunicorn    │             │   Daphne     │
+#   │  (WSGI)      │             │   (ASGI)     │
+#   │  :8000       │             │   :8001      │
+#   └──────┬───────┘             └───────┬──────┘
+#          │                             │
+#   ┌──────┴─────────────────────────────┴──────┐
+#   │              Redis 7 (Alpine)              │
+#   │     Cache (:6379/0) + Broker (:6379/3)     │
+#   └──────┬─────────────────────────────┬──────┘
+#          │                             │
+#   ┌──────┴───────┐             ┌───────┴──────┐
+#   │ Celery       │             │ Celery       │
+#   │ Worker       │             │ Beat         │
+#   └──────────────┘             └──────────────┘
+#          │
+#   ┌──────┴───────┐
+#   │  PostgreSQL  │  ← EXTERNAL (pass DB_HOST/DB_PORT via .env)
+#   └──────────────┘
+#
+# No container_name set — allows `docker compose up --scale api=3`.
+# Secrets kept out of docker-compose.yml — injected via .env only.
+# =============================================================================
+
+services:
+
+  # ── Redis — Cache + Message Broker ───────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: >
+      redis-server
+      --maxmemory ${REDIS_MAXMEMORY:-256mb}
+      --maxmemory-policy allkeys-lru
+      --appendonly yes
+      --save 60 1000
+    volumes:
+      - ../runtime/redis:/data:Z
+    networks:
+      - lms-network
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: "512M"
+        reservations:
+          cpus: "0.25"
+          memory: "128M"
+
+  # ── Gunicorn — Django WSGI API Server ────────────────────────────────────
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: ${IMAGE_REGISTRY:-}enable-lms:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    command: ["gunicorn"]
+    env_file:
+      - .env
+    environment:
+      - RUN_MIGRATIONS=false
+    volumes:
+      - ../runtime/media:/app/media:Z
+      - ../runtime/static:/app/staticfiles:Z
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - lms-network
+    deploy:
+      resources:
+        limits:
+          cpus: "${API_CPU_LIMIT:-2.0}"
+          memory: "${API_MEMORY_LIMIT:-1G}"
+        reservations:
+          cpus: "0.5"
+          memory: "256M"
+
+  # ── Daphne — Django ASGI WebSocket Server ────────────────────────────────
+  websocket:
+    image: ${IMAGE_REGISTRY:-}enable-lms:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    command: ["daphne"]
+    env_file:
+      - .env
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - lms-network
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import socket,sys; s=socket.socket(); s.settimeout(3);\ntry:\n  s.connect((\"127.0.0.1\", 8001)); sys.exit(0)\nexcept Exception: sys.exit(1)'"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: "${WS_CPU_LIMIT:-1.0}"
+          memory: "${WS_MEMORY_LIMIT:-512M}"
+        reservations:
+          cpus: "0.25"
+          memory: "128M"
+
+  # ── Celery Worker — Async Task Processing ────────────────────────────────
+  celery-worker:
+    image: ${IMAGE_REGISTRY:-}enable-lms:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    command: ["celery-worker"]
+    env_file:
+      - .env
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - lms-network
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A lms_enterprise inspect ping -d celery@$$HOSTNAME -t 5 >/dev/null 2>&1 || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: "${WORKER_CPU_LIMIT:-2.0}"
+          memory: "${WORKER_MEMORY_LIMIT:-1G}"
+        reservations:
+          cpus: "0.5"
+          memory: "256M"
+
+  # ── Celery Beat — Periodic Task Scheduler (single instance only) ─────────
+  celery-beat:
+    image: ${IMAGE_REGISTRY:-}enable-lms:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    command: ["celery-beat"]
+    env_file:
+      - .env
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - lms-network
+    healthcheck:
+      test: ["CMD-SHELL", "ls /proc/1/cmdline >/dev/null 2>&1 && grep -q 'beat' /proc/1/cmdline || exit 1"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: "${BEAT_CPU_LIMIT:-0.5}"
+          memory: "${BEAT_MEMORY_LIMIT:-256M}"
+        reservations:
+          cpus: "0.1"
+          memory: "64M"
+
+  # ── Database Migration — run-once job ────────────────────────────────────
+  #    Usage: docker compose run --rm migrate
+  migrate:
+    image: ${IMAGE_REGISTRY:-}enable-lms:${IMAGE_TAG:-latest}
+    command: ["migrate"]
+    env_file:
+      - .env
+    volumes:
+      - ../runtime/static:/app/staticfiles:Z
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - lms-network
+    profiles:
+      - tools
+
+  # ── Nginx — Reverse Proxy + Static Files ─────────────────────────────────
+  nginx:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.nginx
+    image: ${IMAGE_REGISTRY:-}enable-lms-nginx:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "8000:80"
+    volumes:
+      - ../runtime/static:/app/staticfiles:ro,Z
+      - ../runtime/media:/app/media:ro,Z
+    depends_on:
+      - api
+      - websocket
+    networks:
+      - lms-network
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: "256M"
+        reservations:
+          cpus: "0.1"
+          memory: "64M"
+
+  # ── Cloudflare Tunnel — REMOVED ─────────────────────────────────────────
+  # Traffic is now served via Cloudflare DNS proxy (orange cloud) pointing
+  # to the server's public IP on port 80. No tunnel container needed.
+  # Cloudflare setup: DNS → A record → <PUBLIC_IP> (Proxied ON).
+
+# ── Networks ─────────────────────────────────────────────────────────────────
+# Note: Named volumes removed. All runtime data now under ../runtime/ (bind mounts):
+#   ../runtime/redis   → Redis data (AOF + RDB)
+#   ../runtime/media   → Django user uploads
+#   ../runtime/static  → Collected static files
+networks:
+  lms-network:
+    driver: bridge

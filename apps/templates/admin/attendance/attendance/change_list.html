@@ -1,0 +1,19 @@
+{% extends "admin/enhanced_change_list.html" %}
+
+{% block content_title %}
+{{ block.super }}
+{% if attendance_summary_cards %}
+<div class="att-summary-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin:18px 0 22px;">
+  {% for c in attendance_summary_cards %}
+  <div style="background:#fff;border-radius:14px;padding:16px 18px;box-shadow:0 2px 8px rgba(15,23,42,0.06);border-left:4px solid {{ c.color }};">
+    <div style="display:flex;align-items:center;gap:10px;color:#64748b;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">
+      <span style="width:30px;height:30px;border-radius:8px;background:{{ c.color }}20;color:{{ c.color }};display:inline-flex;align-items:center;justify-content:center;"><i class="fas {{ c.icon }}"></i></span>
+      {{ c.title }}
+    </div>
+    <div style="font-size:1.7rem;font-weight:800;color:#0f172a;margin-top:6px;line-height:1;">{{ c.value }}</div>
+    <div style="font-size:0.72rem;color:#94a3b8;margin-top:4px;">{{ c.sub }}</div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

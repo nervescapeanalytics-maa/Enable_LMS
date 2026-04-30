@@ -1,0 +1,57 @@
+{% load static %}
+<div class="friendly-json-widget links-list-widget" id="llw-{{ widget.name }}">
+  <div class="fjw-links-header">
+    <span class="fjw-links-col" style="flex:2;">Link Label</span>
+    <span class="fjw-links-col" style="flex:3;">URL</span>
+    <span class="fjw-links-col" style="flex:1;">Icon (optional)</span>
+    <span class="fjw-links-col" style="width:40px;"></span>
+  </div>
+
+  <div class="fjw-links-rows" id="linkrows-{{ widget.name }}">
+    {% for link in widget.links %}
+    <div class="fjw-links-row">
+      <input type="text" name="{{ widget.name }}_labels" value="{{ link.label }}"
+             class="fjw-text-input" placeholder="Link text" style="flex:2;">
+      <input type="url" name="{{ widget.name }}_urls" value="{{ link.url }}"
+             class="fjw-text-input" placeholder="https://..." style="flex:3;">
+      <input type="text" name="{{ widget.name }}_icons" value="{{ link.icon|default:'' }}"
+             class="fjw-text-input" placeholder="fas fa-link" style="flex:1;">
+      <button type="button" class="fjw-btn-icon fjw-btn-remove" onclick="this.parentElement.remove()" title="Remove link">
+        <i class="fas fa-trash-alt"></i>
+      </button>
+    </div>
+    {% empty %}
+    <div class="fjw-empty-state">
+      <i class="fas fa-link"></i>
+      <span>No links configured. Click "Add Link" to begin.</span>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="fjw-actions-bar">
+    <button type="button" class="fjw-btn fjw-btn-add" onclick="fjwAddLinkRow('{{ widget.name }}')">
+      <i class="fas fa-plus"></i> Add Link
+    </button>
+  </div>
+
+  <p class="fjw-help"><i class="fas fa-info-circle"></i> Each row creates a clickable link. Icon is optional (use FontAwesome class like "fas fa-home").</p>
+</div>
+
+<script>
+function fjwAddLinkRow(name) {
+  var container = document.getElementById('linkrows-' + name);
+  var empty = container.querySelector('.fjw-empty-state');
+  if (empty) empty.remove();
+
+  var row = document.createElement('div');
+  row.className = 'fjw-links-row';
+  row.innerHTML =
+    '<input type="text" name="' + name + '_labels" value="" class="fjw-text-input" placeholder="Link text" style="flex:2;">' +
+    '<input type="url" name="' + name + '_urls" value="" class="fjw-text-input" placeholder="https://..." style="flex:3;">' +
+    '<input type="text" name="' + name + '_icons" value="" class="fjw-text-input" placeholder="fas fa-link" style="flex:1;">' +
+    '<button type="button" class="fjw-btn-icon fjw-btn-remove" onclick="this.parentElement.remove()" title="Remove link">' +
+    '<i class="fas fa-trash-alt"></i></button>';
+  container.appendChild(row);
+  row.querySelector('input').focus();
+}
+</script>

@@ -1,0 +1,1363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ENF Admin Panel — Interactive Hierarchy Explorer</title>
+<style>
+  :root {
+    --primary: #844FC1;
+    --primary-light: #a78bfa;
+    --primary-dark: #5b21b6;
+    --bg: #0f0f1a;
+    --bg-card: #1a1a2e;
+    --bg-card-hover: #232340;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --border: #334155;
+    --red: #ef4444;
+    --orange: #f59e0b;
+    --blue: #3b82f6;
+    --green: #22c55e;
+    --purple: #a855f7;
+    --cyan: #06b6d4;
+    --gray: #6b7280;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── Header ─── */
+  .header {
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+    padding: 20px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 4px 20px rgba(132,79,193,0.3);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .header .subtitle {
+    color: rgba(255,255,255,0.8);
+    font-size: 14px;
+  }
+
+  /* ─── Tab Navigation ─── */
+  .tab-nav {
+    display: flex;
+    gap: 4px;
+    padding: 16px 40px;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    flex-wrap: wrap;
+  }
+  .tab-btn {
+    padding: 10px 20px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s;
+    white-space: nowrap;
+  }
+  .tab-btn:hover { background: var(--bg-card-hover); color: var(--text); }
+  .tab-btn.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+  }
+
+  /* ─── Content ─── */
+  .content { padding: 30px 40px; max-width: 1400px; margin: 0 auto; }
+  .tab-panel { display: none; animation: fadeIn 0.4s ease; }
+  .tab-panel.active { display: block; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ─── Section titles ─── */
+  .section-title {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    background: linear-gradient(90deg, var(--primary-light), var(--cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .section-desc { color: var(--text-muted); margin-bottom: 30px; font-size: 16px; }
+
+  /* ─── Layer Stack ─── */
+  .layer-stack { display: flex; flex-direction: column; gap: 0; }
+  .layer {
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s;
+    cursor: pointer;
+    position: relative;
+  }
+  .layer:hover {
+    border-color: var(--primary-light);
+    transform: scale(1.01);
+    box-shadow: 0 0 30px rgba(132,79,193,0.2);
+  }
+  .layer-header {
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-weight: 600;
+    font-size: 18px;
+  }
+  .layer-num {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .layer-body {
+    padding: 0 24px 20px 76px;
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1.8;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s ease, padding 0.3s;
+  }
+  .layer.open .layer-body {
+    max-height: 2000px;
+    padding: 0 24px 20px 76px;
+  }
+  .layer-arrow {
+    margin-left: auto;
+    font-size: 20px;
+    transition: transform 0.3s;
+  }
+  .layer.open .layer-arrow { transform: rotate(180deg); }
+
+  .layer-connector {
+    width: 2px;
+    height: 24px;
+    background: var(--border);
+    margin-left: 42px;
+  }
+
+  /* Layer colors */
+  .layer-1 .layer-header { background: rgba(124,58,237,0.2); }
+  .layer-1 .layer-num { background: #7c3aed; color: #fff; }
+  .layer-2 .layer-header { background: rgba(220,38,38,0.15); }
+  .layer-2 .layer-num { background: #dc2626; color: #fff; }
+  .layer-3 .layer-header { background: rgba(37,99,235,0.15); }
+  .layer-3 .layer-num { background: #2563eb; color: #fff; }
+  .layer-4 .layer-header { background: rgba(5,150,105,0.15); }
+  .layer-4 .layer-num { background: #059669; color: #fff; }
+  .layer-5 .layer-header { background: rgba(217,119,6,0.15); }
+  .layer-5 .layer-num { background: #d97706; color: #fff; }
+
+  /* ─── Admin Type Pyramid ─── */
+  .pyramid { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 20px 0; }
+  .pyramid-level {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 14px 24px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+  }
+  .pyramid-level:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+  .pyramid-level .pip {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .pyramid-level .detail {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    min-width: 340px;
+    z-index: 10;
+    font-weight: 400;
+    font-size: 13px;
+    color: var(--text);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    text-align: left;
+  }
+  .pyramid-level:hover .detail, .pyramid-level.clicked .detail { display: block; }
+
+  .pyr-super { background: rgba(239,68,68,0.2); border: 2px solid #ef4444; width: 50%; }
+  .pyr-tenant { background: rgba(245,158,11,0.2); border: 2px solid #f59e0b; width: 60%; }
+  .pyr-branch { background: rgba(59,130,246,0.2); border: 2px solid #3b82f6; width: 70%; }
+  .pyr-academic { background: rgba(34,197,94,0.2); border: 2px solid #22c55e; width: 80%; }
+  .pyr-finance { background: rgba(168,85,247,0.2); border: 2px solid #a855f7; width: 80%; }
+  .pyr-support { background: rgba(6,182,212,0.2); border: 2px solid #06b6d4; width: 80%; }
+
+  /* ─── Flow Diagram ─── */
+  .flow { display: flex; flex-direction: column; gap: 0; align-items: center; }
+  .flow-phase {
+    width: 100%;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.4s;
+  }
+  .flow-phase:hover { border-color: var(--primary-light); }
+  .flow-phase-header {
+    padding: 14px 24px;
+    font-weight: 700;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+  }
+  .flow-phase-body {
+    padding: 0 24px 0 24px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s ease, padding 0.3s;
+  }
+  .flow-phase.open .flow-phase-body {
+    max-height: 2000px;
+    padding: 0 24px 20px 24px;
+  }
+  .flow-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    animation: stepReveal 0.4s ease forwards;
+    opacity: 0;
+  }
+  .flow-phase.open .flow-step { opacity: 1; }
+  .flow-step:last-child { border-bottom: none; }
+  @keyframes stepReveal { to { opacity: 1; } }
+  .step-num {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .step-content { flex: 1; }
+  .step-model { font-weight: 600; color: var(--primary-light); }
+  .step-desc { color: var(--text-muted); font-size: 13px; }
+
+  .flow-arrow {
+    font-size: 28px;
+    color: var(--primary-light);
+    text-align: center;
+    line-height: 1;
+    padding: 4px 0;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
+
+  .phase-setup .flow-phase-header { background: rgba(124,58,237,0.2); }
+  .phase-setup .step-num { background: var(--primary); color: #fff; }
+  .phase-enroll .flow-phase-header { background: rgba(37,99,235,0.15); }
+  .phase-enroll .step-num { background: var(--blue); color: #fff; }
+  .phase-daily .flow-phase-header { background: rgba(5,150,105,0.15); }
+  .phase-daily .step-num { background: var(--green); color: #fff; }
+  .phase-monitor .flow-phase-header { background: rgba(217,119,6,0.15); }
+  .phase-monitor .step-num { background: var(--orange); color: #fff; }
+
+  /* ─── RBAC Explorer ─── */
+  .rbac-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .rbac-grid { grid-template-columns: 1fr; } }
+  .rbac-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s;
+  }
+  .rbac-card:hover {
+    border-color: var(--primary-light);
+    box-shadow: 0 4px 20px rgba(132,79,193,0.15);
+  }
+  .rbac-card-header {
+    padding: 16px;
+    font-weight: 600;
+    font-size: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .rbac-card-body { padding: 16px; font-size: 14px; }
+  .rbac-card-body p { margin-bottom: 10px; color: var(--text-muted); }
+
+  .perm-code {
+    display: inline-block;
+    background: rgba(132,79,193,0.15);
+    border: 1px solid var(--primary);
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-family: 'Fira Code', monospace, monospace;
+    font-size: 12px;
+    color: var(--primary-light);
+    margin: 2px 4px 2px 0;
+  }
+  .scope-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    margin: 2px;
+  }
+  .scope-own { background: rgba(107,114,128,0.3); color: #9ca3af; border: 1px solid #6b7280; }
+  .scope-batch { background: rgba(59,130,246,0.2); color: #93c5fd; border: 1px solid #3b82f6; }
+  .scope-branch { background: rgba(168,85,247,0.2); color: #c4b5fd; border: 1px solid #a855f7; }
+  .scope-tenant { background: rgba(245,158,11,0.2); color: #fcd34d; border: 1px solid #f59e0b; }
+  .scope-global { background: rgba(239,68,68,0.2); color: #fca5a5; border: 1px solid #ef4444; }
+
+  /* ─── User Cards ─── */
+  .user-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+  .user-card {
+    background: var(--bg-card);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    transition: all 0.3s;
+    cursor: pointer;
+  }
+  .user-card:hover {
+    border-color: var(--primary-light);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+  }
+  .user-card-header {
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .user-avatar {
+    width: 50px; height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+  .user-card-body {
+    padding: 0 20px 20px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s ease;
+  }
+  .user-card.open .user-card-body { max-height: 1500px; }
+  .user-card-body table {
+    width: 100%;
+    font-size: 13px;
+    border-collapse: collapse;
+  }
+  .user-card-body td {
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    vertical-align: top;
+  }
+  .user-card-body td:first-child { color: var(--text-muted); width: 40%; }
+
+  /* ─── Sidebar Map ─── */
+  .sidebar-map { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+  .sidebar-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .sidebar-section-header {
+    padding: 14px 18px;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .sidebar-section-header .count {
+    margin-left: auto;
+    background: rgba(255,255,255,0.1);
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+  }
+  .sidebar-items {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s;
+  }
+  .sidebar-section.open .sidebar-items { max-height: 2000px; }
+  .sidebar-item {
+    padding: 8px 18px 8px 36px;
+    font-size: 13px;
+    border-top: 1px solid rgba(255,255,255,0.04);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .sidebar-item:hover { background: var(--bg-card-hover); }
+  .sidebar-item .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .sidebar-item .table-name {
+    margin-left: auto;
+    font-family: monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .sidebar-item:hover .table-name { opacity: 1; }
+
+  /* ─── Comparison Table ─── */
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    background: var(--bg-card);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .compare-table th {
+    padding: 14px 16px;
+    text-align: left;
+    background: rgba(132,79,193,0.15);
+    border-bottom: 2px solid var(--primary);
+    font-weight: 600;
+  }
+  .compare-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .compare-table tr:hover td { background: var(--bg-card-hover); }
+  .check { color: var(--green); font-weight: 700; }
+  .cross { color: var(--red); font-weight: 700; }
+  .partial { color: var(--orange); font-weight: 700; }
+
+  /* ─── Golden Path ─── */
+  .golden-path { position: relative; padding-left: 40px; }
+  .golden-step {
+    position: relative;
+    padding: 14px 20px;
+    margin-bottom: 4px;
+    border-radius: 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 14px;
+    animation: slideIn 0.5s ease forwards;
+    opacity: 0;
+  }
+  .golden-step:nth-child(1) { animation-delay: 0s; }
+  .golden-step:nth-child(2) { animation-delay: 0.05s; }
+  .golden-step:nth-child(3) { animation-delay: 0.1s; }
+  .golden-step:nth-child(4) { animation-delay: 0.15s; }
+  .golden-step:nth-child(5) { animation-delay: 0.2s; }
+  .golden-step:nth-child(6) { animation-delay: 0.25s; }
+  .golden-step:nth-child(7) { animation-delay: 0.3s; }
+  .golden-step:nth-child(8) { animation-delay: 0.35s; }
+  .golden-step:nth-child(9) { animation-delay: 0.4s; }
+  .golden-step:nth-child(10) { animation-delay: 0.45s; }
+  .golden-step:nth-child(11) { animation-delay: 0.5s; }
+  .golden-step:nth-child(12) { animation-delay: 0.55s; }
+  .golden-step:nth-child(13) { animation-delay: 0.6s; }
+  .golden-step:nth-child(14) { animation-delay: 0.65s; }
+  .golden-step:nth-child(15) { animation-delay: 0.7s; }
+  .golden-step:nth-child(16) { animation-delay: 0.75s; }
+  .golden-step:nth-child(17) { animation-delay: 0.8s; }
+  .golden-step:nth-child(18) { animation-delay: 0.85s; }
+  .golden-step:nth-child(19) { animation-delay: 0.9s; }
+  .golden-step:nth-child(20) { animation-delay: 0.95s; }
+  @keyframes slideIn { to { opacity: 1; transform: translateX(0); } from { opacity: 0; transform: translateX(-20px); } }
+  .golden-step:hover {
+    border-color: var(--primary-light);
+    background: var(--bg-card-hover);
+  }
+  .golden-step::before {
+    content: '';
+    position: absolute;
+    left: -30px;
+    top: 50%;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    transform: translateY(-50%);
+  }
+  .golden-step::after {
+    content: '';
+    position: absolute;
+    left: -24px;
+    top: calc(50% + 8px);
+    width: 2px;
+    height: calc(100% + 4px - 8px);
+    background: var(--border);
+  }
+  .golden-step:last-child::after { display: none; }
+  .golden-step .gs-num {
+    font-weight: 800;
+    margin-right: 8px;
+    color: var(--primary-light);
+  }
+  .golden-step .gs-model { font-weight: 600; color: var(--cyan); }
+
+  .gs-setup::before { background: var(--primary); }
+  .gs-rbac::before { background: var(--red); }
+  .gs-academic::before { background: var(--green); }
+  .gs-user::before { background: var(--blue); }
+  .gs-ops::before { background: var(--orange); }
+
+  /* ─── Scope Slider ─── */
+  .scope-visual {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    margin: 20px 0;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .scope-level {
+    flex: 1;
+    padding: 20px 14px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+  }
+  .scope-level:hover { filter: brightness(1.3); }
+  .scope-level .scope-name { font-weight: 700; font-size: 15px; margin-bottom: 6px; }
+  .scope-level .scope-desc { font-size: 11px; opacity: 0.8; }
+  .scope-level .scope-arrow {
+    position: absolute;
+    right: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+    z-index: 2;
+    color: rgba(255,255,255,0.6);
+  }
+  .sl-own { background: rgba(107,114,128,0.3); }
+  .sl-batch { background: rgba(59,130,246,0.25); }
+  .sl-branch { background: rgba(168,85,247,0.25); }
+  .sl-tenant { background: rgba(245,158,11,0.25); }
+  .sl-global { background: rgba(239,68,68,0.25); }
+
+  /* ─── Tooltip ─── */
+  .tooltip-box {
+    background: var(--bg-card);
+    border: 1px solid var(--primary);
+    border-radius: 10px;
+    padding: 16px;
+    margin-top: 10px;
+    font-size: 13px;
+    line-height: 1.7;
+    display: none;
+    animation: fadeIn 0.3s;
+  }
+  .tooltip-box.visible { display: block; }
+
+  /* ─── Footer ─── */
+  .footer {
+    text-align: center;
+    padding: 30px;
+    color: var(--text-muted);
+    font-size: 13px;
+    border-top: 1px solid var(--border);
+    margin-top: 60px;
+  }
+
+  /* ─── Inheritance Demo ─── */
+  .inherit-demo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    margin: 20px 0;
+  }
+  .inherit-role {
+    width: 70%;
+    max-width: 500px;
+    border-radius: 12px;
+    padding: 16px 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  .inherit-role:hover { transform: scale(1.02); }
+  .inherit-role .role-name { font-weight: 700; font-size: 16px; }
+  .inherit-role .role-meta { font-size: 12px; opacity: 0.8; margin-bottom: 8px; }
+  .inherit-role .role-perms { font-size: 13px; }
+  .inherit-arrow { font-size: 24px; color: var(--primary-light); padding: 4px 0; }
+
+  .ir-parent { background: rgba(239,68,68,0.15); border: 2px solid var(--red); }
+  .ir-child1 { background: rgba(37,99,235,0.15); border: 2px solid var(--blue); }
+  .ir-child2 { background: rgba(34,197,94,0.15); border: 2px solid var(--green); }
+
+  .perm-inherited { opacity: 0.6; font-style: italic; }
+  .perm-own { font-weight: 600; }
+
+  /* Stats banner */
+  .stats-bar {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 30px;
+  }
+  .stat-pill {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 8px 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+  }
+  .stat-pill .stat-num {
+    font-weight: 800;
+    font-size: 18px;
+    color: var(--primary-light);
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════ HEADER ═══════ -->
+<div class="header">
+  <div>
+    <h1>ENABLE PROGRAM — Admin Panel Hierarchy</h1>
+    <div class="subtitle">Interactive Explorer for Demo & Presentation</div>
+  </div>
+  <div style="color:rgba(255,255,255,0.7); font-size:13px;">v4.0 Purple Edition</div>
+</div>
+
+<!-- ═══════ STATS ═══════ -->
+<div style="padding: 20px 40px 0;">
+  <div class="stats-bar">
+    <div class="stat-pill"><span class="stat-num">12</span> Apps</div>
+    <div class="stat-pill"><span class="stat-num">62</span> Models</div>
+    <div class="stat-pill"><span class="stat-num">4</span> User Types</div>
+    <div class="stat-pill"><span class="stat-num">6</span> Admin Types</div>
+    <div class="stat-pill"><span class="stat-num">5</span> Scope Levels</div>
+    <div class="stat-pill"><span class="stat-num">7</span> Actions</div>
+  </div>
+</div>
+
+<!-- ═══════ TAB NAV ═══════ -->
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="showTab('layers')">📊 System Layers</button>
+  <button class="tab-btn" onclick="showTab('roles')">🔐 Roles & Permissions</button>
+  <button class="tab-btn" onclick="showTab('users')">👥 User Types</button>
+  <button class="tab-btn" onclick="showTab('flow')">🔄 Operations Flow</button>
+  <button class="tab-btn" onclick="showTab('golden')">✨ Golden Path</button>
+  <button class="tab-btn" onclick="showTab('sidebar')">📁 Sidebar Map</button>
+  <button class="tab-btn" onclick="showTab('compare')">📋 Comparison</button>
+</div>
+
+<!-- ═══════ TAB 1: LAYERS ═══════ -->
+<div class="content">
+<div id="tab-layers" class="tab-panel active">
+  <div class="section-title">5-Layer System Architecture</div>
+  <div class="section-desc">Click each layer to expand. Each layer depends on the one above it — data flows top-down.</div>
+
+  <div class="layer-stack">
+    <div class="layer layer-1 open" onclick="this.classList.toggle('open')">
+      <div class="layer-header">
+        <div class="layer-num">1</div>
+        <div>TENANT — Multi-Tenant Root</div>
+        <div class="layer-arrow">▼</div>
+      </div>
+      <div class="layer-body">
+        <p>The <strong>Tenant</strong> is the top-level container. Each coaching institute is a tenant. All data is isolated per tenant — ABC Institute cannot see XYZ Institute's students.</p>
+        <p><strong>Key Fields:</strong> <code>code</code>, <code>name</code>, <code>subdomain</code>, <code>custom_domain</code>, <code>plan_type</code> (FREE/BASIC/PREMIUM/ENTERPRISE), <code>youtube_api_key</code>, <code>status</code></p>
+        <p><strong>Example:</strong> <code>code: ABC</code> → <code>abc.enfclass.com</code> → contains 156 students, 12 teachers, 5 admins</p>
+        <p><strong>Admin Location:</strong> Sidebar → TENANTS → Tenants</p>
+        <p>Every other model in the system has a <code>tenant</code> FK that links back here. This is the isolation boundary.</p>
+      </div>
+    </div>
+
+    <div class="layer-connector"></div>
+
+    <div class="layer layer-2" onclick="this.classList.toggle('open')">
+      <div class="layer-header">
+        <div class="layer-num">2</div>
+        <div>RBAC — Roles, Permissions & Access Control</div>
+        <div class="layer-arrow">▼</div>
+      </div>
+      <div class="layer-body">
+        <p><strong>Role-Based Access Control</strong> defines who can do what. Three components:</p>
+        <p><strong>Permission</strong> — an atomic action: <code>students.read.batch</code> = "read students in your batch"</p>
+        <p><strong>Role</strong> — a bundle of permissions: "Academic Coordinator" = 12 permissions</p>
+        <p><strong>RolePermission</strong> — the junction: Role X has Permission Y</p>
+        <p><strong>Permission Format:</strong> <code>module.action.scope</code> — e.g., <code>attendance.update.tenant</code></p>
+        <p><strong>Actions:</strong> CREATE, READ, UPDATE, DELETE, EXECUTE, APPROVE, EXPORT</p>
+        <p><strong>Scopes:</strong> OWN → BATCH → BRANCH → TENANT → GLOBAL (escalating access)</p>
+        <p><strong>Role Inheritance:</strong> A role can have a <code>parent_role</code> — it inherits all parent permissions plus its own</p>
+        <p><strong>Admin Location:</strong> Sidebar → ACCOUNTS → Roles / Permissions / Role permissions</p>
+      </div>
+    </div>
+
+    <div class="layer-connector"></div>
+
+    <div class="layer layer-3" onclick="this.classList.toggle('open')">
+      <div class="layer-header">
+        <div class="layer-num">3</div>
+        <div>USERS — Admin, Teacher, Student, Parent</div>
+        <div class="layer-arrow">▼</div>
+      </div>
+      <div class="layer-body">
+        <p>Four user types, all extending a common <code>BaseUser</code> (UUID PK, email, phone, MFA, status):</p>
+        <p><strong>Admin</strong> — 6 admin types (Super → Tenant → Branch → Academic/Finance/Support). Has FK to Role + permissions_override JSON.</p>
+        <p><strong>Teacher</strong> — YouTube integration, batch assignments, inline permissions (can_override_attendance, etc.). Self-FK <code>reporting_to</code> for hierarchy.</p>
+        <p><strong>Student</strong> — FK to Batch, class level, exam target, fee status, notifications. Core user — everything else references students.</p>
+        <p><strong>Parent</strong> — FK to Student (primary_student), relationship type, toggle flags for what they can view.</p>
+        <p><strong>Admin Location:</strong> Sidebar → ACCOUNTS → Students / Teachers / Admins / Parents</p>
+      </div>
+    </div>
+
+    <div class="layer-connector"></div>
+
+    <div class="layer layer-4" onclick="this.classList.toggle('open')">
+      <div class="layer-header">
+        <div class="layer-num">4</div>
+        <div>ACADEMIC STRUCTURE — Sessions, Subjects, Batches</div>
+        <div class="layer-arrow">▼</div>
+      </div>
+      <div class="layer-body">
+        <p>Defines <strong>what</strong> is taught, <strong>when</strong>, and <strong>how</strong> it's organized:</p>
+        <p><strong>AcademicSession</strong> → "2025-2026" (time boundary)</p>
+        <p><strong>Group</strong> → "Main Campus" (organizational division)</p>
+        <p><strong>Category</strong> → "JEE Wing" (sub-division under Group)</p>
+        <p><strong>Subject</strong> → "Physics" → <strong>Chapter</strong> → "Mechanics" → <strong>Topic</strong> → "Newton's Laws"</p>
+        <p><strong>Batch</strong> → "NEET-2025-A" (links to Session + Group)</p>
+        <p><strong>BatchStudent</strong> = Student enrolled in Batch</p>
+        <p><strong>BatchTeacher</strong> = Teacher assigned to Batch + Subject</p>
+        <p>Plus reference tables: Language, State, City, Religion, School</p>
+        <p><strong>Admin Location:</strong> Sidebar → ACADEMICS (15 items)</p>
+      </div>
+    </div>
+
+    <div class="layer-connector"></div>
+
+    <div class="layer layer-5" onclick="this.classList.toggle('open')">
+      <div class="layer-header">
+        <div class="layer-num">5</div>
+        <div>OPERATIONS — Classes, Tests, Attendance, Communication</div>
+        <div class="layer-arrow">▼</div>
+      </div>
+      <div class="layer-body">
+        <p>Daily activities that reference users and academic structure:</p>
+        <p><strong>Classes:</strong> ScheduledClass (teacher + batch + chapter + YouTube), ClassAccessToken, ClassWatchTime</p>
+        <p><strong>Assessments:</strong> Test → TestSection → Question → TestAttempt → TestAttemptAnswer, TestFeedback, OfflineTestMarks</p>
+        <p><strong>Attendance:</strong> Mark present/absent/late per student per batch per day</p>
+        <p><strong>Communication:</strong> SupportTickets, Announcements, DirectMessages, Notifications</p>
+        <p><strong>Materials:</strong> StudyMaterial (PDF/video), PhotoGallery, Scholarship, TopperStudent</p>
+        <p><strong>Monitoring:</strong> UserDevice, UserSession, LoginHistory, UserActivity, AuditLog</p>
+        <p><strong>Config:</strong> SystemSettings, FeatureFlags, MFAPolicy, MaintenanceWindow, AIFeatureConfig</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ TAB 2: ROLES & PERMISSIONS ═══════ -->
+<div id="tab-roles" class="tab-panel">
+  <div class="section-title">Roles & Permissions System</div>
+  <div class="section-desc">How RBAC controls access across the admin panel.</div>
+
+  <h3 style="margin: 20px 0 16px; color: var(--primary-light);">Admin Type Hierarchy</h3>
+  <p style="color: var(--text-muted); margin-bottom: 16px;">Click each level to see details. Higher = more authority.</p>
+
+  <div class="pyramid">
+    <div class="pyramid-level pyr-super" onclick="this.classList.toggle('clicked')">
+      <span class="pip" style="background:#ef4444"></span>
+      SUPER_ADMIN — Full System Access
+      <div class="detail">
+        <strong>Access:</strong> Everything. All tenants, all settings, all data.<br>
+        <strong>Example Person:</strong> Platform Owner / CTO<br>
+        <strong>managed_branches:</strong> N/A (all)<br>
+        <strong>Typical Permissions:</strong> *.*.global<br>
+        <strong>Can create:</strong> Other admins, tenants, system settings
+      </div>
+    </div>
+    <div class="pyramid-level pyr-tenant" onclick="this.classList.toggle('clicked')">
+      <span class="pip" style="background:#f59e0b"></span>
+      TENANT_ADMIN — Full Tenant Access
+      <div class="detail">
+        <strong>Access:</strong> Everything within their tenant. Cannot see other tenants.<br>
+        <strong>Example Person:</strong> Institute Director<br>
+        <strong>managed_branches:</strong> All within tenant<br>
+        <strong>Typical Permissions:</strong> *.*.tenant<br>
+        <strong>Can create:</strong> Branch admins, teachers, students, batches
+      </div>
+    </div>
+    <div class="pyramid-level pyr-branch" onclick="this.classList.toggle('clicked')">
+      <span class="pip" style="background:#3b82f6"></span>
+      BRANCH_ADMIN — Branch-Level Access
+      <div class="detail">
+        <strong>Access:</strong> Only data in their managed_branches[] array.<br>
+        <strong>Example Person:</strong> Campus Head<br>
+        <strong>managed_branches:</strong> ["Main Campus"]<br>
+        <strong>Typical Permissions:</strong> *.*.branch<br>
+        <strong>Can create:</strong> Teachers, students within their branch
+      </div>
+    </div>
+    <div style="display:flex; gap:12px; width:80%;">
+      <div class="pyramid-level pyr-academic" style="flex:1;" onclick="this.classList.toggle('clicked')">
+        <span class="pip" style="background:#22c55e"></span>
+        ACADEMIC_ADMIN
+        <div class="detail">
+          <strong>Access:</strong> Academic modules only — Subjects, Batches, Tests, Chapters<br>
+          <strong>Example Person:</strong> Academic Coordinator<br>
+          <strong>Cannot access:</strong> Financial data, system settings, audit logs
+        </div>
+      </div>
+      <div class="pyramid-level pyr-finance" style="flex:1;" onclick="this.classList.toggle('clicked')">
+        <span class="pip" style="background:#a855f7"></span>
+        FINANCE_ADMIN
+        <div class="detail">
+          <strong>Access:</strong> Financial modules — Fee status, scholarships<br>
+          <strong>Example Person:</strong> Accounts Manager<br>
+          <strong>Cannot access:</strong> Academic content, system settings
+        </div>
+      </div>
+      <div class="pyramid-level pyr-support" style="flex:1;" onclick="this.classList.toggle('clicked')">
+        <span class="pip" style="background:#06b6d4"></span>
+        SUPPORT_ADMIN
+        <div class="detail">
+          <strong>Access:</strong> Support modules — Tickets, Communication<br>
+          <strong>Example Person:</strong> Help Desk Lead<br>
+          <strong>Cannot access:</strong> Academic or financial data
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="margin: 40px 0 16px; color: var(--primary-light);">Permission Scope Escalation</h3>
+  <p style="color: var(--text-muted); margin-bottom: 16px;">Each scope includes everything below it. Higher scope = wider access.</p>
+
+  <div class="scope-visual">
+    <div class="scope-level sl-own" onclick="showScopeDetail('own')">
+      <div class="scope-name">OWN</div>
+      <div class="scope-desc">Only records you created/own</div>
+      <div class="scope-arrow">→</div>
+    </div>
+    <div class="scope-level sl-batch" onclick="showScopeDetail('batch')">
+      <div class="scope-name">BATCH</div>
+      <div class="scope-desc">Records in your assigned batches</div>
+      <div class="scope-arrow">→</div>
+    </div>
+    <div class="scope-level sl-branch" onclick="showScopeDetail('branch')">
+      <div class="scope-name">BRANCH</div>
+      <div class="scope-desc">Records in your managed branches</div>
+      <div class="scope-arrow">→</div>
+    </div>
+    <div class="scope-level sl-tenant" onclick="showScopeDetail('tenant')">
+      <div class="scope-name">TENANT</div>
+      <div class="scope-desc">All records in your tenant</div>
+      <div class="scope-arrow">→</div>
+    </div>
+    <div class="scope-level sl-global" onclick="showScopeDetail('global')">
+      <div class="scope-name">GLOBAL</div>
+      <div class="scope-desc">All records across all tenants</div>
+    </div>
+  </div>
+  <div id="scope-tooltip" class="tooltip-box"></div>
+
+  <h3 style="margin: 40px 0 16px; color: var(--primary-light);">Role Inheritance Example</h3>
+  <p style="color: var(--text-muted); margin-bottom: 16px;">Child roles automatically inherit all parent permissions.</p>
+
+  <div class="inherit-demo">
+    <div class="inherit-role ir-parent">
+      <div class="role-name">📛 Teacher (Parent Role)</div>
+      <div class="role-meta">Level: 30 · Type: SYSTEM · Applies To: TEACHER</div>
+      <div class="role-perms">
+        <span class="perm-code">classes.read.own</span>
+        <span class="perm-code">attendance.read.batch</span>
+        <span class="perm-code">students.read.batch</span>
+      </div>
+    </div>
+    <div class="inherit-arrow">↓ inherits ↓</div>
+    <div style="display:flex; gap:16px; width:90%;">
+      <div class="inherit-role ir-child1" style="flex:1;">
+        <div class="role-name">📛 Head Teacher</div>
+        <div class="role-meta">Level: 80 · parent: Teacher</div>
+        <div class="role-perms">
+          <span class="perm-code perm-inherited" title="Inherited from Teacher">classes.read.own</span>
+          <span class="perm-code perm-inherited" title="Inherited">attendance.read.batch</span>
+          <span class="perm-code perm-inherited" title="Inherited">students.read.batch</span>
+          <span class="perm-code perm-own">+ attendance.update.batch</span>
+          <span class="perm-code perm-own">+ students.export.tenant</span>
+          <span class="perm-code perm-own">+ tests.approve.batch</span>
+        </div>
+        <div style="margin-top:8px; font-size:12px; color:var(--cyan);">Total: 3 inherited + 3 own = 6 permissions</div>
+      </div>
+      <div class="inherit-role ir-child2" style="flex:1;">
+        <div class="role-name">📛 Junior Teacher</div>
+        <div class="role-meta">Level: 50 · parent: Teacher</div>
+        <div class="role-perms">
+          <span class="perm-code perm-inherited" title="Inherited">classes.read.own</span>
+          <span class="perm-code perm-inherited" title="Inherited">attendance.read.batch</span>
+          <span class="perm-code perm-inherited" title="Inherited">students.read.batch</span>
+          <span class="perm-code perm-own">+ materials.create.own</span>
+          <span class="perm-code perm-own">+ tests.create.own</span>
+        </div>
+        <div style="margin-top:8px; font-size:12px; color:var(--cyan);">Total: 3 inherited + 2 own = 5 permissions</div>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="margin: 40px 0 16px; color: var(--primary-light);">Permission Code Examples</h3>
+  <div class="rbac-grid">
+    <div class="rbac-card">
+      <div class="rbac-card-header" style="background:rgba(34,197,94,0.1);">📗 CREATE Permissions</div>
+      <div class="rbac-card-body">
+        <span class="perm-code">students.create.branch</span>
+        <span class="perm-code">tests.create.own</span>
+        <span class="perm-code">batches.create.tenant</span>
+        <span class="perm-code">materials.create.own</span>
+        <p style="margin-top:10px;">Create new records. Scope limits <em>where</em> the record can be assigned.</p>
+      </div>
+    </div>
+    <div class="rbac-card">
+      <div class="rbac-card-header" style="background:rgba(59,130,246,0.1);">📘 READ Permissions</div>
+      <div class="rbac-card-body">
+        <span class="perm-code">students.read.batch</span>
+        <span class="perm-code">attendance.read.branch</span>
+        <span class="perm-code">audit.read.global</span>
+        <span class="perm-code">tests.read.tenant</span>
+        <p style="margin-top:10px;">View existing records. Most common permission type.</p>
+      </div>
+    </div>
+    <div class="rbac-card">
+      <div class="rbac-card-header" style="background:rgba(239,68,68,0.1);">📕 DELETE Permissions</div>
+      <div class="rbac-card-body">
+        <span class="perm-code">students.delete.own</span>
+        <span class="perm-code">tests.delete.branch</span>
+        <span class="perm-code">audit.delete.global</span>
+        <p style="margin-top:10px;">Destructive action — usually limited to higher scopes. Often requires APPROVE prerequisite.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ TAB 3: USER TYPES ═══════ -->
+<div id="tab-users" class="tab-panel">
+  <div class="section-title">User Types & Their Relationships</div>
+  <div class="section-desc">Click each card to expand and see the complete field breakdown.</div>
+
+  <div class="user-grid">
+
+    <div class="user-card" onclick="this.classList.toggle('open')">
+      <div class="user-card-header" style="background:rgba(245,158,11,0.1);">
+        <div class="user-avatar" style="background:rgba(245,158,11,0.3); color:#fbbf24;">🛡</div>
+        <div>
+          <div style="font-weight:700; font-size:18px;">Admin</div>
+          <div style="color:var(--text-muted); font-size:13px;">System Operators · 6 Types</div>
+        </div>
+      </div>
+      <div class="user-card-body">
+        <table>
+          <tr><td>Admin Types</td><td>🔴 SUPER_ADMIN, 🟠 TENANT_ADMIN, 🔵 BRANCH_ADMIN, 🟢 ACADEMIC_ADMIN, 🟣 FINANCE_ADMIN, 🩵 SUPPORT_ADMIN</td></tr>
+          <tr><td>Role Assignment</td><td>FK to <strong>Role</strong> → inherits all role permissions</td></tr>
+          <tr><td>permissions_override</td><td>JSON array of extra permission codes (bypass role)</td></tr>
+          <tr><td>managed_branches</td><td>JSON array limiting branch access</td></tr>
+          <tr><td>IP Whitelist</td><td>require_ip_whitelist + allowed_ips[] for security</td></tr>
+          <tr><td>Session Timeout</td><td>session_timeout_minutes (default: 240 = 4 hrs)</td></tr>
+          <tr><td>Theme</td><td>LIGHT / DARK / SYSTEM / CUSTOM + accent_color</td></tr>
+          <tr><td>Security</td><td>failed_login_count, locked_until, password_expires_at</td></tr>
+          <tr><td>Admin Panel</td><td>✅ Can login to admin panel</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="user-card" onclick="this.classList.toggle('open')">
+      <div class="user-card-header" style="background:rgba(34,197,94,0.1);">
+        <div class="user-avatar" style="background:rgba(34,197,94,0.3); color:#4ade80;">👨‍🏫</div>
+        <div>
+          <div style="font-weight:700; font-size:18px;">Teacher</div>
+          <div style="color:var(--text-muted); font-size:13px;">Content Creators · YouTube Integration</div>
+        </div>
+      </div>
+      <div class="user-card-body">
+        <table>
+          <tr><td>Employment Types</td><td>FULL_TIME, PART_TIME, CONTRACT, VISITING</td></tr>
+          <tr><td>Hierarchy</td><td>Self-FK <code>reporting_to</code> → another Teacher</td></tr>
+          <tr><td>Batch Assignment</td><td>Via <strong>BatchTeacher</strong>: teacher + batch + subject</td></tr>
+          <tr><td>YouTube</td><td>channel_id, youtube_channel_verified, can_create_streams</td></tr>
+          <tr><td>Inline Permissions</td><td>can_edit_student_profile, can_override_attendance, can_override_scores</td></tr>
+          <tr><td>Professional</td><td>qualification, experience_years, department, designation</td></tr>
+          <tr><td>Financial</td><td>bank_name, bank_account, ifsc_code, pan_number</td></tr>
+          <tr><td>Admin Panel</td><td>❌ API only (does not login to admin)</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="user-card" onclick="this.classList.toggle('open')">
+      <div class="user-card-header" style="background:rgba(59,130,246,0.1);">
+        <div class="user-avatar" style="background:rgba(59,130,246,0.3); color:#60a5fa;">🎓</div>
+        <div>
+          <div style="font-weight:700; font-size:18px;">Student</div>
+          <div style="color:var(--text-muted); font-size:13px;">Primary Users · Core Records</div>
+        </div>
+      </div>
+      <div class="user-card-body">
+        <table>
+          <tr><td>Auto-Assigned Code</td><td>STU2026001, STU2026002, etc.</td></tr>
+          <tr><td>Class Levels</td><td>9, 10, 11, 12</td></tr>
+          <tr><td>Exam Targets</td><td>JEE, NEET, BOTH</td></tr>
+          <tr><td>Streams</td><td>PCM, PCB, PCMB</td></tr>
+          <tr><td>Batch Assignment</td><td>FK to <strong>Batch</strong> (primary) + <strong>BatchStudent</strong> records</td></tr>
+          <tr><td>Fee Status</td><td>PAID, PARTIAL, PENDING, WAIVED (color-coded badge)</td></tr>
+          <tr><td>Parent Link</td><td>Via <strong>ParentStudent</strong> M2M (multiple parents per student)</td></tr>
+          <tr><td>Notifications</td><td>email, sms, push, whatsapp (each toggleable)</td></tr>
+          <tr><td>Subscription</td><td>FREE, BASIC, PREMIUM, SCHOLARSHIP</td></tr>
+          <tr><td>Admin Panel</td><td>❌ API only (does not login to admin)</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="user-card" onclick="this.classList.toggle('open')">
+      <div class="user-card-header" style="background:rgba(168,85,247,0.1);">
+        <div class="user-avatar" style="background:rgba(168,85,247,0.3); color:#c084fc;">👪</div>
+        <div>
+          <div style="font-weight:700; font-size:18px;">Parent</div>
+          <div style="color:var(--text-muted); font-size:13px;">Observers · Read-Only Access</div>
+        </div>
+      </div>
+      <div class="user-card-body">
+        <table>
+          <tr><td>Relationship Types</td><td>FATHER, MOTHER, GUARDIAN, OTHER</td></tr>
+          <tr><td>Primary Student</td><td>FK to <strong>Student</strong> (main child)</td></tr>
+          <tr><td>Multiple Children</td><td>Via <strong>ParentStudent</strong> M2M bridge table</td></tr>
+          <tr><td>can_view_attendance</td><td>Toggle: see child's daily attendance</td></tr>
+          <tr><td>can_view_results</td><td>Toggle: see test scores and grades</td></tr>
+          <tr><td>can_view_fee_details</td><td>Toggle: see fee status and payments</td></tr>
+          <tr><td>can_communicate_teacher</td><td>Toggle: send messages to teachers</td></tr>
+          <tr><td>receive_notifications</td><td>Toggle: get SMS/email alerts</td></tr>
+          <tr><td>Admin Panel</td><td>❌ API only (does not login to admin)</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ TAB 4: FLOW ═══════ -->
+<div id="tab-flow" class="tab-panel">
+  <div class="section-title">Operations Lifecycle Flow</div>
+  <div class="section-desc">The 4 phases every coaching institute follows, from initial setup to daily operations. Click each phase to expand.</div>
+
+  <div class="flow">
+    <div class="flow-phase phase-setup" onclick="this.classList.toggle('open')">
+      <div class="flow-phase-header">1️⃣ SETUP PHASE — One-Time Configuration</div>
+      <div class="flow-phase-body">
+        <div class="flow-step"><div class="step-num">1</div><div class="step-content"><span class="step-model">Tenant</span> — <span class="step-desc">Create the institute: code, name, subdomain, YouTube API key</span></div></div>
+        <div class="flow-step"><div class="step-num">2</div><div class="step-content"><span class="step-model">Academic Session</span> — <span class="step-desc">Create "2025-2026", mark as current</span></div></div>
+        <div class="flow-step"><div class="step-num">3</div><div class="step-content"><span class="step-model">Groups & Categories</span> — <span class="step-desc">"Main Campus" → "JEE Wing", "NEET Wing"</span></div></div>
+        <div class="flow-step"><div class="step-num">4</div><div class="step-content"><span class="step-model">Subjects</span> — <span class="step-desc">Physics, Chemistry, Mathematics, Biology</span></div></div>
+        <div class="flow-step"><div class="step-num">5</div><div class="step-content"><span class="step-model">Chapters & Topics</span> — <span class="step-desc">Physics → Mechanics → Newton's Laws</span></div></div>
+        <div class="flow-step"><div class="step-num">6</div><div class="step-content"><span class="step-model">Batches</span> — <span class="step-desc">"NEET-2025-A" linked to Session + Group</span></div></div>
+        <div class="flow-step"><div class="step-num">7</div><div class="step-content"><span class="step-model">Roles & Permissions</span> — <span class="step-desc">Define RBAC roles for Admin/Teacher user types</span></div></div>
+        <div class="flow-step"><div class="step-num">8</div><div class="step-content"><span class="step-model">System Config</span> — <span class="step-desc">Feature flags, MFA policies, attendance rules</span></div></div>
+      </div>
+    </div>
+
+    <div class="flow-arrow">⬇</div>
+
+    <div class="flow-phase phase-enroll" onclick="this.classList.toggle('open')">
+      <div class="flow-phase-header">2️⃣ ENROLLMENT PHASE — Adding People</div>
+      <div class="flow-phase-body">
+        <div class="flow-step"><div class="step-num">1</div><div class="step-content"><span class="step-model">Admin</span> — <span class="step-desc">Create admin accounts: Academic Coordinator, Branch Manager, etc. Assign admin_type + Role</span></div></div>
+        <div class="flow-step"><div class="step-num">2</div><div class="step-content"><span class="step-model">Teacher</span> — <span class="step-desc">Add teachers, link YouTube channels, set employment type</span></div></div>
+        <div class="flow-step"><div class="step-num">3</div><div class="step-content"><span class="step-model">BatchTeacher</span> — <span class="step-desc">Assign: Dr. Sharma → NEET-2025-A → Physics</span></div></div>
+        <div class="flow-step"><div class="step-num">4</div><div class="step-content"><span class="step-model">Student</span> — <span class="step-desc">Add students (or CSV import 50 at once). Set class, exam target, stream</span></div></div>
+        <div class="flow-step"><div class="step-num">5</div><div class="step-content"><span class="step-model">BatchStudent</span> — <span class="step-desc">Enroll: Naveen Reddy → NEET-2025-A</span></div></div>
+        <div class="flow-step"><div class="step-num">6</div><div class="step-content"><span class="step-model">Parent</span> — <span class="step-desc">Create parent accounts, link to students via ParentStudent</span></div></div>
+      </div>
+    </div>
+
+    <div class="flow-arrow">⬇</div>
+
+    <div class="flow-phase phase-daily" onclick="this.classList.toggle('open')">
+      <div class="flow-phase-header">3️⃣ DAILY OPERATIONS — Teaching & Learning</div>
+      <div class="flow-phase-body">
+        <div class="flow-step"><div class="step-num">1</div><div class="step-content"><span class="step-model">ScheduledClass</span> — <span class="step-desc">Schedule: Dr. Sharma teaches Physics Ch.Mechanics to NEET-2025-A at 2 PM on YouTube</span></div></div>
+        <div class="flow-step"><div class="step-num">2</div><div class="step-content"><span class="step-model">Attendance</span> — <span class="step-desc">Mark: Naveen=PRESENT, Kavya=PRESENT, Amit=ABSENT in NEET-2025-A today</span></div></div>
+        <div class="flow-step"><div class="step-num">3</div><div class="step-content"><span class="step-model">Test</span> — <span class="step-desc">Create: "Mechanics Unit Test" for NEET-2025-A, Physics, 100 marks, 60 min</span></div></div>
+        <div class="flow-step"><div class="step-num">4</div><div class="step-content"><span class="step-model">Questions</span> — <span class="step-desc">Add 30 MCQs under Mechanics chapter, Newton's Laws topic</span></div></div>
+        <div class="flow-step"><div class="step-num">5</div><div class="step-content"><span class="step-model">StudyMaterial</span> — <span class="step-desc">Upload "Mechanics Notes.pdf" for NEET-2025-A, linked to Physics > Mechanics</span></div></div>
+        <div class="flow-step"><div class="step-num">6</div><div class="step-content"><span class="step-model">Announcement</span> — <span class="step-desc">Send: "Physics test on Friday" to all NEET-2025-A students</span></div></div>
+        <div class="flow-step"><div class="step-num">7</div><div class="step-content"><span class="step-model">TestAttempt</span> — <span class="step-desc">Naveen takes the test → scores 85/100 → attempt recorded</span></div></div>
+      </div>
+    </div>
+
+    <div class="flow-arrow">⬇</div>
+
+    <div class="flow-phase phase-monitor" onclick="this.classList.toggle('open')">
+      <div class="flow-phase-header">4️⃣ MONITORING — Dashboard & Audit</div>
+      <div class="flow-phase-body">
+        <div class="flow-step"><div class="step-num">1</div><div class="step-content"><span class="step-model">Dashboard</span> — <span class="step-desc">See real-time stats: 156 students, 8 active batches, today's attendance breakdown</span></div></div>
+        <div class="flow-step"><div class="step-num">2</div><div class="step-content"><span class="step-model">AttendanceSummary</span> — <span class="step-desc">Monthly report: Naveen has 92% attendance this month</span></div></div>
+        <div class="flow-step"><div class="step-num">3</div><div class="step-content"><span class="step-model">AuditLog</span> — <span class="step-desc">Who changed what? "Admin Kavya updated student Naveen's fee_status at 10:30 AM"</span></div></div>
+        <div class="flow-step"><div class="step-num">4</div><div class="step-content"><span class="step-model">LoginHistory</span> — <span class="step-desc">Track: 45 successful logins today, 3 failed attempts from unknown IP</span></div></div>
+        <div class="flow-step"><div class="step-num">5</div><div class="step-content"><span class="step-model">SupportTicket</span> — <span class="step-desc">Student Amita raised ticket: "Cannot access recorded class" — resolved by IT</span></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ TAB 5: GOLDEN PATH ═══════ -->
+<div id="tab-golden" class="tab-panel">
+  <div class="section-title">The Golden Path — From Tenant to Test Score</div>
+  <div class="section-desc">This is the complete 20-step journey showing how every model connects, from creating a tenant to a parent viewing test results.</div>
+
+  <div class="golden-path">
+    <div class="golden-step gs-setup"><span class="gs-num">01</span> <span class="gs-model">TENANT</span> created → "ABC Coaching Institute" (code: ABC, plan: PREMIUM)</div>
+    <div class="golden-step gs-rbac"><span class="gs-num">02</span> <span class="gs-model">ROLE</span> created → "Academic Coordinator" (level: 70, type: CUSTOM, applies_to: ADMIN)</div>
+    <div class="golden-step gs-rbac"><span class="gs-num">03</span> <span class="gs-model">PERMISSIONS</span> assigned → 12 permissions bundled into the Academic Coordinator role via RolePermission</div>
+    <div class="golden-step gs-user"><span class="gs-num">04</span> <span class="gs-model">ADMIN</span> created → Kavya (admin_type: ACADEMIC_ADMIN, role: Academic Coordinator)</div>
+    <div class="golden-step gs-academic"><span class="gs-num">05</span> <span class="gs-model">ACADEMIC SESSION</span> created → "2025-2026" (is_current: True)</div>
+    <div class="golden-step gs-academic"><span class="gs-num">06</span> <span class="gs-model">GROUP</span> created → "Main Campus"</div>
+    <div class="golden-step gs-academic"><span class="gs-num">07</span> <span class="gs-model">SUBJECT</span> created → "Physics" (code: PHY, type: THEORY)</div>
+    <div class="golden-step gs-academic"><span class="gs-num">08</span> <span class="gs-model">CHAPTER</span> created → "Mechanics" (subject: Physics, class: 11)</div>
+    <div class="golden-step gs-academic"><span class="gs-num">09</span> <span class="gs-model">TOPIC</span> created → "Newton's Laws" (chapter: Mechanics)</div>
+    <div class="golden-step gs-academic"><span class="gs-num">10</span> <span class="gs-model">BATCH</span> created → "NEET-2025-A" (session: 2025-2026, group: Main Campus)</div>
+    <div class="golden-step gs-user"><span class="gs-num">11</span> <span class="gs-model">TEACHER</span> created → Dr. Sharma (youtube_verified: True, employment: FULL_TIME)</div>
+    <div class="golden-step gs-academic"><span class="gs-num">12</span> <span class="gs-model">BATCH TEACHER</span> → Dr. Sharma assigned to NEET-2025-A for Physics</div>
+    <div class="golden-step gs-user"><span class="gs-num">13</span> <span class="gs-model">STUDENT</span> created → Naveen Reddy (STU2026001, exam: NEET, class: 12)</div>
+    <div class="golden-step gs-academic"><span class="gs-num">14</span> <span class="gs-model">BATCH STUDENT</span> → Naveen enrolled in NEET-2025-A</div>
+    <div class="golden-step gs-user"><span class="gs-num">15</span> <span class="gs-model">PARENT</span> created → Mr. Reddy (primary_student: Naveen, relationship: FATHER)</div>
+    <div class="golden-step gs-ops"><span class="gs-num">16</span> <span class="gs-model">SCHEDULED CLASS</span> → Dr. Sharma teaches Physics/Mechanics to NEET-2025-A at 2 PM</div>
+    <div class="golden-step gs-ops"><span class="gs-num">17</span> <span class="gs-model">ATTENDANCE</span> → Naveen marked PRESENT in NEET-2025-A on 2026-02-16</div>
+    <div class="golden-step gs-ops"><span class="gs-num">18</span> <span class="gs-model">TEST</span> → "Mechanics Unit Test" created for NEET-2025-A, Physics, 100 marks</div>
+    <div class="golden-step gs-ops"><span class="gs-num">19</span> <span class="gs-model">TEST ATTEMPT</span> → Naveen takes the test → scores 85/100 → 30 answers recorded</div>
+    <div class="golden-step gs-ops"><span class="gs-num">20</span> <span class="gs-model">PARENT VIEWS</span> → Mr. Reddy (can_view_results: True) sees Naveen scored 85/100 🎉</div>
+  </div>
+
+  <div style="margin-top:30px; padding:20px; background:var(--bg-card); border:1px solid var(--border); border-radius:12px;">
+    <h3 style="color:var(--primary-light); margin-bottom:10px;">Legend</h3>
+    <div style="display:flex; gap:20px; flex-wrap:wrap; font-size:14px;">
+      <span>🟣 <strong>Setup</strong> (Tenant)</span>
+      <span>🔴 <strong>RBAC</strong> (Roles/Perms)</span>
+      <span>🔵 <strong>Users</strong> (Admin/Teacher/Student/Parent)</span>
+      <span>🟢 <strong>Academic</strong> (Session/Subject/Batch)</span>
+      <span>🟠 <strong>Operations</strong> (Class/Attendance/Test)</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ TAB 6: SIDEBAR MAP ═══════ -->
+<div id="tab-sidebar" class="tab-panel">
+  <div class="section-title">Sidebar → Database Table Map</div>
+  <div class="section-desc">Every item in the admin sidebar mapped to its database table. Click a section to expand. Hover items to see table names.</div>
+
+  <div class="sidebar-map" id="sidebarMap"></div>
+</div>
+
+<!-- ═══════ TAB 7: COMPARISON ═══════ -->
+<div id="tab-compare" class="tab-panel">
+  <div class="section-title">Feature Comparison Across User Types</div>
+  <div class="section-desc">What each user type can do in the system.</div>
+
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th>Feature</th>
+        <th>🛡 Admin</th>
+        <th>👨‍🏫 Teacher</th>
+        <th>🎓 Student</th>
+        <th>👪 Parent</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Login to Admin Panel</td><td class="check">✅ Yes</td><td class="cross">❌ No</td><td class="cross">❌ No</td><td class="cross">❌ No</td></tr>
+      <tr><td>RBAC Role Assignment</td><td class="check">✅ Full RBAC</td><td class="cross">❌ Inline only</td><td class="cross">❌ No</td><td class="cross">❌ Toggle flags</td></tr>
+      <tr><td>Create Other Users</td><td class="check">✅ All types</td><td class="cross">❌ No</td><td class="cross">❌ No</td><td class="cross">❌ No</td></tr>
+      <tr><td>Manage Batches</td><td class="check">✅ Yes</td><td class="partial">⚠️ View only</td><td class="cross">❌ No</td><td class="cross">❌ No</td></tr>
+      <tr><td>Schedule Classes</td><td class="check">✅ Yes</td><td class="check">✅ Own batches</td><td class="cross">❌ No</td><td class="cross">❌ No</td></tr>
+      <tr><td>Create Tests</td><td class="check">✅ Yes</td><td class="check">✅ Own subjects</td><td class="cross">❌ No</td><td class="cross">❌ No</td></tr>
+      <tr><td>Mark Attendance</td><td class="check">✅ Yes</td><td class="check">✅ Own batches</td><td class="cross">❌ No</td><td class="cross">❌ No</td></tr>
+      <tr><td>View Attendance</td><td class="check">✅ All</td><td class="check">✅ Batch</td><td class="partial">⚠️ Own</td><td class="partial">⚠️ Child's (if toggled)</td></tr>
+      <tr><td>View Test Results</td><td class="check">✅ All</td><td class="check">✅ Batch</td><td class="partial">⚠️ Own</td><td class="partial">⚠️ Child's (if toggled)</td></tr>
+      <tr><td>Upload Materials</td><td class="check">✅ Yes</td><td class="check">✅ Own subjects</td><td class="cross">❌ No</td><td class="cross">❌ No</td></tr>
+      <tr><td>Import/Export CSV</td><td class="check">✅ 22 models</td><td class="cross">❌ No</td><td class="cross">❌ No</td><td class="cross">❌ No</td></tr>
+      <tr><td>View Audit Logs</td><td class="check">✅ Yes</td><td class="cross">❌ No</td><td class="cross">❌ No</td><td class="cross">❌ No</td></tr>
+      <tr><td>System Settings</td><td class="check">✅ Super/Tenant</td><td class="cross">❌ No</td><td class="cross">❌ No</td><td class="cross">❌ No</td></tr>
+      <tr><td>Multi-Tenant Isolation</td><td class="check">✅ Yes</td><td class="check">✅ Yes</td><td class="check">✅ Yes</td><td class="check">✅ Yes</td></tr>
+      <tr><td>MFA Support</td><td class="check">✅ Yes</td><td class="check">✅ Yes</td><td class="check">✅ Yes</td><td class="check">✅ Yes</td></tr>
+      <tr><td>YouTube Integration</td><td class="partial">⚠️ Config</td><td class="check">✅ Live streaming</td><td class="partial">⚠️ Watch only</td><td class="cross">❌ No</td></tr>
+      <tr><td>Communication</td><td class="check">✅ All channels</td><td class="check">✅ Announcements</td><td class="check">✅ Tickets</td><td class="partial">⚠️ If toggled</td></tr>
+    </tbody>
+  </table>
+</div>
+
+</div><!-- /content -->
+
+<div class="footer">
+  ENABLE PROGRAM — Admin Console v4.0 (Purple Edition) · Interactive Hierarchy Explorer · February 2026
+</div>
+
+<script>
+// ─── Tab Switching ───
+function showTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+
+  // Lazy-init sidebar map
+  if (name === 'sidebar' && !document.getElementById('sidebarMap').children.length) {
+    buildSidebarMap();
+  }
+}
+
+// ─── Scope Detail ───
+const scopeDetails = {
+  own: '<strong>OWN Scope</strong><br>User can only access records they personally created or own.<br><br><em>Example:</em> A teacher with <code>tests.read.own</code> can only see tests they created — not tests by other teachers.',
+  batch: '<strong>BATCH Scope</strong> (includes OWN)<br>User can access records in their assigned batches.<br><br><em>Example:</em> A teacher with <code>attendance.read.batch</code> assigned to NEET-2025-A can see attendance for all students in that batch.',
+  branch: '<strong>BRANCH Scope</strong> (includes OWN + BATCH)<br>User can access records in their managed_branches.<br><br><em>Example:</em> A Branch Admin with <code>students.read.branch</code> managing "Main Campus" can see all students in all batches at that campus.',
+  tenant: '<strong>TENANT Scope</strong> (includes OWN + BATCH + BRANCH)<br>User can access all records within their tenant.<br><br><em>Example:</em> A Tenant Admin with <code>audit.read.tenant</code> can see all audit logs for ABC Coaching Institute.',
+  global: '<strong>GLOBAL Scope</strong> (includes everything)<br>User can access records across ALL tenants. Reserved for Super Admins.<br><br><em>Example:</em> A Super Admin with <code>tenants.manage.global</code> can create/delete tenants, modify system settings platform-wide.'
+};
+
+function showScopeDetail(scope) {
+  const el = document.getElementById('scope-tooltip');
+  el.innerHTML = scopeDetails[scope];
+  el.classList.add('visible');
+}
+
+// ─── Sidebar Map Data ───
+const sidebarData = [
+  { name: 'ACCOUNTS', color: '#f59e0b', models: [
+    ['Students', 'students'], ['Teachers', 'teachers'], ['Admins', 'admins'],
+    ['Parents', 'parents'], ['Roles', 'roles'], ['Permissions', 'permissions'],
+    ['Role permissions', 'role_permissions']
+  ]},
+  { name: 'ACADEMICS', color: '#22c55e', models: [
+    ['Academic sessions', 'academic_sessions'], ['Groups', 'groups'], ['Categories', 'categories'],
+    ['Subjects', 'subjects'], ['Subject sections', 'subject_sections'], ['Chapters', 'chapters'],
+    ['Topics', 'topics'], ['Batches', 'batches'], ['Users', 'users'],
+    ['Batch teachers', 'batch_teachers'], ['Languages', 'languages'], ['States', 'states'],
+    ['Cities', 'cities'], ['Religions', 'religions'], ['Schools', 'schools']
+  ]},
+  { name: 'ASSESSMENTS', color: '#3b82f6', models: [
+    ['Tests', 'tests'], ['Test sections', 'test_sections'], ['Questions', 'questions'],
+    ['Test attempts', 'test_attempts'], ['Test attempt answers', 'test_attempt_answers'],
+    ['Test feedbacks', 'test_feedbacks'], ['Offline test marks', 'offline_test_marks']
+  ]},
+  { name: 'ATTENDANCE', color: '#ef4444', models: [
+    ['Attendances', 'attendances'], ['Attendance correction requests', 'attendance_correction_requests'],
+    ['Attendance summaries', 'attendance_summaries']
+  ]},
+  { name: 'CLASSES', color: '#a855f7', models: [
+    ['YouTube channels', 'youtube_channels'], ['Scheduled classes', 'scheduled_classes'],
+    ['Class access tokens', 'class_access_tokens'], ['Class watch times', 'class_watch_times']
+  ]},
+  { name: 'COMMUNICATION', color: '#06b6d4', models: [
+    ['Support tickets', 'support_tickets'], ['Ticket messages', 'ticket_messages'],
+    ['Announcements', 'announcements'], ['Announcement reads', 'announcement_reads'],
+    ['Direct messages', 'direct_messages'], ['Notifications', 'notifications']
+  ]},
+  { name: 'MATERIALS', color: '#10b981', models: [
+    ['Study materials', 'study_materials'], ['Material accesses', 'material_accesses'],
+    ['Photo galleries', 'photo_galleries'], ['Scholarships', 'scholarships'],
+    ['Topper students', 'topper_students']
+  ]},
+  { name: 'SESSIONS TRACKING', color: '#f97316', models: [
+    ['User devices', 'user_devices'], ['User sessions', 'user_sessions'],
+    ['Login history', 'login_history'], ['User activities', 'user_activities']
+  ]},
+  { name: 'AUDIT', color: '#dc2626', models: [
+    ['Audit logs', 'audit_logs'], ['Audit purge policies', 'audit_purge_policies'],
+    ['Backup policies', 'backup_policies'], ['Backup history', 'backup_history']
+  ]},
+  { name: 'SYSTEM CONFIG', color: '#8b5cf6', models: [
+    ['System settings', 'system_settings'], ['Feature flags', 'feature_flags'],
+    ['MFA policies', 'mfa_policies'], ['Maintenance windows', 'maintenance_windows'],
+    ['Founder infos', 'founder_infos'], ['Enquiry forms', 'enquiry_forms'],
+    ['AI feature configs', 'ai_feature_configs'], ['Class link configs', 'class_link_configs'],
+    ['Attendance rules', 'attendance_rules']
+  ]},
+  { name: 'REALTIME', color: '#14b8a6', models: [
+    ['Realtime events', 'realtime_events']
+  ]},
+  { name: 'TENANTS', color: '#7c3aed', models: [
+    ['Tenants', 'tenants']
+  ]}
+];
+
+function buildSidebarMap() {
+  const container = document.getElementById('sidebarMap');
+  sidebarData.forEach(section => {
+    const div = document.createElement('div');
+    div.className = 'sidebar-section';
+    div.innerHTML = `
+      <div class="sidebar-section-header" onclick="this.parentElement.classList.toggle('open')" style="background:${section.color}22; border-bottom:2px solid ${section.color};">
+        <span style="color:${section.color};">■</span> ${section.name}
+        <span class="count">${section.models.length}</span>
+      </div>
+      <div class="sidebar-items">
+        ${section.models.map(m => `
+          <div class="sidebar-item">
+            <span class="dot" style="background:${section.color};"></span>
+            ${m[0]}
+            <span class="table-name">${m[1]}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+// Initialize first tab's sidebar if needed
+</script>
+
+</body>
+</html>

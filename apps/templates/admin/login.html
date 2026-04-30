@@ -1,0 +1,479 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}{{ block.super }}
+<style>
+/* ═══ ADMIN LOGIN — Professional Branded Page ═══ */
+body.login {
+  background: linear-gradient(135deg, #f8f6fc 0%, #ede9f5 50%, #e8e0f0 100%) !important;
+  min-height: 100vh;
+}
+body.login #header { display: none !important; }
+body.login #container { padding: 0 !important; margin: 0 !important; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+body.login #content { max-width: none !important; padding: 0 !important; margin: 0 !important; background: transparent !important; }
+body.login #content-main { background: transparent; }
+body.login .breadcrumbs, body.login #nav-sidebar { display: none !important; }
+body.login footer#footer { display: none !important; }
+body.login .content { padding: 0 !important; }
+body.login .main { padding: 0 !important; }
+
+.admin-login-wrapper {
+  display: flex;
+  min-height: 100vh;
+  width: 100vw;
+}
+
+/* ── LEFT PANEL (Branding) ── */
+.admin-login-sidebar {
+  width: 480px;
+  flex-shrink: 0;
+  background: linear-gradient(160deg, #1e1b4b 0%, #4c1d95 40%, #6d28d9 70%, #7c3aed 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 60px 48px;
+  position: relative;
+  overflow: hidden;
+  color: #fff;
+}
+.admin-login-sidebar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.06;
+  background-image:
+    radial-gradient(circle at 25% 25%, #fff 1px, transparent 1px),
+    radial-gradient(circle at 75% 75%, #fff 1px, transparent 1px);
+  background-size: 40px 40px;
+  z-index: 0;
+}
+.admin-login-sidebar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: radial-gradient(ellipse at 30% 90%, rgba(139,92,246,0.3) 0%, transparent 60%),
+              radial-gradient(ellipse at 80% 20%, rgba(196,181,253,0.15) 0%, transparent 50%);
+}
+.admin-login-sidebar > * { position: relative; z-index: 1; }
+
+.admin-sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 48px;
+}
+.admin-sidebar-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+.admin-sidebar-brand-text {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.admin-sidebar-brand-text small {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 400;
+  opacity: 0.7;
+  margin-top: 2px;
+  letter-spacing: 0.03em;
+}
+
+.admin-sidebar-title {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin-bottom: 12px;
+  letter-spacing: -0.03em;
+}
+.admin-sidebar-subtitle {
+  font-size: 0.92rem;
+  line-height: 1.6;
+  opacity: 0.8;
+  margin-bottom: 40px;
+  max-width: 360px;
+}
+.admin-sidebar-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 40px;
+}
+.admin-sidebar-features li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  font-size: 0.88rem;
+  font-weight: 500;
+  opacity: 0.9;
+}
+.admin-sidebar-features li i {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.55rem;
+  flex-shrink: 0;
+}
+.admin-sidebar-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  padding-top: 32px;
+  border-top: 1px solid rgba(255,255,255,0.15);
+}
+.admin-sidebar-stats .stat-value {
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.admin-sidebar-stats .stat-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.6;
+  margin-top: 2px;
+}
+
+/* ── RIGHT PANEL (Form) ── */
+.admin-login-form-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  background: linear-gradient(135deg, #f8f6fc 0%, #ede9f5 100%);
+}
+.admin-login-box {
+  width: 100%;
+  max-width: 420px;
+}
+.admin-login-box-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 32px;
+}
+.admin-login-box-brand .logo-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: #fff;
+}
+.admin-login-box-brand span {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+.admin-login-box h1 {
+  font-size: 1.75rem !important;
+  font-weight: 800 !important;
+  color: #0f172a !important;
+  margin: 0 0 4px !important;
+  letter-spacing: -0.03em;
+}
+.admin-login-box .login-sub {
+  font-size: 0.88rem;
+  color: #64748b;
+  margin-bottom: 28px;
+}
+.admin-login-box .errornote {
+  background: #fef2f2 !important;
+  color: #dc2626 !important;
+  border: 1px solid #fecaca !important;
+  border-radius: 12px !important;
+  padding: 12px 16px !important;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.admin-login-box .errornote::before {
+  content: '\f071';
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  font-size: 0.8rem;
+}
+.admin-login-box .form-row {
+  margin-bottom: 20px;
+}
+.admin-login-box label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 6px;
+  text-transform: none;
+}
+.admin-login-box input[type="text"],
+.admin-login-box input[type="password"] {
+  width: 100%;
+  padding: 12px 16px !important;
+  font-size: 0.92rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  color: #0f172a;
+  transition: all 0.2s ease;
+  outline: none;
+  font-family: 'Inter', sans-serif;
+  box-sizing: border-box;
+}
+.admin-login-box input[type="text"]:focus,
+.admin-login-box input[type="password"]:focus {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124,58,237,0.12);
+}
+.admin-login-box input[type="text"]::placeholder,
+.admin-login-box input[type="password"]::placeholder {
+  color: #94a3b8;
+}
+.admin-login-box .password-reset-link {
+  text-align: right;
+  margin-top: 6px;
+}
+.admin-login-box .password-reset-link a {
+  font-size: 0.8rem;
+  color: #7c3aed;
+  text-decoration: none;
+  font-weight: 500;
+}
+.admin-login-box .password-reset-link a:hover {
+  color: #6d28d9;
+  text-decoration: underline;
+}
+.admin-login-box .submit-row {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  margin-top: 28px !important;
+  overflow: visible !important;
+}
+.admin-login-box .submit-row input[type="submit"] {
+  width: 100%;
+  padding: 14px 24px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-family: 'Inter', sans-serif;
+  box-shadow: 0 4px 14px rgba(124,58,237,0.3);
+}
+.admin-login-box .submit-row input[type="submit"]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(124,58,237,0.4);
+  background: linear-gradient(135deg, #6d28d9, #5b21b6);
+}
+.admin-login-footer {
+  margin-top: 28px;
+  text-align: center;
+}
+.admin-login-footer a {
+  font-size: 0.82rem;
+  color: #7c3aed;
+  text-decoration: none;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.admin-login-footer a:hover { text-decoration: underline; }
+.admin-login-footer .login-hint {
+  margin-top: 16px;
+  font-size: 0.78rem;
+  color: #94a3b8;
+  line-height: 1.5;
+}
+.admin-login-footer .login-hint strong {
+  color: #64748b;
+}
+
+.admin-login-clock {
+  margin-top: 32px;
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  color: #94a3b8;
+  padding: 8px 16px;
+  background: rgba(132,79,193,0.06);
+  border-radius: 8px;
+  border: 1px solid rgba(132,79,193,0.1);
+}
+
+/* ── Responsive ── */
+@media (max-width: 960px) {
+  .admin-login-sidebar { display: none; }
+  .admin-login-wrapper { flex-direction: column; }
+  .admin-login-form-area { min-height: 100vh; }
+}
+</style>
+{% endblock %}
+
+{% block bodyclass %}{{ block.super }} login{% endblock %}
+
+{% block usertools %}{% endblock %}
+{% block nav-global %}{% endblock %}
+{% block nav-sidebar %}{% endblock %}
+{% block content_title %}{% endblock %}
+{% block nav-breadcrumbs %}{% endblock %}
+
+{% block content %}
+<div class="admin-login-wrapper">
+
+  <!-- ═══ LEFT BRANDING PANEL ═══ -->
+  <div class="admin-login-sidebar">
+    <div class="admin-sidebar-brand">
+      <div class="admin-sidebar-logo">E</div>
+      <div class="admin-sidebar-brand-text">
+        ENABLE PROGRAM
+        <small>Enterprise Learning Platform</small>
+      </div>
+    </div>
+
+    <div class="admin-sidebar-title">Administration<br>Console</div>
+    <p class="admin-sidebar-subtitle">
+      Full system administration — manage tenants, users, programs, batches, academic sessions, and platform configurations with enterprise-grade control.
+    </p>
+
+    <ul class="admin-sidebar-features">
+      <li><i class="fas fa-check"></i> Multi-Tenant &amp; School Management</li>
+      <li><i class="fas fa-check"></i> User Management (Students, Teachers, Staff)</li>
+      <li><i class="fas fa-check"></i> Program &amp; Batch Configuration</li>
+      <li><i class="fas fa-check"></i> Academic Session &amp; Scheduling</li>
+      <li><i class="fas fa-check"></i> Reports, Analytics &amp; System Logs</li>
+      <li><i class="fas fa-check"></i> Platform Settings &amp; Integrations</li>
+    </ul>
+
+    <div class="admin-sidebar-stats">
+      <div>
+        <div class="stat-value">15,000+</div>
+        <div class="stat-label">Students</div>
+      </div>
+      <div>
+        <div class="stat-value">380+</div>
+        <div class="stat-label">Schools</div>
+      </div>
+      <div>
+        <div class="stat-value">28+</div>
+        <div class="stat-label">States</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ RIGHT LOGIN FORM ═══ -->
+  <div class="admin-login-form-area">
+    <div class="admin-login-box">
+      <div class="admin-login-box-brand">
+        <div class="logo-icon">E</div>
+        <span>ENABLE PROGRAM</span>
+      </div>
+
+      <h1>Welcome Back</h1>
+      <p class="login-sub">Sign in to the Administration Console</p>
+
+      {% if form.errors and not form.non_field_errors %}
+      <p class="errornote">
+        {% blocktranslate count counter=form.errors.items|length %}Please correct the error below.{% plural %}Please correct the errors below.{% endblocktranslate %}
+      </p>
+      {% endif %}
+
+      {% if form.non_field_errors %}
+      {% for error in form.non_field_errors %}
+      <p class="errornote">{{ error }}</p>
+      {% endfor %}
+      {% endif %}
+
+      {% if user.is_authenticated %}
+      <p class="errornote">
+        {% blocktranslate trimmed %}
+          You are authenticated as {{ username }}, but are not authorized to access this page. Would you like to login to a different account?
+        {% endblocktranslate %}
+      </p>
+      {% endif %}
+
+      <form action="{{ app_path }}" method="post" id="login-form">{% csrf_token %}
+        <div class="form-row">
+          {{ form.username.errors }}
+            <label for="id_username">Username or Email</label>
+          {{ form.username }}
+        </div>
+        <div class="form-row">
+          {{ form.password.errors }}
+          <label for="id_password">Password</label>
+          <div style="position:relative">
+            {{ form.password }}
+            <button type="button" onclick="toggleAdminPassword()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:#94a3b8;cursor:pointer;padding:4px;z-index:2" title="Show/hide password">
+              <i class="fas fa-eye" id="adminToggleIcon"></i>
+            </button>
+          </div>
+          <input type="hidden" name="next" value="{{ next }}">
+        </div>
+        {% url 'admin_password_reset' as password_reset_url %}
+        {% if password_reset_url %}
+        <div class="password-reset-link">
+          <a href="{{ password_reset_url }}">{% translate 'Forgotten your password or username?' %}</a>
+        </div>
+        {% endif %}
+        <div class="submit-row">
+          <input type="submit" value="{% translate 'Sign In' %}">
+        </div>
+      </form>
+
+      <div class="admin-login-footer">
+        <a href="/"><i class="fas fa-arrow-left"></i> Back to Home</a>
+
+      <div class="admin-login-clock" id="admin-login-clock"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function() {
+  function updateClock() {
+    var now = new Date();
+    var opts = { weekday:'short', year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:true };
+    var el = document.getElementById('admin-login-clock');
+    if (el) el.textContent = now.toLocaleString('en-IN', opts);
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+})();
+
+function toggleAdminPassword() {
+  var pw = document.getElementById('id_password');
+  var icon = document.getElementById('adminToggleIcon');
+  if (pw.type === 'password') { pw.type = 'text'; icon.className = 'fas fa-eye-slash'; }
+  else { pw.type = 'password'; icon.className = 'fas fa-eye'; }
+}
+</script>
+{% endblock %}

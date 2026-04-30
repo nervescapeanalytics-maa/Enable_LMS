@@ -1,0 +1,44 @@
+{% extends 'dashboards/admin_base.html' %}
+
+{% block admin_content %}
+<div class="page-header">
+  <div><h2>Teacher Attendance</h2><p>{{ today_date }}</p></div>
+</div>
+
+<div class="stat-row">
+  <div class="stat-card"><div class="stat-icon green"><i class="fas fa-user-check"></i></div><div class="stat-info"><div class="stat-value">{{ marked_today }}</div><div class="stat-label">Marked Today</div></div></div>
+  <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-chalkboard-teacher"></i></div><div class="stat-info"><div class="stat-value">{{ attendance|length }}</div><div class="stat-label">Active Teachers</div></div></div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fas fa-user-check"></i> Teacher Attendance</h3>
+    <span class="card-badge info">Today</span>
+  </div>
+  {% if attendance %}
+  <div style="overflow-x:auto">
+    <table class="adm-table">
+      <thead><tr><th>Teacher</th><th>Code</th><th>Today Status</th><th>Check-in</th><th>Total Present</th><th>Total Absent</th></tr></thead>
+      <tbody>
+        {% for a in attendance %}
+        <tr>
+          <td style="font-weight:600;">{{ a.name }}</td>
+          <td><span style="font-family:monospace;font-size:0.82rem;color:#64748b;">{{ a.code }}</span></td>
+          <td>
+            <span class="status {% if a.today_status == 'PRESENT' %}active{% elif a.today_status == 'ABSENT' %}live{% elif a.today_status == 'LATE' %}pending{% else %}inactive{% endif %}">
+              {{ a.today_status }}
+            </span>
+          </td>
+          <td>{{ a.today_checkin }}</td>
+          <td style="color:#22c55e;font-weight:600;">{{ a.total_present }}</td>
+          <td style="color:#ef4444;font-weight:600;">{{ a.total_absent }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><i class="fas fa-user-check"></i><p>No active teachers found</p></div>
+  {% endif %}
+</div>
+{% endblock %}

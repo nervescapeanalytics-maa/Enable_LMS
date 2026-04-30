@@ -1,0 +1,18 @@
+{% load static %}
+<div class="friendly-json-widget social-links-widget" id="slw-{{ widget.name }}">
+  <div class="fjw-social-grid">
+    {% for p in widget.platforms %}
+    <div class="fjw-social-row">
+      <div class="fjw-social-icon" style="color: {{ p.color }};">
+        <i class="{{ p.icon }}"></i>
+      </div>
+      <div class="fjw-social-label">{{ p.key|title }}</div>
+      <input type="url" name="{{ widget.name }}_{{ p.key }}" value="{{ p.value }}"
+             class="fjw-text-input fjw-social-input"
+             placeholder="{{ p.placeholder }}">
+    </div>
+    {% endfor %}
+  </div>
+
+  <p class="fjw-help"><i class="fas fa-info-circle"></i> Enter the full URL for each social media profile. Leave blank to hide.</p>
+</div>

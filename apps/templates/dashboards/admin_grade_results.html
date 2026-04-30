@@ -1,0 +1,126 @@
+{% extends 'dashboards/admin_base.html' %}
+
+{% block admin_content %}
+<div class="page-header">
+  <div><h2><i class="fas fa-robot"></i> Auto-Grading Results</h2><p>{{ test.title }}</p></div>
+  <a href="/staff/exam-management/" class="btn-secondary"><i class="fas fa-arrow-left"></i> Back to Exams</a>
+</div>
+
+<!-- Grading Summary -->
+{% if pending_count > 0 %}
+<div class="card" style="margin-bottom:24px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:2px solid #bbf7d0;">
+  <div style="padding:24px;text-align:center;">
+    <div style="font-size:3rem;margin-bottom:8px;">✅</div>
+    <div style="font-size:1.3rem;font-weight:800;color:#166534;">Auto-Grading Complete!</div>
+    <div style="font-size:0.95rem;color:#15803d;margin-top:4px;">{{ grading_results|length }} attempt{{ grading_results|length|pluralize }} graded successfully</div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Individual Results -->
+{% if grading_results %}
+<div class="card" style="margin-bottom:24px;">
+  <div class="card-header">
+    <h3><i class="fas fa-check-double"></i> Graded Attempts</h3>
+    <span class="card-badge success">{{ grading_results|length }} Graded</span>
+  </div>
+  <div style="overflow-x:auto">
+    <table class="adm-table">
+      <thead><tr><th>Attempt</th><th>Questions</th><th>Attempted</th><th>Correct</th><th>Incorrect</th><th>Skipped</th><th>Score</th><th>Percentage</th><th>Result</th></tr></thead>
+      <tbody>
+        {% for r in grading_results %}
+        <tr>
+          <td style="font-family:monospace;font-size:0.78rem;color:#64748b;">{{ r.attempt_id|truncatechars:12 }}</td>
+          <td style="text-align:center;">{{ r.total_questions }}</td>
+          <td style="text-align:center;">{{ r.attempted }}</td>
+          <td style="text-align:center;color:#22c55e;font-weight:700;">{{ r.correct }}</td>
+          <td style="text-align:center;color:#ef4444;font-weight:700;">{{ r.incorrect }}</td>
+          <td style="text-align:center;color:#94a3b8;">{{ r.skipped }}</td>
+          <td style="text-align:center;font-weight:700;">{{ r.raw_score }}</td>
+          <td style="text-align:center;font-weight:700;color:#8b5cf6;">{{ r.percentage }}%</td>
+          <td>
+            {% if r.result == 'PASS' %}<span class="status active">✅ PASS</span>
+            {% elif r.result == 'FAIL' %}<span style="background:#fef2f2;color:#ef4444;padding:4px 10px;border-radius:20px;font-size:0.75rem;font-weight:600;">❌ FAIL</span>
+            {% else %}<span style="background:#fffbeb;color:#d97706;padding:4px 10px;border-radius:20px;font-size:0.75rem;font-weight:600;">⏳ PENDING</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- Test Report -->
+{% if report and report.total_attempts %}
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px;">
+  <div class="card" style="padding:20px;text-align:center;border-left:4px solid #6366f1;">
+    <div style="font-size:2rem;font-weight:800;color:#6366f1;">{{ report.total_attempts }}</div>
+    <div style="font-size:0.82rem;color:#64748b;">Total Attempts</div>
+  </div>
+  <div class="card" style="padding:20px;text-align:center;border-left:4px solid #22c55e;">
+    <div style="font-size:2rem;font-weight:800;color:#22c55e;">{{ report.pass_count }}</div>
+    <div style="font-size:0.82rem;color:#64748b;">Passed</div>
+  </div>
+  <div class="card" style="padding:20px;text-align:center;border-left:4px solid #ef4444;">
+    <div style="font-size:2rem;font-weight:800;color:#ef4444;">{{ report.fail_count }}</div>
+    <div style="font-size:0.82rem;color:#64748b;">Failed</div>
+  </div>
+  <div class="card" style="padding:20px;text-align:center;border-left:4px solid #f59e0b;">
+    <div style="font-size:2rem;font-weight:800;color:#f59e0b;">{{ report.pass_rate }}%</div>
+    <div style="font-size:0.82rem;color:#64748b;">Pass Rate</div>
+  </div>
+  <div class="card" style="padding:20px;text-align:center;border-left:4px solid #8b5cf6;">
+    <div style="font-size:2rem;font-weight:800;color:#8b5cf6;">{{ report.avg_percentage }}%</div>
+    <div style="font-size:0.82rem;color:#64748b;">Avg Score</div>
+  </div>
+</div>
+
+<!-- Question-wise Analysis -->
+{% if report.question_analysis %}
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fas fa-microscope"></i> Question-wise Analysis</h3>
+  </div>
+  <div style="overflow-x:auto">
+    <table class="adm-table">
+      <thead><tr><th>Q#</th><th>Question</th><th>Type</th><th>Difficulty</th><th>Responses</th><th>Correct</th><th>Incorrect</th><th>Accuracy</th></tr></thead>
+      <tbody>
+        {% for qa in report.question_analysis %}
+        <tr>
+          <td style="font-weight:700;">Q{{ qa.question_order }}</td>
+          <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.85rem;">{{ qa.question_text }}</td>
+          <td><span style="background:#f1f5f9;padding:2px 8px;border-radius:4px;font-size:0.72rem;">{{ qa.question_type }}</span></td>
+          <td>
+            {% if qa.difficulty == 'EASY' %}<span style="color:#22c55e;font-weight:600;">Easy</span>
+            {% elif qa.difficulty == 'MEDIUM' %}<span style="color:#f59e0b;font-weight:600;">Medium</span>
+            {% else %}<span style="color:#ef4444;font-weight:600;">Hard</span>{% endif %}
+          </td>
+          <td style="text-align:center;">{{ qa.total_responses }}</td>
+          <td style="text-align:center;color:#22c55e;font-weight:700;">{{ qa.correct }}</td>
+          <td style="text-align:center;color:#ef4444;font-weight:700;">{{ qa.incorrect }}</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <div style="flex:1;background:#f1f5f9;border-radius:4px;height:6px;overflow:hidden;min-width:60px;">
+                <div style="background:{% if qa.accuracy >= 70 %}#22c55e{% elif qa.accuracy >= 40 %}#f59e0b{% else %}#ef4444{% endif %};height:100%;width:{{ qa.accuracy }}%;border-radius:4px;"></div>
+              </div>
+              <span style="font-size:0.78rem;font-weight:600;">{{ qa.accuracy }}%</span>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% elif not grading_results %}
+<div class="card">
+  <div class="empty-state">
+    <i class="fas fa-check-circle" style="color:#22c55e;"></i>
+    <p>All attempts for this test have already been graded</p>
+    <a href="/staff/exam-management/" class="btn-primary" style="margin-top:12px;"><i class="fas fa-arrow-left"></i> Back to Exams</a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

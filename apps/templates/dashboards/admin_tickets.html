@@ -1,0 +1,50 @@
+{% extends 'dashboards/admin_base.html' %}
+
+{% block admin_content %}
+<div class="page-header">
+  <div><h2>Support Tickets</h2><p>Manage support and help desk</p></div>
+</div>
+
+<div class="stat-row">
+  <div class="stat-card"><div class="stat-icon red"><i class="fas fa-ticket-alt"></i></div><div class="stat-info"><div class="stat-value">{{ open_tickets }}</div><div class="stat-label">Open / Pending</div></div></div>
+  <div class="stat-card"><div class="stat-icon green"><i class="fas fa-check-circle"></i></div><div class="stat-info"><div class="stat-value">{{ resolved_tickets }}</div><div class="stat-label">Resolved</div></div></div>
+  <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-inbox"></i></div><div class="stat-info"><div class="stat-value">{{ total_tickets }}</div><div class="stat-label">Total</div></div></div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fas fa-ticket-alt"></i> All Tickets</h3>
+    <span class="card-badge info">{{ total_tickets }} Total</span>
+  </div>
+  {% if tickets %}
+  <div style="overflow-x:auto">
+    <table class="adm-table">
+      <thead><tr><th>Ticket #</th><th>Title</th><th>Category</th><th>Priority</th><th>Submitted By</th><th>Status</th><th>Created</th></tr></thead>
+      <tbody>
+        {% for t in tickets %}
+        <tr>
+          <td><span style="font-family:monospace;font-size:0.82rem;color:#64748b;">{{ t.number }}</span></td>
+          <td style="font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ t.title }}</td>
+          <td>{{ t.category|default:"—" }}</td>
+          <td>
+            <span class="status {% if t.priority == 'HIGH' or t.priority == 'CRITICAL' %}live{% elif t.priority == 'MEDIUM' %}pending{% else %}active{% endif %}">
+              {{ t.priority }}
+            </span>
+          </td>
+          <td>{{ t.submitted_by }}</td>
+          <td>
+            <span class="status {% if t.status == 'OPEN' %}open{% elif t.status == 'IN_PROGRESS' %}in_progress{% elif t.status == 'RESOLVED' or t.status == 'CLOSED' %}resolved{% else %}pending{% endif %}">
+              {{ t.status }}
+            </span>
+          </td>
+          <td style="white-space:nowrap;">{{ t.created }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><i class="fas fa-ticket-alt"></i><p>No support tickets yet</p></div>
+  {% endif %}
+</div>
+{% endblock %}

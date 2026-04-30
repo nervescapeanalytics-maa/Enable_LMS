@@ -1,0 +1,41 @@
+{% extends 'dashboards/admin_base.html' %}
+
+{% block admin_content %}
+<div class="page-header">
+  <div><h2>My Profile</h2><p>Administrator account details</p></div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fas fa-user-shield"></i> Profile Information</h3>
+  </div>
+  <div style="padding:30px;">
+    <div style="display:flex;align-items:center;gap:24px;margin-bottom:30px;">
+      <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.8rem;font-weight:700;">
+        {{ profile.name|first|default:"A" }}
+      </div>
+      <div>
+        <h3 style="margin:0 0 4px 0;font-size:1.3rem;">{{ profile.name|default:"System Administrator" }}</h3>
+        <p style="margin:0;color:#64748b;">{{ profile.email|default:"-" }}</p>
+        <span class="status active" style="margin-top:6px;display:inline-block;"><i class="fas fa-shield-alt" style="font-size:0.7rem;"></i> Administrator</span>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;">
+      <div class="profile-field"><label>Email</label><p>{{ profile.email|default:"-" }}</p></div>
+      <div class="profile-field"><label>Phone</label><p>{{ profile.phone|default:"-" }}</p></div>
+      <div class="profile-field"><label>Date Joined</label><p>{{ profile.joined|default:"-" }}</p></div>
+      <div class="profile-field"><label>Last Login</label><p>{{ profile.last_login|default:"-" }}</p></div>
+      <div class="profile-field"><label>Status</label><p>{% if profile.status == 'ACTIVE' %}<span class="status active">Active</span>{% else %}<span class="status inactive">{{ profile.status }}</span>{% endif %}</p></div>
+      <div class="profile-field"><label>Role</label><p>{{ profile.role|default:"Administrator" }}</p></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block page_css %}
+<style>
+  .profile-field { background:#f8fafc; border-radius:10px; padding:16px 20px; border:1px solid #e2e8f0; }
+  .profile-field label { font-size:0.78rem; text-transform:uppercase; letter-spacing:0.5px; color:#94a3b8; font-weight:600; display:block; margin-bottom:6px; }
+  .profile-field p { margin:0; font-size:0.95rem; font-weight:500; color:#1e293b; }
+</style>
+{% endblock %}

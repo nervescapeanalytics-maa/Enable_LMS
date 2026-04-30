@@ -1,0 +1,13 @@
+{% extends "admin/change_list.html" %}
+{% load i18n admin_urls %}
+
+{% block content %}
+{{ block.super }}
+
+<style>
+  /* Force changelist to use full width — filter sidebar is hidden via CSS */
+  #changelist #changelist-filter { display: none !important; }
+  #changelist .results { width: 100%; }
+  #content-related { display: none !important; }
+</style>
+{% endblock %}
