@@ -5,6 +5,55 @@ from assessments.models import (
     TestAttemptAnswer, TestFeedback, OfflineTestMarks
 )
 from core.admin_utils import EnhancedModelAdmin, ImportExportMixin, export_as_csv, export_as_json, activate_selected, deactivate_selected, colored_status
+from assessments.permissions import (
+    can_manage_exams, is_admin_full, get_logged_in_admin,
+)
+
+
+class ExamRBACMixin:
+    """
+    Phase 1 RBAC for exam-related admin pages.
+
+    * Teachers: blocked from view/add/change/delete (defense-in-depth; teachers
+      do not normally have Django admin login, but if they ever did via a
+      permissions misconfiguration, they would still be locked out here).
+    * Students: blocked.
+    * Staff (admin row WITH staff_role): can view + change + add IF the
+      staff_role has can_manage_exams = True. Cannot delete.
+    * Admin (admin row WITHOUT staff_role, or SUPER_ADMIN): full access.
+    """
+    def _exam_has_access(self, request, write: bool = False) -> bool:
+        sess_type = request.session.get('user_type')
+        # Allow legacy Django superuser logins through (request.user)
+        if getattr(request.user, 'is_superuser', False):
+            return True
+        if sess_type in (None, '', 'TEACHER', 'STUDENT'):
+            return False
+        admin_user = get_logged_in_admin(request)
+        if admin_user is None:
+            return False
+        if is_admin_full(admin_user):
+            return True
+        return can_manage_exams(admin_user)
+
+    def has_view_permission(self, request, obj=None):
+        return self._exam_has_access(request)
+
+    def has_add_permission(self, request):
+        return self._exam_has_access(request, write=True)
+
+    def has_change_permission(self, request, obj=None):
+        return self._exam_has_access(request, write=True)
+
+    def has_delete_permission(self, request, obj=None):
+        # Only full admin can delete
+        if getattr(request.user, 'is_superuser', False):
+            return True
+        admin_user = get_logged_in_admin(request)
+        return is_admin_full(admin_user)
+
+    def has_module_permission(self, request):
+        return self._exam_has_access(request)
 
 
 class TestSectionInline(admin.TabularInline):
@@ -15,7 +64,7 @@ class TestSectionInline(admin.TabularInline):
 
 
 @admin.register(Test)
-class TestAdmin(ImportExportMixin, EnhancedModelAdmin):
+class TestAdmin(ExamRBACMixin, ImportExportMixin, EnhancedModelAdmin):
     enf_hide_tools = True
     list_display = (
         'test_code', 'title', 'type_badge', 'exam_target',
@@ -102,7 +151,7 @@ class TestAdmin(ImportExportMixin, EnhancedModelAdmin):
 
 
 @admin.register(TestSection)
-class TestSectionAdmin(EnhancedModelAdmin):
+class TestSectionAdmin(ExamRBACMixin, EnhancedModelAdmin):
     enf_hide_tools = True
     list_display = ('test', 'section_name', 'section_order', 'total_questions', 'max_marks')
     list_filter = ('test',)
@@ -119,7 +168,7 @@ class TestSectionAdmin(EnhancedModelAdmin):
 
 
 @admin.register(Question)
-class QuestionAdmin(ImportExportMixin, EnhancedModelAdmin):
+class QuestionAdmin(ExamRBACMixin, ImportExportMixin, EnhancedModelAdmin):
     enf_hide_tools = True
     list_display = (
         'question_code', 'type_badge', 'difficulty_badge',
@@ -195,7 +244,7 @@ class QuestionAdmin(ImportExportMixin, EnhancedModelAdmin):
 
 
 @admin.register(TestAttempt)
-class TestAttemptAdmin(EnhancedModelAdmin):
+class TestAttemptAdmin(ExamRBACMixin, EnhancedModelAdmin):
     enf_hide_tools = True
     list_display = (
         'test', 'student', 'attempt_number', 'status_badge',
@@ -262,7 +311,7 @@ class TestAttemptAdmin(EnhancedModelAdmin):
 
 
 @admin.register(TestAttemptAnswer)
-class TestAttemptAnswerAdmin(EnhancedModelAdmin):
+class TestAttemptAnswerAdmin(ExamRBACMixin, EnhancedModelAdmin):
     enf_hide_tools = True
     list_display = ('attempt', 'question', 'status_badge', 'correct_badge', 'marks_awarded', 'time_spent_seconds')
     list_filter = ('status', 'is_correct')
@@ -286,7 +335,7 @@ class TestAttemptAnswerAdmin(EnhancedModelAdmin):
 
 
 @admin.register(TestFeedback)
-class TestFeedbackAdmin(EnhancedModelAdmin):
+class TestFeedbackAdmin(ExamRBACMixin, EnhancedModelAdmin):
     enf_hide_tools = True
     list_display = ('test', 'student', 'overall_rating', 'difficulty_rating')
     actions = [export_as_csv]
@@ -303,7 +352,7 @@ class TestFeedbackAdmin(EnhancedModelAdmin):
 
 
 @admin.register(OfflineTestMarks)
-class OfflineTestMarksAdmin(ImportExportMixin, EnhancedModelAdmin):
+class OfflineTestMarksAdmin(ExamRBACMixin, ImportExportMixin, EnhancedModelAdmin):
     enf_hide_tools = True
     list_display = ('student', 'test_name', 'test_date', 'marks_obtained', 'total_marks', 'percentage_display')
     actions = [export_as_csv, export_as_json]
