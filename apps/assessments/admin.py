@@ -172,10 +172,11 @@ class QuestionAdmin(ExamRBACMixin, ImportExportMixin, EnhancedModelAdmin):
     enf_hide_tools = True
     list_display = (
         'question_code', 'type_badge', 'difficulty_badge',
-        'subject', 'test', 'active_badge',
+        'batch_display', 'subject', 'topic', 'test', 'active_badge',
     )
-    list_filter = ('question_type', 'difficulty', 'is_active', 'subject')
-    search_fields = ('question_code', 'question_text')
+    list_filter = ('question_type', 'difficulty', 'is_active', 'subject', 'topic', 'test__batch')
+    search_fields = ('question_code', 'question_text', 'topic__name', 'test__batch__name')
+    list_select_related = ('subject', 'topic', 'test', 'test__batch')
     actions = [export_as_csv, export_as_json, activate_selected, deactivate_selected]
     list_per_page = 30
     readonly_fields = (
@@ -241,6 +242,12 @@ class QuestionAdmin(ExamRBACMixin, ImportExportMixin, EnhancedModelAdmin):
     def active_badge(self, obj):
         return colored_status(obj.is_active)
     active_badge.short_description = 'Active'
+
+    def batch_display(self, obj):
+        b = getattr(getattr(obj, 'test', None), 'batch', None)
+        return getattr(b, 'name', '—') if b else '—'
+    batch_display.short_description = 'Batch'
+    batch_display.admin_order_field = 'test__batch__name'
 
 
 @admin.register(TestAttempt)

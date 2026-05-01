@@ -1,0 +1,43 @@
+{% extends 'dashboards/admin_base.html' %}
+{% block admin_content %}
+<style>
+  .u-card{background:white;border:1px solid #e2e8f0;border-radius:12px;padding:18px;margin-bottom:18px;}
+  .u-table{width:100%;border-collapse:collapse;font-size:.88rem;}
+  .u-table th,.u-table td{padding:8px 10px;border-bottom:1px solid #f1f5f9;text-align:left;}
+  .u-table th{background:#f8fafc;font-weight:600;}
+</style>
+<div class="page-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+  <div><h2>Underperformer Alerts</h2><p>Students failing recent assessments — raises in-app alerts.</p></div>
+  <form method="post" style="display:inline;">{% csrf_token %}
+    <button type="submit" {% if not enabled %}disabled{% endif %} class="btn-primary"
+      style="background:#dc2626;color:white;padding:9px 18px;border:none;border-radius:8px;font-weight:600;cursor:pointer;{% if not enabled %}opacity:.5;{% endif %}">
+      <i class="fas fa-bell"></i> Scan & raise alerts
+    </button>
+  </form>
+</div>
+
+<div class="u-card" style="display:flex;gap:24px;flex-wrap:wrap;">
+  <div><b>Fail threshold:</b> &lt; {{ fail_pct }}%</div>
+  <div><b>Trigger:</b> {{ need }} fails out of last {{ window }}</div>
+  <div><b>Alerts:</b> {% if enabled %}<span style="color:#15803d;">enabled</span>{% else %}<span style="color:#dc2626;">disabled by flag</span>{% endif %}</div>
+</div>
+
+<div class="u-card">
+  {% if items %}
+  <table class="u-table">
+    <tr><th>Student</th><th>Fails</th><th>Window</th><th>Avg %</th><th>Last attempt</th></tr>
+    {% for it in items %}
+      <tr>
+        <td>{{ it.student.first_name }} {{ it.student.last_name }}<br><small style="color:#64748b;">{{ it.student.student_code }}</small></td>
+        <td><b style="color:#dc2626;">{{ it.fails }}</b></td>
+        <td>{{ it.window }}</td>
+        <td>{{ it.avg|floatformat:1 }}</td>
+        <td>{{ it.last_attempt_at|date:"d M Y H:i" }}</td>
+      </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p style="color:#64748b;">No underperformers detected against the current thresholds.</p>
+  {% endif %}
+</div>
+{% endblock %}

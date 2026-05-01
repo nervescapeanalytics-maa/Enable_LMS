@@ -209,6 +209,12 @@ from assessments.views.admin_exam_views import (
     ExamSectionCreateView, ExamFeatureFlagsView,
     QuestionListView, QuestionCreateView, QuestionEditView, QuestionDeleteView,
 )
+from assessments.views.phase4_views import (
+    QuestionImportView, question_import_template,
+    TestVersionListView, TestVersionSnapshotView, TestVersionRestoreView, TestVersionDiffView,
+    AIInsightsView, UnderperformerListView, ExamReportsView, export_exam_report_csv,
+    ExamThresholdsView,
+)
 
 urlpatterns += [
     # Staff Dashboard — Main
@@ -239,6 +245,21 @@ urlpatterns += [
     path('staff/exams/<uuid:test_id>/archive/',         ExamArchiveView.as_view(),       name='staff-exam-archive'),
     path('staff/exams/<uuid:test_id>/delete/',          ExamDeleteView.as_view(),        name='staff-exam-delete'),
     path('staff/exams/<uuid:test_id>/sections/new/',    ExamSectionCreateView.as_view(), name='staff-exam-section-create'),
+
+    # Staff Dashboard — Exams Phase 4 (bulk import + version control)
+    path('staff/exams/import/',                         QuestionImportView.as_view(),    name='staff-exam-import'),
+    path('staff/exams/import/template/',                question_import_template,        name='staff-exam-import-template'),
+    path('staff/exams/<uuid:test_id>/versions/',        TestVersionListView.as_view(),   name='staff-exam-versions'),
+    path('staff/exams/<uuid:test_id>/versions/snapshot/', TestVersionSnapshotView.as_view(), name='staff-exam-version-snapshot'),
+    path('staff/exams/<uuid:test_id>/versions/diff/',   TestVersionDiffView.as_view(),   name='staff-exam-version-diff'),
+    path('staff/exams/<uuid:test_id>/versions/<uuid:version_id>/restore/', TestVersionRestoreView.as_view(), name='staff-exam-version-restore'),
+
+    # Staff Dashboard — Analytics & Alerting (Phase 4)
+    path('staff/analytics/exam-reports/',               ExamReportsView.as_view(),       name='staff-exam-reports'),
+    path('staff/analytics/exam-reports/export/',        export_exam_report_csv,          name='staff-exam-reports-export'),
+    path('staff/analytics/ai-insights/',                AIInsightsView.as_view(),        name='staff-ai-insights'),
+    path('staff/analytics/underperformers/',            UnderperformerListView.as_view(), name='staff-underperformers'),
+    path('staff/analytics/thresholds/',                 ExamThresholdsView.as_view(),    name='staff-exam-thresholds'),
 
     # Staff Dashboard — Assessments (legacy read-only views, kept for back-compat)
     path('staff/tests/', TestsView.as_view(), name='staff-tests'),

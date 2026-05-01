@@ -1,0 +1,32 @@
+{% extends 'dashboards/admin_base.html' %}
+{% block admin_content %}
+<style>
+  .t-card{background:white;border:1px solid #e2e8f0;border-radius:12px;padding:22px;margin-bottom:18px;}
+  .t-table{width:100%;border-collapse:collapse;font-size:.9rem;}
+  .t-table th,.t-table td{padding:9px 10px;border-bottom:1px solid #f1f5f9;text-align:left;}
+  .t-table input{padding:6px 10px;border:1px solid #cbd5e1;border-radius:6px;width:100px;text-align:right;}
+</style>
+<div class="page-header"><h2>Exam Thresholds</h2><p>Tune the numeric thresholds used by AI insights and underperformer alerts.</p></div>
+
+<div class="t-card">
+  <form method="post">
+    {% csrf_token %}
+    <table class="t-table">
+      <tr><th>Setting</th><th>Description</th><th>Default</th><th style="text-align:right;">Current</th></tr>
+      {% for r in rows %}
+        <tr>
+          <td><code>{{ r.key }}</code></td>
+          <td style="color:#475569;">{{ r.desc }}</td>
+          <td>{{ r.default }}</td>
+          <td style="text-align:right;"><input type="number" name="{{ r.key }}" value="{{ r.value }}" min="0" max="100"></td>
+        </tr>
+      {% endfor %}
+    </table>
+    <div style="margin-top:18px;text-align:right;">
+      <button type="submit" class="btn-primary" style="background:#16a34a;color:white;padding:10px 22px;border:none;border-radius:8px;font-weight:600;cursor:pointer;">
+        <i class="fas fa-save"></i> Save thresholds
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

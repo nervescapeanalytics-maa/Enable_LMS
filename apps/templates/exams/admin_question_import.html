@@ -1,0 +1,96 @@
+{% extends 'dashboards/admin_base.html' %}
+{% block admin_content %}
+<style>
+  .imp-card{background:white;border:1px solid #e2e8f0;border-radius:12px;padding:24px;margin-bottom:18px;}
+  .imp-table{width:100%;font-size:.86rem;border-collapse:collapse;}
+  .imp-table th,.imp-table td{padding:6px 8px;border-bottom:1px solid #f1f5f9;text-align:left;vertical-align:top;}
+  .imp-table th{background:#f8fafc;font-weight:600;}
+  .err-row{background:#fef2f2;}
+  .badge-new{background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:6px;font-size:.7rem;}
+  .badge-upd{background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:6px;font-size:.7rem;}
+</style>
+<div class="page-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+  <div><h2>Bulk Question Import</h2><p>CSV / XLSX upload with dry-run preview.</p></div>
+  <a href="/staff/exams/import/template/" class="btn-primary" style="background:#475569;color:white;padding:9px 16px;border-radius:8px;text-decoration:none;">
+    <i class="fas fa-download"></i> Download CSV template
+  </a>
+</div>
+
+<div class="imp-card">
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;">
+      <div style="flex:1;min-width:280px;">
+        <label style="display:block;font-weight:600;margin-bottom:6px;">Target test</label>
+        <select name="test_id" required style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:8px;">
+          <option value="">— pick a test —</option>
+          {% for t in tests %}
+            <option value="{{ t.id }}" {% if test and test.id == t.id %}selected{% endif %}>{{ t.test_code }} — {{ t.title }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div style="flex:1;min-width:280px;">
+        <label style="display:block;font-weight:600;margin-bottom:6px;">File (.csv / .xlsx)</label>
+        <input type="file" name="file" accept=".csv,.xlsx" required style="width:100%;">
+      </div>
+      <div>
+        <button type="submit" name="action" value="preview" class="btn-primary"
+          style="background:#6366f1;color:white;padding:10px 22px;border:none;border-radius:8px;font-weight:600;cursor:pointer;">
+          <i class="fas fa-eye"></i> Preview
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+
+{% if total_rows is not None %}
+<div class="imp-card">
+  <h3 style="margin:0 0 10px;">Dry-run summary</h3>
+  <div style="display:flex;gap:24px;flex-wrap:wrap;">
+    <div><b>{{ total_rows }}</b> row(s) parsed</div>
+    <div style="color:#15803d;"><b>{{ cleaned_count }}</b> ready to apply</div>
+    <div style="color:#dc2626;"><b>{{ error_count }}</b> error(s)</div>
+  </div>
+
+  {% if preview_errors %}
+  <h4 style="margin-top:18px;color:#dc2626;">Errors</h4>
+  <table class="imp-table">
+    <tr><th>Row</th><th>Field</th><th>Message</th></tr>
+    {% for e in preview_errors %}
+      <tr class="err-row"><td>{{ e.row }}</td><td>{{ e.field }}</td><td>{{ e.message }}</td></tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+
+  {% if preview_rows %}
+  <h4 style="margin-top:18px;">Will apply</h4>
+  <table class="imp-table">
+    <tr><th>Row</th><th>Code</th><th>Type</th><th>Action</th><th>Question</th><th>Marks</th></tr>
+    {% for r in preview_rows %}
+      <tr>
+        <td>{{ r.row }}</td>
+        <td>{{ r.question_code }}</td>
+        <td>{{ r.question_type }}</td>
+        <td>{% if r.action == 'create' %}<span class="badge-new">CREATE</span>{% else %}<span class="badge-upd">UPDATE</span>{% endif %}</td>
+        <td>{{ r.question_text|truncatechars:90 }}</td>
+        <td>{{ r.marks_per_question }}</td>
+      </tr>
+    {% endfor %}
+  </table>
+
+  {% if error_count == 0 %}
+  <form method="post" enctype="multipart/form-data" style="margin-top:18px;">
+    {% csrf_token %}
+    <input type="hidden" name="test_id" value="{{ test.id }}">
+    <p style="color:#475569;font-size:.85rem;">Re-attach the same file and click <b>Apply</b> to commit. (Stateless preview — file is not stored.)</p>
+    <input type="file" name="file" accept=".csv,.xlsx" required>
+    <button type="submit" name="action" value="apply" class="btn-primary"
+      style="background:#16a34a;color:white;padding:10px 22px;border:none;border-radius:8px;font-weight:600;cursor:pointer;">
+      <i class="fas fa-check"></i> Apply import
+    </button>
+  </form>
+  {% endif %}
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

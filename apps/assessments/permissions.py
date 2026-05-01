@@ -54,6 +54,9 @@ EXAM_FEATURE_FLAGS = [
     ('exam.dispute_flow',              'Mark disputes',                              True),
     ('exam.pdf_record_card',          'Downloadable PDF student record card',       True),
     ('exam.topic_heatmap',            'Topic-wise strength/weakness heatmap',       True),
+    ('exam.underperformer_alerts',    'Alert on consistent underperformers',        True),
+    ('exam.question_import',          'Bulk question import (CSV/XLSX)',            True),
+    ('exam.test_versioning',          'Test version control (snapshot + revert)',   True),
 ]
 
 
@@ -76,6 +79,49 @@ def ensure_exam_feature_flags() -> int:
         if was_created:
             created += 1
     return created
+
+
+# =============================================================================
+# Numeric thresholds (admin-configurable via SystemSetting)
+# =============================================================================
+
+EXAM_SETTINGS = [
+    # (key,                              default,  type,       description)
+    ('exam.fail_threshold_percent',      '35',     'INTEGER',  'Score below this % is flagged as a fail.'),
+    ('exam.underperformer_fail_count',   '3',      'INTEGER',  'Number of fails…'),
+    ('exam.underperformer_window_size',  '5',      'INTEGER',  '…within this many most-recent attempts.'),
+    ('exam.alert_red_zone_percent',      '35',     'INTEGER',  'Red-zone score threshold for in-app alerts.'),
+    ('exam.alert_amber_zone_percent',    '50',     'INTEGER',  'Amber-zone threshold for in-app alerts.'),
+]
+
+
+def ensure_exam_settings() -> int:
+    """Seed default numeric thresholds. Idempotent. Returns number created."""
+    from system_config.models import SystemSetting
+    created = 0
+    for key, value, vtype, desc in EXAM_SETTINGS:
+        _, was = SystemSetting.objects.get_or_create(
+            tenant=None, setting_key=key,
+            defaults=dict(setting_value=value, value_type=vtype,
+                          category='exams', description=desc, is_editable=True),
+        )
+        if was:
+            created += 1
+    return created
+
+
+def get_exam_setting_int(key: str, tenant=None, default: int = 0) -> int:
+    """Resolve an integer SystemSetting (tenant-scoped, falls back to global)."""
+    from system_config.models import SystemSetting
+    qs = SystemSetting.objects.filter(setting_key=key)
+    row = (qs.filter(tenant=tenant).first() if tenant is not None else None) \
+          or qs.filter(tenant__isnull=True).first()
+    if not row or not row.setting_value:
+        return default
+    try:
+        return int(row.setting_value)
+    except (ValueError, TypeError):
+        return default
 
 
 def is_feature_enabled(flag_key: str, tenant=None, user_type: Optional[str] = None) -> bool:

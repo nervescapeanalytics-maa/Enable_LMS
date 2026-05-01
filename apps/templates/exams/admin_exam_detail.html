@@ -58,6 +58,7 @@
   <a href="/staff/exams/{{ test.id }}/edit/" class="btn btn-primary"><i class="fas fa-edit"></i> Edit Settings</a>
   <a href="/staff/exams/questions/new/?test={{ test.id }}" class="btn btn-light"><i class="fas fa-plus"></i> Add Question</a>
   <a href="/staff/exams/{{ test.id }}/sections/new/" class="btn btn-light"><i class="fas fa-th-list"></i> Add Section</a>
+  <a href="/staff/exams/{{ test.id }}/versions/" class="btn btn-light"><i class="fas fa-history"></i> Versions</a>
 
   {% if can_publish %}
   <form method="post" action="/staff/exams/{{ test.id }}/publish/" style="display:inline;" onsubmit="return confirm('Publish this exam? Students in the assigned batch will gain access.');">

@@ -1,0 +1,42 @@
+{% extends 'dashboards/admin_base.html' %}
+{% block admin_content %}
+<style>
+  .ai-card{background:white;border:1px solid #e2e8f0;border-radius:12px;padding:18px;margin-bottom:18px;}
+  .ai-table{width:100%;border-collapse:collapse;font-size:.88rem;}
+  .ai-table th,.ai-table td{padding:8px 10px;border-bottom:1px solid #f1f5f9;text-align:left;}
+  .ai-table th{background:#f8fafc;font-weight:600;}
+  .band-RED{background:#fee2e2;color:#991b1b;padding:3px 10px;border-radius:999px;font-size:.72rem;font-weight:700;}
+  .band-AMBER{background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:999px;font-size:.72rem;font-weight:700;}
+  .band-GREEN{background:#d1fae5;color:#065f46;padding:3px 10px;border-radius:999px;font-size:.72rem;font-weight:700;}
+</style>
+<div class="page-header"><h2>AI Insights</h2><p>Per-student score prediction & risk scoring.</p></div>
+
+<div class="ai-card" style="display:flex;gap:24px;flex-wrap:wrap;">
+  <div><b>Rule engine:</b> {% if rule_enabled %}<span style="color:#15803d;">ON</span>{% else %}<span style="color:#dc2626;">OFF</span>{% endif %}</div>
+  <div><b>LLM narrative:</b> {% if llm_enabled %}<span style="color:#15803d;">ON</span>{% else %}<span style="color:#64748b;">OFF</span>{% endif %}</div>
+  <div><b>Red-zone:</b> &lt; {{ red_zone }}%</div>
+  <div><b>Amber-zone:</b> &lt; {{ amber_zone }}%</div>
+</div>
+
+<div class="ai-card">
+  {% if rows %}
+  <table class="ai-table">
+    <tr><th>Student</th><th>#Attempts</th><th>Last %</th><th>Avg %</th><th>Predicted next %</th><th>Risk</th><th>Predicted rank band</th><th>Narrative</th></tr>
+    {% for r in rows %}
+      <tr>
+        <td>{{ r.student.first_name }} {{ r.student.last_name }}<br><small style="color:#64748b;">{{ r.student.student_code }}</small></td>
+        <td>{{ r.samples }}</td>
+        <td>{{ r.last|floatformat:1 }}</td>
+        <td>{{ r.avg|floatformat:1 }}</td>
+        <td><b>{{ r.predicted_next_pct|floatformat:1 }}</b></td>
+        <td><span class="band-{{ r.risk_band }}">{{ r.risk_band }}</span></td>
+        <td>{{ r.predicted_rank_band }}</td>
+        <td style="max-width:340px;font-size:.78rem;color:#475569;">{{ r.narrative|default:"—" }}</td>
+      </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p style="color:#64748b;">No evaluated attempts yet, or AI prediction is disabled.</p>
+  {% endif %}
+</div>
+{% endblock %}

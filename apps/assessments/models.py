@@ -163,6 +163,46 @@ class Test(models.Model):
 
 
 # ---------------------------------------------------------------------------
+# Test Version (Phase 4 — version control)
+# ---------------------------------------------------------------------------
+class TestVersion(models.Model):
+    """
+    Immutable snapshot of a Test (and its sections + questions) at a point
+    in time. Used for rollback after an authoring error.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    tenant = models.ForeignKey('tenants.Tenant', on_delete=models.CASCADE)
+    test = models.ForeignKey(Test, on_delete=models.CASCADE, related_name='versions')
+
+    version_number = models.IntegerField()
+    label = models.CharField(max_length=200, blank=True, default='')
+    snapshot = models.JSONField(help_text='Full Test+Sections+Questions JSON snapshot.')
+    summary = models.JSONField(default=dict, blank=True,
+                               help_text='Quick stats: question_count, total_marks, etc.')
+
+    created_by_id = models.UUIDField(null=True, blank=True)
+    created_by_name = models.CharField(max_length=200, blank=True, default='')
+    created_at = models.DateTimeField(default=timezone.now)
+    note = models.TextField(blank=True, default='')
+
+    class Meta:
+        db_table = 'test_versions'
+        ordering = ['-version_number']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['test', 'version_number'],
+                name='uq_test_version',
+            ),
+        ]
+        indexes = [
+            models.Index(fields=['tenant', 'test'], name='idx_test_version_test'),
+        ]
+
+    def __str__(self):
+        return f"{self.test_id} v{self.version_number}"
+
+
+# ---------------------------------------------------------------------------
 # Test Section (for multi-subject tests like JEE)
 # ---------------------------------------------------------------------------
 class TestSection(models.Model):

@@ -1,0 +1,70 @@
+{% extends 'dashboards/admin_base.html' %}
+{% block admin_content %}
+<style>
+  .r-card{background:white;border:1px solid #e2e8f0;border-radius:12px;padding:18px;margin-bottom:18px;}
+  .r-table{width:100%;border-collapse:collapse;font-size:.86rem;}
+  .r-table th,.r-table td{padding:7px 10px;border-bottom:1px solid #f1f5f9;text-align:left;}
+  .r-table th{background:#f8fafc;font-weight:600;}
+  .flag-RED{background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:6px;font-weight:700;font-size:.7rem;}
+  .flag-AMBER{background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:6px;font-weight:700;font-size:.7rem;}
+  .flag-GREEN{background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:6px;font-weight:700;font-size:.7rem;}
+</style>
+<div class="page-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+  <div><h2>Exam Reports</h2><p>Recent attempts with red/amber/green flagging (red &lt; {{ red_zone }}%, amber &lt; {{ amber_zone }}%).</p></div>
+  <a href="/staff/analytics/exam-reports/export/" class="btn-primary" style="background:#475569;color:white;padding:9px 16px;border-radius:8px;text-decoration:none;">
+    <i class="fas fa-file-csv"></i> Export CSV
+  </a>
+</div>
+
+<div class="r-card">
+  <form method="get" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+    <div style="flex:1;min-width:280px;"><label style="font-weight:600;">Filter by test</label>
+      <select name="test" style="width:100%;padding:7px;border:1px solid #cbd5e1;border-radius:6px;">
+        <option value="">All tests</option>
+        {% for t in tests %}
+          <option value="{{ t.id }}" {% if selected_test == t.id|stringformat:"s" %}selected{% endif %}>{{ t.test_code }} — {{ t.title }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="btn-primary" style="background:#6366f1;color:white;padding:9px 18px;border:none;border-radius:8px;font-weight:600;cursor:pointer;">
+      Apply
+    </button>
+  </form>
+</div>
+
+<div class="r-card">
+  <h3 style="margin:0 0 10px;">Per-test stats</h3>
+  <table class="r-table">
+    <tr><th>Test</th><th>Attempts</th><th>Avg %</th></tr>
+    {% for a in agg %}
+      <tr>
+        <td>{{ a.test__test_code }} — {{ a.test__title|truncatechars:50 }}</td>
+        <td>{{ a.n }}</td>
+        <td>{{ a.avg|floatformat:1 }}</td>
+      </tr>
+    {% endfor %}
+  </table>
+</div>
+
+<div class="r-card">
+  <h3 style="margin:0 0 10px;">Recent attempts</h3>
+  {% if attempts %}
+  <table class="r-table">
+    <tr><th>Submitted</th><th>Test</th><th>Student</th><th>Attempt #</th><th>%</th><th>Result</th><th>Flag</th></tr>
+    {% for a in attempts %}
+      <tr>
+        <td>{{ a.submitted_at|date:"d M H:i" }}</td>
+        <td>{{ a.test.test_code }}</td>
+        <td>{{ a.student.first_name }} {{ a.student.last_name }}</td>
+        <td>{{ a.attempt_number }}</td>
+        <td><b>{{ a.percentage|floatformat:1 }}</b></td>
+        <td>{{ a.result|default:"—" }}</td>
+        <td><span class="flag-{{ a.flag }}">{{ a.flag }}</span></td>
+      </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p style="color:#64748b;">No evaluated attempts yet.</p>
+  {% endif %}
+</div>
+{% endblock %}

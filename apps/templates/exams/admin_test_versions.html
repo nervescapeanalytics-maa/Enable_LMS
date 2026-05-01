@@ -1,0 +1,63 @@
+{% extends 'dashboards/admin_base.html' %}
+{% block admin_content %}
+<style>
+  .v-card{background:white;border:1px solid #e2e8f0;border-radius:12px;padding:22px;margin-bottom:18px;}
+  .v-table{width:100%;border-collapse:collapse;font-size:.9rem;}
+  .v-table th,.v-table td{padding:8px 10px;border-bottom:1px solid #f1f5f9;text-align:left;}
+  .v-table th{background:#f8fafc;font-weight:600;}
+  .pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:.7rem;font-weight:600;background:#e0e7ff;color:#3730a3;}
+</style>
+<div class="page-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+  <div>
+    <h2>Test Versions</h2>
+    <p>{{ test.test_code }} — {{ test.title }}</p>
+  </div>
+  <a href="/staff/exams/{{ test.id }}/" style="color:#475569;text-decoration:none;">&larr; Back to test</a>
+</div>
+
+<div class="v-card">
+  <form method="post" action="/staff/exams/{{ test.id }}/versions/snapshot/" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+    {% csrf_token %}
+    <div style="flex:1;min-width:200px;"><label style="font-weight:600;">Label</label>
+      <input type="text" name="label" placeholder="e.g. before exam-day fix" style="width:100%;padding:7px;border:1px solid #cbd5e1;border-radius:6px;"></div>
+    <div style="flex:2;min-width:280px;"><label style="font-weight:600;">Note (optional)</label>
+      <input type="text" name="note" style="width:100%;padding:7px;border:1px solid #cbd5e1;border-radius:6px;"></div>
+    <button type="submit" class="btn-primary" style="background:#6366f1;color:white;padding:9px 18px;border:none;border-radius:8px;font-weight:600;cursor:pointer;">
+      <i class="fas fa-camera"></i> Take snapshot
+    </button>
+  </form>
+</div>
+
+<div class="v-card">
+  <h3 style="margin:0 0 12px;">History</h3>
+  {% if versions %}
+  <table class="v-table">
+    <tr><th>Version</th><th>Label</th><th>Captured by</th><th>When</th><th>Questions</th><th>Total marks</th><th>Note</th><th></th></tr>
+    {% for v in versions %}
+      <tr>
+        <td><span class="pill">v{{ v.version_number }}</span></td>
+        <td>{{ v.label|default:"—" }}</td>
+        <td>{{ v.created_by_name|default:"system" }}</td>
+        <td>{{ v.created_at|date:"d M Y H:i" }}</td>
+        <td>{{ v.summary.questions|default:"—" }}</td>
+        <td>{{ v.summary.total_marks|default:"—" }}</td>
+        <td>{{ v.note|truncatechars:80|default:"—" }}</td>
+        <td>
+          {% if is_admin_full %}
+          <form method="post" action="/staff/exams/{{ test.id }}/versions/{{ v.id }}/restore/" style="display:inline;"
+                onsubmit="return confirm('Restore live test from v{{ v.version_number }}? Current state will be auto-snapshotted first.');">
+            {% csrf_token %}
+            <button type="submit" style="background:#fee2e2;color:#991b1b;border:none;padding:5px 12px;border-radius:6px;font-weight:600;cursor:pointer;font-size:.78rem;">
+              Restore
+            </button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p style="color:#64748b;">No snapshots yet. Click <b>Take snapshot</b> to capture the current state.</p>
+  {% endif %}
+</div>
+{% endblock %}
