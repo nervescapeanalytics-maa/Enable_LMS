@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>403 — Forbidden</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; background:#f8fafc;
+      display:flex; align-items:center; justify-content:center; min-height:100vh; margin:0; }
+    .box { text-align:center; background:white; padding:48px 56px; border-radius:14px;
+      box-shadow:0 4px 20px rgba(0,0,0,0.06); max-width:520px; }
+    .icon { font-size:4rem; color:#dc2626; margin-bottom:18px; }
+    h2 { color:#991b1b; margin:0 0 12px 0; font-size:1.6rem; }
+    p { color:#475569; margin:0 0 24px 0; line-height:1.5; }
+    a { background:#6366f1; color:white; padding:11px 24px; border-radius:8px;
+      text-decoration:none; font-weight:600; display:inline-block; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <div class="icon">⛔</div>
+    <h2>403 — Forbidden</h2>
+    <p>{{ reason|default:"You do not have permission to access this resource." }}</p>
+    <a href="/staff/dashboard/">Back to Dashboard</a>
+  </div>
+</body>
+</html>

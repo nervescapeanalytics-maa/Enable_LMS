@@ -1,0 +1,157 @@
+{% extends 'dashboards/admin_base.html' %}
+
+{% block admin_content %}
+<style>
+  .form-grid { display:grid; grid-template-columns: 1fr 1fr; gap:18px; }
+  .form-grid .full { grid-column: 1 / -1; }
+  .field-group { background:white; border:1px solid #e2e8f0; border-radius:12px; padding:18px; margin-bottom:18px; }
+  .field-group h4 { margin:0 0 14px 0; font-size:1rem; color:#0f172a;
+    padding-bottom:8px; border-bottom:1px solid #f1f5f9; }
+  .field-group label { display:block; font-size:0.85rem; font-weight:600; color:#334155; margin-bottom:5px; }
+  .field-group input[type=text], .field-group input[type=number],
+  .field-group input[type=password], .field-group input[type=datetime-local],
+  .field-group select, .field-group textarea {
+    width:100%; padding:8px 12px; border:1px solid #cbd5e1; border-radius:8px;
+    font-size:0.9rem; box-sizing:border-box; font-family:inherit;
+  }
+  .field-group .helptext { font-size:0.75rem; color:#94a3b8; margin-top:3px; }
+  .field-group .errorlist { color:#b91c1c; font-size:0.78rem; padding-left:18px; margin:4px 0; }
+  .field-row { margin-bottom:12px; }
+  .checkbox-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .checkbox-row input[type=checkbox] { width:auto; }
+  .checkbox-row label { margin:0; font-weight:500; }
+  .form-actions { display:flex; gap:10px; padding:18px 0; }
+  .btn-primary { background:#6366f1; color:white; border:none; padding:11px 24px; border-radius:10px;
+    cursor:pointer; font-weight:600; text-decoration:none; display:inline-block; font-size:0.9rem; }
+  .btn-secondary { background:#f1f5f9; color:#475569; border:none; padding:11px 24px; border-radius:10px;
+    cursor:pointer; font-weight:600; text-decoration:none; display:inline-block; font-size:0.9rem; }
+</style>
+
+<div class="page-header">
+  <h2>{% if mode == 'create' %}Create Exam{% else %}Edit: {{ test.title }}{% endif %}</h2>
+  <p>Define identity, schedule, scoring, access rules and proctoring options.</p>
+</div>
+
+{% if form.non_field_errors %}<div class="errorlist">{{ form.non_field_errors }}</div>{% endif %}
+
+<form method="post" novalidate>
+  {% csrf_token %}
+
+  <div class="field-group">
+    <h4><i class="fas fa-id-card"></i> Identity</h4>
+    <div class="form-grid">
+      <div class="field-row">
+        <label>Test code *</label>
+        {{ form.test_code }}{{ form.test_code.errors }}
+      </div>
+      <div class="field-row">
+        <label>Title *</label>
+        {{ form.title }}{{ form.title.errors }}
+      </div>
+      <div class="field-row full">
+        <label>Description</label>
+        {{ form.description }}{{ form.description.errors }}
+      </div>
+      <div class="field-row full">
+        <label>Instructions (shown to student before start)</label>
+        {{ form.instructions }}{{ form.instructions.errors }}
+      </div>
+    </div>
+  </div>
+
+  <div class="field-group">
+    <h4><i class="fas fa-tags"></i> Classification</h4>
+    <div class="form-grid">
+      <div class="field-row"><label>Test type</label>{{ form.test_type }}</div>
+      <div class="field-row"><label>Exam target</label>{{ form.exam_target }}</div>
+      <div class="field-row"><label>Difficulty level</label>{{ form.difficulty_level }}</div>
+      <div class="field-row"><label>Subject</label>{{ form.subject }}</div>
+      <div class="field-row"><label>Chapter</label>{{ form.chapter }}</div>
+      <div class="field-row"><label>Batch</label>{{ form.batch }}</div>
+    </div>
+  </div>
+
+  <div class="field-group">
+    <h4><i class="fas fa-clock"></i> Timing &amp; Schedule</h4>
+    <div class="form-grid">
+      <div class="field-row">
+        <label>Total duration (minutes) *</label>{{ form.total_duration_minutes }}{{ form.total_duration_minutes.errors }}
+      </div>
+      <div class="field-row"><label>Buffer time (min)</label>{{ form.buffer_time_minutes }}</div>
+      <div class="field-row"><label>Start datetime</label>{{ form.start_datetime }}{{ form.start_datetime.errors }}</div>
+      <div class="field-row"><label>End datetime</label>{{ form.end_datetime }}{{ form.end_datetime.errors }}</div>
+      <div class="field-row">
+        <div class="checkbox-row">{{ form.late_submission_allowed }}<label>Allow late submission</label></div>
+        <label>Late penalty %</label>{{ form.late_submission_penalty_percent }}
+      </div>
+      <div class="field-row">
+        <div class="checkbox-row">{{ form.show_timer }}<label>Show countdown timer</label></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="field-group">
+    <h4><i class="fas fa-calculator"></i> Scoring</h4>
+    <div class="form-grid">
+      <div class="field-row"><label>Total marks</label>{{ form.total_marks }}<div class="helptext">Auto-recomputed from questions on publish.</div></div>
+      <div class="field-row"><label>Passing marks</label>{{ form.passing_marks }}</div>
+      <div class="field-row"><label>Passing % *</label>{{ form.passing_percent }}{{ form.passing_percent.errors }}</div>
+      <div class="field-row"><label>Default + marks/Q</label>{{ form.positive_marks_per_question }}</div>
+      <div class="field-row"><label>Default − marks/Q</label>{{ form.negative_marks_per_question }}</div>
+      <div class="field-row"><div class="checkbox-row">{{ form.partial_marking }}<label>Enable partial marking</label></div></div>
+    </div>
+  </div>
+
+  <div class="field-group">
+    <h4><i class="fas fa-shield-alt"></i> Access Rules</h4>
+    <div class="form-grid">
+      <div class="field-row"><label>Access mode</label>{{ form.access_mode }}{{ form.access_mode.errors }}</div>
+      <div class="field-row"><label>Access password</label>{{ form.access_password }}{{ form.access_password.errors }}</div>
+      <div class="field-row"><label>Max attempts</label>{{ form.max_attempts }}{{ form.max_attempts.errors }}</div>
+      <div class="field-row">
+        <div class="checkbox-row">{{ form.shuffle_questions }}<label>Shuffle questions</label></div>
+        <div class="checkbox-row">{{ form.shuffle_options }}<label>Shuffle options</label></div>
+        <div class="checkbox-row">{{ form.allow_review }}<label>Allow review</label></div>
+        <div class="checkbox-row">{{ form.allow_backward }}<label>Allow backward navigation</label></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="field-group">
+    <h4><i class="fas fa-poll-h"></i> Result Display</h4>
+    <div class="form-grid">
+      <div class="field-row"><label>Result mode</label>{{ form.result_display_mode }}</div>
+      <div class="field-row"><label>Result release datetime</label>{{ form.result_release_datetime }}</div>
+      <div class="field-row">
+        <div class="checkbox-row">{{ form.show_correct_answers }}<label>Show correct answers</label></div>
+        <div class="checkbox-row">{{ form.show_explanations }}<label>Show explanations</label></div>
+        <div class="checkbox-row">{{ form.show_rank }}<label>Show rank</label></div>
+        <div class="checkbox-row">{{ form.show_percentile }}<label>Show percentile</label></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="field-group">
+    <h4><i class="fas fa-video"></i> Proctoring</h4>
+    <div class="form-grid">
+      <div class="field-row">
+        <div class="checkbox-row">{{ form.enable_proctoring }}<label>Enable proctoring</label></div>
+        <div class="checkbox-row">{{ form.prevent_tab_switch }}<label>Prevent tab switch</label></div>
+        <div class="checkbox-row">{{ form.prevent_copy_paste }}<label>Prevent copy/paste</label></div>
+        <div class="checkbox-row">{{ form.prevent_screenshot }}<label>Prevent screenshot</label></div>
+        <div class="checkbox-row">{{ form.webcam_required }}<label>Webcam required</label></div>
+        <div class="checkbox-row">{{ form.full_screen_required }}<label>Full-screen required</label></div>
+      </div>
+      <div class="field-row">
+        <label>Max tab switches before auto-submit</label>{{ form.max_tab_switches }}
+      </div>
+    </div>
+    <div class="helptext" style="margin-top:8px;">Per-feature toggles (e.g. webcam snapshots, devtools detection) are enforced via Feature Flags.</div>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn-primary"><i class="fas fa-save"></i> {% if mode == 'create' %}Create Draft{% else %}Save Changes{% endif %}</button>
+    <a href="{% if test %}/staff/exams/{{ test.id }}/{% else %}/staff/exams/{% endif %}" class="btn-secondary">Cancel</a>
+  </div>
+</form>
+{% endblock %}

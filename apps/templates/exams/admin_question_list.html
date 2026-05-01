@@ -1,0 +1,74 @@
+{% extends 'dashboards/admin_base.html' %}
+
+{% block admin_content %}
+<style>
+  .qb-toolbar { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:18px; }
+  .qb-toolbar input, .qb-toolbar select {
+    padding:8px 12px; border:1px solid #e2e8f0; border-radius:8px; font-size:0.9rem; background:white;
+  }
+  .qbox { background:white; border:1px solid #e2e8f0; border-radius:10px; padding:14px; margin-bottom:10px; }
+  .qmeta { font-size:0.78rem; color:#64748b; display:flex; gap:14px; margin-top:6px; flex-wrap:wrap; }
+  .qmeta span { background:#f1f5f9; padding:2px 8px; border-radius:6px; }
+</style>
+
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
+  <div>
+    <h2>Question Bank</h2>
+    <p>Reusable questions across all exams.</p>
+  </div>
+  <a href="/staff/exams/questions/new/" style="background:#6366f1; color:white; padding:10px 20px; border-radius:10px; text-decoration:none; font-weight:600;">
+    <i class="fas fa-plus"></i> New Question
+  </a>
+</div>
+
+<div class="stat-row">
+  <div class="stat-card"><div class="stat-icon indigo" style="background:#eef2ff;color:#6366f1;"><i class="fas fa-question"></i></div><div class="stat-info"><div class="stat-value">{{ count_total }}</div><div class="stat-label">Total</div></div></div>
+  <div class="stat-card"><div class="stat-icon green"><i class="fas fa-check"></i></div><div class="stat-info"><div class="stat-value">{{ count_active }}</div><div class="stat-label">Active</div></div></div>
+</div>
+
+<form method="get" class="qb-toolbar">
+  <input type="text" name="q" value="{{ filters.q }}" placeholder="Search question text or code" style="min-width:240px;">
+  <select name="type">
+    <option value="">All types</option>
+    {% for v, lbl in type_choices %}<option value="{{ v }}" {% if filters.type == v %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
+  </select>
+  <select name="difficulty">
+    <option value="">All difficulties</option>
+    {% for v, lbl in difficulty_choices %}<option value="{{ v }}" {% if filters.difficulty == v %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
+  </select>
+  <button type="submit" style="background:#475569; color:white; border:none; padding:8px 16px; border-radius:8px; cursor:pointer;">Filter</button>
+</form>
+
+{% if questions %}
+{% for q in questions %}
+<div class="qbox">
+  <div style="display:flex; justify-content:space-between; gap:12px;">
+    <div style="flex:1;">
+      <div style="font-weight:600; color:#0f172a;">{{ q.question_text|truncatechars:160 }}</div>
+      <div class="qmeta">
+        <span><i class="fas fa-tag"></i> {{ q.get_question_type_display }}</span>
+        <span>{{ q.get_difficulty_display }}</span>
+        {% if q.subject %}<span>{{ q.subject }}</span>{% endif %}
+        {% if q.chapter %}<span>{{ q.chapter }}</span>{% endif %}
+        {% if q.test %}<span style="background:#dbeafe; color:#1e40af;">→ {{ q.test.test_code }}</span>{% endif %}
+        <span>+{{ q.positive_marks }} / {{ q.negative_marks }}</span>
+      </div>
+    </div>
+    <div style="display:flex; gap:8px; align-items:start;">
+      <a href="/staff/exams/questions/{{ q.id }}/edit/" style="color:#6366f1; text-decoration:none; font-size:0.85rem;">
+        <i class="fas fa-edit"></i> Edit
+      </a>
+      <form method="post" action="/staff/exams/questions/{{ q.id }}/delete/" style="display:inline;" onsubmit="return confirm('Delete question?');">
+        {% csrf_token %}
+        <button type="submit" style="background:none; border:none; color:#dc2626; font-size:0.85rem; cursor:pointer; padding:0;">
+          <i class="fas fa-trash"></i> Delete
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="empty-state"><i class="fas fa-question-circle"></i><p>No questions found.</p></div>
+{% endif %}
+{% endblock %}

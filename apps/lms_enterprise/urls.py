@@ -192,6 +192,12 @@ from core.admin_page_views import (
     ExamManagementView, ComplianceView, AIFeaturesView, DashboardIntegrationView,
     AutoGradeView,
 )
+from assessments.views.admin_exam_views import (
+    ExamListView, ExamCreateView, ExamEditView, ExamDetailView,
+    ExamPublishView, ExamUnpublishView, ExamArchiveView, ExamDeleteView,
+    ExamSectionCreateView, ExamFeatureFlagsView,
+    QuestionListView, QuestionCreateView, QuestionEditView, QuestionDeleteView,
+)
 
 urlpatterns += [
     # Staff Dashboard — Main
@@ -207,7 +213,23 @@ urlpatterns += [
     path('staff/programs/', ProgramsAdminView.as_view(), name='staff-programs'),
     path('staff/sessions/', AcademicSessionsView.as_view(), name='staff-sessions'),
 
-    # Staff Dashboard — Assessments
+    # Staff Dashboard — Exams & Assessments (Phase 2)
+    path('staff/exams/',                                ExamListView.as_view(),          name='staff-exams'),
+    path('staff/exams/new/',                            ExamCreateView.as_view(),        name='staff-exam-create'),
+    path('staff/exams/flags/',                          ExamFeatureFlagsView.as_view(),  name='staff-exam-flags'),
+    path('staff/exams/questions/',                      QuestionListView.as_view(),      name='staff-exam-questions'),
+    path('staff/exams/questions/new/',                  QuestionCreateView.as_view(),    name='staff-exam-question-create'),
+    path('staff/exams/questions/<uuid:qid>/edit/',      QuestionEditView.as_view(),      name='staff-exam-question-edit'),
+    path('staff/exams/questions/<uuid:qid>/delete/',    QuestionDeleteView.as_view(),    name='staff-exam-question-delete'),
+    path('staff/exams/<uuid:test_id>/',                 ExamDetailView.as_view(),        name='staff-exam-detail'),
+    path('staff/exams/<uuid:test_id>/edit/',            ExamEditView.as_view(),          name='staff-exam-edit'),
+    path('staff/exams/<uuid:test_id>/publish/',         ExamPublishView.as_view(),       name='staff-exam-publish'),
+    path('staff/exams/<uuid:test_id>/unpublish/',       ExamUnpublishView.as_view(),     name='staff-exam-unpublish'),
+    path('staff/exams/<uuid:test_id>/archive/',         ExamArchiveView.as_view(),       name='staff-exam-archive'),
+    path('staff/exams/<uuid:test_id>/delete/',          ExamDeleteView.as_view(),        name='staff-exam-delete'),
+    path('staff/exams/<uuid:test_id>/sections/new/',    ExamSectionCreateView.as_view(), name='staff-exam-section-create'),
+
+    # Staff Dashboard — Assessments (legacy read-only views, kept for back-compat)
     path('staff/tests/', TestsView.as_view(), name='staff-tests'),
     path('staff/questions/', QuestionsView.as_view(), name='staff-questions'),
     path('staff/test-reports/', TestReportsView.as_view(), name='staff-test-reports'),

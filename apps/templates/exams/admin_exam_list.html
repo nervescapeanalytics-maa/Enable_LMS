@@ -1,0 +1,105 @@
+{% extends 'dashboards/admin_base.html' %}
+
+{% block admin_content %}
+<style>
+  .exam-toolbar { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:18px; }
+  .exam-toolbar input, .exam-toolbar select {
+    padding:8px 12px; border:1px solid #e2e8f0; border-radius:8px; font-size:0.9rem;
+    background:white;
+  }
+  .exam-toolbar .btn-primary { padding:9px 18px; }
+  .pill { display:inline-block; padding:3px 10px; border-radius:999px; font-size:0.75rem; font-weight:600; }
+  .pill.published { background:#d1fae5; color:#065f46; }
+  .pill.draft { background:#fef3c7; color:#92400e; }
+  .pill.archived { background:#e5e7eb; color:#374151; }
+  .pill.active { background:#dbeafe; color:#1e40af; }
+  .pill.completed { background:#ede9fe; color:#6b21a8; }
+  .pill.cancelled { background:#fee2e2; color:#991b1b; }
+  .row-actions a { margin-right:6px; color:#475569; font-size:0.85rem; }
+  .row-actions a:hover { color:#6366f1; text-decoration: underline; }
+</style>
+
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+  <div>
+    <h2>Exams</h2>
+    <p>Author, schedule and publish all exams &amp; assessments.</p>
+  </div>
+  <a href="/staff/exams/new/" class="btn-primary"
+     style="background:#6366f1; color:white; padding:10px 20px; border-radius:10px; text-decoration:none; font-weight:600;">
+    <i class="fas fa-plus"></i> New Exam
+  </a>
+</div>
+
+<div class="stat-row">
+  <div class="stat-card"><div class="stat-icon indigo" style="background:#eef2ff;color:#6366f1;"><i class="fas fa-clipboard-list"></i></div><div class="stat-info"><div class="stat-value">{{ count_total }}</div><div class="stat-label">Total Exams</div></div></div>
+  <div class="stat-card"><div class="stat-icon green"><i class="fas fa-check-circle"></i></div><div class="stat-info"><div class="stat-value">{{ count_published }}</div><div class="stat-label">Published</div></div></div>
+  <div class="stat-card"><div class="stat-icon amber"><i class="fas fa-edit"></i></div><div class="stat-info"><div class="stat-value">{{ count_drafts }}</div><div class="stat-label">Drafts</div></div></div>
+  <div class="stat-card"><div class="stat-icon" style="background:#f1f5f9;color:#64748b;"><i class="fas fa-archive"></i></div><div class="stat-info"><div class="stat-value">{{ count_archived }}</div><div class="stat-label">Archived</div></div></div>
+</div>
+
+<form method="get" class="exam-toolbar">
+  <input type="text" name="q" value="{{ filters.q }}" placeholder="Search by title or code" style="min-width:240px;">
+  <select name="status">
+    <option value="">All statuses</option>
+    {% for v, lbl in status_choices %}
+      <option value="{{ v }}" {% if filters.status == v %}selected{% endif %}>{{ lbl }}</option>
+    {% endfor %}
+  </select>
+  <select name="type">
+    <option value="">All types</option>
+    {% for v, lbl in type_choices %}
+      <option value="{{ v }}" {% if filters.type == v %}selected{% endif %}>{{ lbl }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="btn-primary"
+          style="background:#475569; color:white; border:none; padding:8px 16px; border-radius:8px; cursor:pointer;">
+    Filter
+  </button>
+  {% if filters.q or filters.status or filters.type %}
+    <a href="/staff/exams/" style="color:#64748b; text-decoration:none;">Clear</a>
+  {% endif %}
+</form>
+
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fas fa-list"></i> All Exams</h3>
+    <span class="card-badge info">{{ tests|length }} shown</span>
+  </div>
+  {% if tests %}
+  <div style="overflow-x:auto">
+    <table class="adm-table">
+      <thead><tr>
+        <th>Title</th><th>Code</th><th>Type</th><th>Subject</th><th>Batch</th>
+        <th>Duration</th><th>Marks</th><th>Qs</th><th>Attempts</th>
+        <th>Start</th><th>Status</th><th></th>
+      </tr></thead>
+      <tbody>
+        {% for t in tests %}
+        <tr>
+          <td style="font-weight:600;max-width:240px;">
+            <a href="/staff/exams/{{ t.id }}/" style="color:#1e293b; text-decoration:none;">{{ t.title }}</a>
+          </td>
+          <td><code style="font-size:0.78rem;color:#64748b;">{{ t.code }}</code></td>
+          <td>{{ t.type }}</td>
+          <td>{{ t.subject }}</td>
+          <td>{{ t.batch }}</td>
+          <td>{{ t.duration }}m</td>
+          <td>{{ t.total_marks }}</td>
+          <td><strong>{{ t.total_questions }}</strong></td>
+          <td><strong>{{ t.attempts }}</strong></td>
+          <td style="white-space:nowrap;font-size:0.82rem;color:#475569;">{{ t.start|default:"—" }}</td>
+          <td><span class="pill {{ t.status|lower }}">{{ t.status_label }}</span></td>
+          <td class="row-actions" style="white-space:nowrap;">
+            <a href="/staff/exams/{{ t.id }}/" title="View"><i class="fas fa-eye"></i></a>
+            <a href="/staff/exams/{{ t.id }}/edit/" title="Edit"><i class="fas fa-edit"></i></a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><i class="fas fa-clipboard-list"></i><p>No exams found. <a href="/staff/exams/new/">Create one →</a></p></div>
+  {% endif %}
+</div>
+{% endblock %}

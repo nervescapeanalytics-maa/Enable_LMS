@@ -1,0 +1,137 @@
+{% extends 'dashboards/admin_base.html' %}
+
+{% block admin_content %}
+<style>
+  .info-grid { display:grid; grid-template-columns: repeat(4, 1fr); gap:14px; margin-bottom:18px; }
+  .info-card { background:white; border:1px solid #e2e8f0; border-radius:12px; padding:14px; }
+  .info-card .lbl { font-size:0.75rem; color:#94a3b8; text-transform:uppercase; letter-spacing:0.05em; }
+  .info-card .val { font-size:1.05rem; font-weight:600; color:#0f172a; margin-top:4px; }
+  .pill { display:inline-block; padding:3px 10px; border-radius:999px; font-size:0.75rem; font-weight:600; }
+  .pill.published { background:#d1fae5; color:#065f46; }
+  .pill.draft { background:#fef3c7; color:#92400e; }
+  .pill.archived { background:#e5e7eb; color:#374151; }
+  .pill.active { background:#dbeafe; color:#1e40af; }
+  .qrow { display:grid; grid-template-columns: 30px 1fr 100px 90px 70px 110px; gap:12px;
+    align-items:center; padding:10px 12px; border-bottom:1px solid #f1f5f9; }
+  .qrow:last-child { border-bottom: none; }
+  .qrow .qnum { font-weight:600; color:#64748b; }
+  .qrow .qtext { font-size:0.88rem; color:#1e293b; max-height:48px; overflow:hidden; }
+  .qrow .qtype { font-size:0.75rem; color:#475569; }
+  .action-bar { display:flex; gap:10px; align-items:center; margin-bottom:18px; flex-wrap:wrap; }
+  .btn { padding:9px 18px; border:none; border-radius:8px; font-weight:600; cursor:pointer;
+    text-decoration:none; font-size:0.85rem; display:inline-flex; align-items:center; gap:6px; }
+  .btn-primary { background:#6366f1; color:white; }
+  .btn-success { background:#059669; color:white; }
+  .btn-warn { background:#d97706; color:white; }
+  .btn-danger { background:#dc2626; color:white; }
+  .btn-light { background:#f1f5f9; color:#475569; }
+</style>
+
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:start; flex-wrap:wrap; gap:12px;">
+  <div>
+    <h2>{{ test.title }} <span class="pill {{ test.status|lower }}">{{ test.get_status_display }}</span></h2>
+    <p style="color:#64748b;font-size:0.85rem;"><code>{{ test.test_code }}</code> · {{ test.get_test_type_display }} · {{ test.get_difficulty_level_display }}</p>
+  </div>
+  <a href="/staff/exams/" class="btn btn-light"><i class="fas fa-arrow-left"></i> Back</a>
+</div>
+
+{% if messages %}
+{% for m in messages %}
+<div style="background:{% if 'error' in m.tags %}#fee2e2{% else %}#d1fae5{% endif %};
+            color:{% if 'error' in m.tags %}#991b1b{% else %}#065f46{% endif %};
+            padding:10px 14px; border-radius:8px; margin-bottom:14px;">{{ m }}</div>
+{% endfor %}
+{% endif %}
+
+<div class="info-grid">
+  <div class="info-card"><div class="lbl">Duration</div><div class="val">{{ test.total_duration_minutes }} min</div></div>
+  <div class="info-card"><div class="lbl">Total Marks</div><div class="val">{{ test.total_marks }}</div></div>
+  <div class="info-card"><div class="lbl">Questions</div><div class="val">{{ questions|length }}</div></div>
+  <div class="info-card"><div class="lbl">Attempts</div><div class="val">{{ attempt_stats.total }}</div></div>
+  <div class="info-card"><div class="lbl">Subject</div><div class="val">{{ test.subject|default:"—" }}</div></div>
+  <div class="info-card"><div class="lbl">Batch</div><div class="val">{{ test.batch|default:"—" }}</div></div>
+  <div class="info-card"><div class="lbl">Schedule</div><div class="val">{% if test.start_datetime %}{{ test.start_datetime|date:"d M Y H:i" }}{% else %}—{% endif %}</div></div>
+  <div class="info-card"><div class="lbl">Pass %</div><div class="val">{{ test.passing_percent }}%</div></div>
+</div>
+
+<div class="action-bar">
+  <a href="/staff/exams/{{ test.id }}/edit/" class="btn btn-primary"><i class="fas fa-edit"></i> Edit Settings</a>
+  <a href="/staff/exams/questions/new/?test={{ test.id }}" class="btn btn-light"><i class="fas fa-plus"></i> Add Question</a>
+  <a href="/staff/exams/{{ test.id }}/sections/new/" class="btn btn-light"><i class="fas fa-th-list"></i> Add Section</a>
+
+  {% if can_publish %}
+  <form method="post" action="/staff/exams/{{ test.id }}/publish/" style="display:inline;" onsubmit="return confirm('Publish this exam? Students in the assigned batch will gain access.');">
+    {% csrf_token %}
+    <button class="btn btn-success" type="submit"><i class="fas fa-check"></i> Publish</button>
+  </form>
+  {% endif %}
+  {% if can_unpublish %}
+  <form method="post" action="/staff/exams/{{ test.id }}/unpublish/" style="display:inline;" onsubmit="return confirm('Revert exam to DRAFT? Students will lose access.');">
+    {% csrf_token %}
+    <button class="btn btn-warn" type="submit"><i class="fas fa-undo"></i> Unpublish</button>
+  </form>
+  {% endif %}
+  {% if test.status != 'ARCHIVED' %}
+  <form method="post" action="/staff/exams/{{ test.id }}/archive/" style="display:inline;" onsubmit="return confirm('Archive this exam?');">
+    {% csrf_token %}
+    <button class="btn btn-light" type="submit"><i class="fas fa-archive"></i> Archive</button>
+  </form>
+  {% endif %}
+  {% if can_delete %}
+  <form method="post" action="/staff/exams/{{ test.id }}/delete/" style="display:inline; margin-left:auto;" onsubmit="return confirm('Delete this exam? This is a soft-delete and can only be restored by a database admin.');">
+    {% csrf_token %}
+    <button class="btn btn-danger" type="submit"><i class="fas fa-trash"></i> Delete</button>
+  </form>
+  {% endif %}
+</div>
+
+{% if sections %}
+<div class="card">
+  <div class="card-header"><h3><i class="fas fa-th-list"></i> Sections</h3></div>
+  <div style="padding:14px;">
+    {% for s in sections %}
+    <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f1f5f9;">
+      <div>
+        <strong>{{ s.section_name }}</strong>
+        <span style="color:#64748b; font-size:0.85rem;">{{ s.subject|default:"" }} · {{ s.total_questions }}Q · {{ s.max_marks }} marks</span>
+      </div>
+      <div style="font-size:0.85rem;color:#64748b;">{% if s.duration_minutes %}{{ s.duration_minutes }} min{% endif %}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<div class="card" style="margin-top:18px;">
+  <div class="card-header">
+    <h3><i class="fas fa-question-circle"></i> Questions</h3>
+    <span class="card-badge info">{{ questions|length }}</span>
+  </div>
+  {% if questions %}
+  <div class="qrow" style="background:#f8fafc; font-size:0.78rem; color:#64748b; text-transform:uppercase; letter-spacing:0.05em; font-weight:600;">
+    <div>#</div><div>Question</div><div>Type</div><div>Difficulty</div><div>Marks</div><div></div>
+  </div>
+  {% for q in questions %}
+  <div class="qrow">
+    <div class="qnum">{{ q.question_order }}</div>
+    <div class="qtext">{{ q.question_text|truncatechars:140 }}</div>
+    <div class="qtype">{{ q.get_question_type_display }}</div>
+    <div class="qtype">{{ q.get_difficulty_display }}</div>
+    <div class="qtype">+{{ q.positive_marks }} / {{ q.negative_marks }}</div>
+    <div style="text-align:right;">
+      <a href="/staff/exams/questions/{{ q.id }}/edit/" style="color:#6366f1; text-decoration:none; font-size:0.82rem;">Edit</a>
+      <form method="post" action="/staff/exams/questions/{{ q.id }}/delete/" style="display:inline; margin-left:8px;" onsubmit="return confirm('Delete question?');">
+        {% csrf_token %}
+        <button type="submit" style="background:none; border:none; color:#dc2626; font-size:0.82rem; cursor:pointer; padding:0;">Delete</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+  {% else %}
+  <div class="empty-state">
+    <i class="fas fa-question-circle"></i>
+    <p>No questions yet. <a href="/staff/exams/questions/new/?test={{ test.id }}">Add the first question →</a></p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

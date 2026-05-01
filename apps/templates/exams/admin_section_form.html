@@ -1,0 +1,43 @@
+{% extends 'dashboards/admin_base.html' %}
+
+{% block admin_content %}
+<style>
+  .field-group { background:white; border:1px solid #e2e8f0; border-radius:12px; padding:18px; margin-bottom:18px; }
+  .field-row { margin-bottom:12px; }
+  .field-row label { display:block; font-size:0.85rem; font-weight:600; color:#334155; margin-bottom:5px; }
+  .field-row input, .field-row select, .field-row textarea {
+    width:100%; padding:8px 12px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.9rem;
+    box-sizing:border-box; font-family:inherit;
+  }
+  .grid-2 { display:grid; grid-template-columns: 1fr 1fr; gap:14px; }
+  .errorlist { color:#b91c1c; font-size:0.78rem; margin:4px 0; }
+</style>
+
+<div class="page-header">
+  <h2>Add Section to {{ test.title }}</h2>
+  <p>Sections let you split a multi-subject exam into independent parts.</p>
+</div>
+
+<form method="post" novalidate>
+  {% csrf_token %}
+  <div class="field-group">
+    <div class="grid-2">
+      <div class="field-row"><label>Section name *</label>{{ form.section_name }}{{ form.section_name.errors }}</div>
+      <div class="field-row"><label>Order *</label>{{ form.section_order }}{{ form.section_order.errors }}</div>
+      <div class="field-row"><label>Subject</label>{{ form.subject }}</div>
+      <div class="field-row"><label>Duration (min)</label>{{ form.duration_minutes }}</div>
+      <div class="field-row"><label>Total questions</label>{{ form.total_questions }}</div>
+      <div class="field-row"><label>Mandatory questions</label>{{ form.mandatory_questions }}</div>
+      <div class="field-row"><label>Max marks</label>{{ form.max_marks }}</div>
+    </div>
+    <div class="field-row">
+      <label>Section instructions</label>
+      {{ form.instructions }}
+    </div>
+  </div>
+  <div style="display:flex; gap:10px;">
+    <button type="submit" style="background:#6366f1; color:white; border:none; padding:11px 24px; border-radius:10px; cursor:pointer; font-weight:600;">Add Section</button>
+    <a href="/staff/exams/{{ test.id }}/" style="background:#f1f5f9; color:#475569; padding:11px 24px; border-radius:10px; text-decoration:none; font-weight:600;">Cancel</a>
+  </div>
+</form>
+{% endblock %}

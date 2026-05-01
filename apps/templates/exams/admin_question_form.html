@@ -1,0 +1,114 @@
+{% extends 'dashboards/admin_base.html' %}
+
+{% block admin_content %}
+<style>
+  .field-group { background:white; border:1px solid #e2e8f0; border-radius:12px; padding:18px; margin-bottom:18px; }
+  .field-group h4 { margin:0 0 14px 0; font-size:1rem; padding-bottom:8px; border-bottom:1px solid #f1f5f9; }
+  .field-row { margin-bottom:12px; }
+  .field-row label { display:block; font-size:0.85rem; font-weight:600; color:#334155; margin-bottom:5px; }
+  .field-row input[type=text], .field-row input[type=number], .field-row select, .field-row textarea {
+    width:100%; padding:8px 12px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.9rem;
+    box-sizing:border-box; font-family:inherit;
+  }
+  .grid-2 { display:grid; grid-template-columns: 1fr 1fr; gap:14px; }
+  .grid-3 { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:14px; }
+  .errorlist { color:#b91c1c; font-size:0.78rem; margin:4px 0; padding-left:18px; }
+  .helptext { font-size:0.75rem; color:#94a3b8; margin-top:3px; }
+  .btn-primary { background:#6366f1; color:white; border:none; padding:11px 24px; border-radius:10px;
+    cursor:pointer; font-weight:600; text-decoration:none; display:inline-block; }
+  .btn-secondary { background:#f1f5f9; color:#475569; border:none; padding:11px 24px; border-radius:10px;
+    cursor:pointer; font-weight:600; text-decoration:none; display:inline-block; }
+  .options-block { background:#f8fafc; padding:14px; border-radius:10px; }
+  .opt-row { display:grid; grid-template-columns: 30px 1fr; gap:10px; align-items:center; margin-bottom:8px; }
+  .opt-row .opt-label { font-weight:600; color:#475569; text-align:center;
+    background:white; border:1px solid #e2e8f0; border-radius:6px; padding:6px 0; }
+</style>
+
+<div class="page-header">
+  <h2>{% if mode == 'create' %}Create Question{% else %}Edit Question{% endif %}</h2>
+  <p>Supports MCQ (single/multi), True/False, Numerical, Fill-in-the-blank, Subjective, and more.</p>
+</div>
+
+<form method="post" novalidate>
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="errorlist">{{ form.non_field_errors }}</div>{% endif %}
+
+  <div class="field-group">
+    <h4><i class="fas fa-question"></i> Question</h4>
+    <div class="grid-3">
+      <div class="field-row"><label>Question code</label>{{ form.question_code }}</div>
+      <div class="field-row"><label>Type *</label>{{ form.question_type }}{{ form.question_type.errors }}</div>
+      <div class="field-row"><label>Difficulty</label>{{ form.difficulty }}</div>
+    </div>
+    <div class="field-row">
+      <label>Question text *</label>
+      {{ form.question_text }}{{ form.question_text.errors }}
+      <div class="helptext">Plain text or simple HTML. KaTeX/MathJax markup ($ ... $) is supported in the student view.</div>
+    </div>
+    <div class="field-row">
+      <label>Image URL (optional)</label>
+      {{ form.question_image }}
+    </div>
+  </div>
+
+  <div class="field-group">
+    <h4><i class="fas fa-list-ol"></i> Options &amp; Correct Answer</h4>
+    <div class="options-block">
+      <div class="opt-row"><div class="opt-label">A</div>{{ form.option_a }}</div>
+      <div class="opt-row"><div class="opt-label">B</div>{{ form.option_b }}</div>
+      <div class="opt-row"><div class="opt-label">C</div>{{ form.option_c }}</div>
+      <div class="opt-row"><div class="opt-label">D</div>{{ form.option_d }}</div>
+      <div class="opt-row"><div class="opt-label">E</div>{{ form.option_e }}</div>
+    </div>
+    <div class="grid-3" style="margin-top:14px;">
+      <div class="field-row">
+        <label>Correct answer *</label>
+        {{ form.correct_answer }}{{ form.correct_answer.errors }}
+        <div class="helptext">Single: A | Multi: A,C | True/False: TRUE / FALSE | Subjective: model answer</div>
+      </div>
+      <div class="field-row">
+        <label>Numerical value (if NUMERICAL)</label>
+        {{ form.correct_answer_value }}
+      </div>
+      <div class="field-row">
+        <label>Tolerance (±)</label>
+        {{ form.numerical_tolerance }}
+      </div>
+    </div>
+    <div class="field-row">
+      <label>Answer explanation</label>
+      {{ form.answer_explanation }}
+    </div>
+  </div>
+
+  <div class="field-group">
+    <h4><i class="fas fa-calculator"></i> Marking</h4>
+    <div class="grid-3">
+      <div class="field-row"><label>Positive marks</label>{{ form.positive_marks }}{{ form.positive_marks.errors }}</div>
+      <div class="field-row"><label>Negative marks</label>{{ form.negative_marks }}</div>
+      <div class="field-row"><label>Partial marks</label>{{ form.partial_marks }}</div>
+    </div>
+  </div>
+
+  <div class="field-group">
+    <h4><i class="fas fa-tags"></i> Classification &amp; Linking</h4>
+    <div class="grid-3">
+      <div class="field-row"><label>Subject</label>{{ form.subject }}</div>
+      <div class="field-row"><label>Chapter</label>{{ form.chapter }}</div>
+      <div class="field-row"><label>Topic</label>{{ form.topic }}</div>
+      <div class="field-row"><label>Tags</label>{{ form.tags }}<div class="helptext">comma,separated</div></div>
+      <div class="field-row"><label>Attach to test</label>{{ form.test }}</div>
+      <div class="field-row"><label>Section (within test)</label>{{ form.section }}</div>
+    </div>
+    <div class="field-row">
+      <label>Order</label>
+      {{ form.question_order }}
+    </div>
+  </div>
+
+  <div style="display:flex; gap:10px;">
+    <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Save</button>
+    <a href="/staff/exams/questions/" class="btn-secondary">Cancel</a>
+  </div>
+</form>
+{% endblock %}

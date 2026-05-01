@@ -387,19 +387,19 @@
       </div>
 
       <div class="sb-section">
-        <div class="sb-label">Test & Questions</div>
-        <a href="/staff/tests/" class="sb-link {% if active_page == 'tests' %}active{% endif %}">
-          <i class="fas fa-clipboard-list"></i> Tests
+        <div class="sb-label">Exams & Assessments</div>
+        <a href="/staff/exams/" class="sb-link {% if active_page == 'exams' %}active{% endif %}">
+          <i class="fas fa-clipboard-list"></i> Exams
           {% if sidebar_counts.tests %}<span class="sb-badge">{{ sidebar_counts.tests }}</span>{% endif %}
         </a>
-        <a href="/staff/questions/" class="sb-link {% if active_page == 'questions' %}active{% endif %}">
-          <i class="fas fa-question-circle"></i> Questions
+        <a href="/staff/exams/questions/" class="sb-link {% if active_page == 'questions' %}active{% endif %}">
+          <i class="fas fa-question-circle"></i> Question Bank
         </a>
         <a href="/staff/test-reports/" class="sb-link {% if active_page == 'test-reports' %}active{% endif %}">
-          <i class="fas fa-chart-bar"></i> Test Reports
+          <i class="fas fa-chart-bar"></i> Reports
         </a>
-        <a href="/staff/exam-management/" class="sb-link {% if active_page == 'exam_management' %}active{% endif %}">
-          <i class="fas fa-robot"></i> Exam & Auto-Grading
+        <a href="/staff/exams/flags/" class="sb-link {% if active_page == 'exam-flags' %}active{% endif %}">
+          <i class="fas fa-toggle-on"></i> Feature Flags
         </a>
       </div>
 
