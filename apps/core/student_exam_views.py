@@ -297,6 +297,20 @@ class ExamTakeView(View):
         if remaining == 0 and attempt.status == 'IN_PROGRESS':
             return self._auto_submit(request, attempt, test, questions, prior)
 
+        # Phase 3 — proctoring / online-exam feature flags (per-tenant).
+        # Keys are bare identifiers so Django templates can resolve them
+        # via dotted lookup (`feature_flags.tab_switch`).
+        from assessments.permissions import is_feature_enabled
+        _ff = lambda k: is_feature_enabled(k, tenant=student.tenant, user_type='STUDENT')
+        feature_flags = {
+            'tab_switch': _ff('exam.tab_switch_detection'),
+            'copy_paste': _ff('exam.copy_paste_block'),
+            'fullscreen': _ff('exam.fullscreen_lockdown'),
+            'devtools':   _ff('exam.devtools_detection'),
+            'snapshot':   _ff('exam.proctoring_snapshots'),
+            'identity':   _ff('exam.identity_verification'),
+        }
+
         return render(request, self.template_name, {
             'student': student,
             'user_name': f"{student.first_name} {student.last_name}",
@@ -305,6 +319,7 @@ class ExamTakeView(View):
             'questions': questions,
             'q_rows': q_rows,
             'remaining_seconds': remaining,
+            'feature_flags': feature_flags,
         })
 
     def post(self, request, test_id):

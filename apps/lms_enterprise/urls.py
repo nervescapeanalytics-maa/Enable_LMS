@@ -144,6 +144,12 @@ from core.student_exam_views import (
     ExamTakeView as StudentExamTakeView,
     ExamResultView as StudentExamResultView,
 )
+from assessments.views.student_exam_api import (
+    AnswerAutoSaveView as StudentAnswerAutoSaveView,
+    ProctorEventView as StudentProctorEventView,
+    ProctorSnapshotView as StudentProctorSnapshotView,
+    ExamSubmitView as StudentExamSubmitView,
+)
 from core.student_schedule_view import StudentScheduleView
 from core.student_resources_view import (
     ResourceListView as StudentResourceListView,
@@ -156,6 +162,11 @@ urlpatterns += [
     path('student/exams/', StudentExamListView.as_view(), name='student-exam-list'),
     path('student/exams/<uuid:test_id>/take/', StudentExamTakeView.as_view(), name='student-exam-take'),
     path('student/exams/<uuid:test_id>/result/<uuid:attempt_id>/', StudentExamResultView.as_view(), name='student-exam-result'),
+    # Phase 3 — REST endpoints (auto-save, proctoring, submit)
+    path('student/exams/<uuid:test_id>/api/answer/',        StudentAnswerAutoSaveView.as_view(),  name='student-exam-api-answer'),
+    path('student/exams/<uuid:test_id>/api/proctor-event/', StudentProctorEventView.as_view(),    name='student-exam-api-proctor-event'),
+    path('student/exams/<uuid:test_id>/api/snapshot/',      StudentProctorSnapshotView.as_view(), name='student-exam-api-snapshot'),
+    path('student/exams/<uuid:test_id>/api/submit/',        StudentExamSubmitView.as_view(),      name='student-exam-api-submit'),
     path('student/schedule/', StudentScheduleView.as_view(), name='student-schedule'),
     path('student/resources/', StudentResourceListView.as_view(), name='student-resources'),
     path('student/resources/<uuid:material_id>/view/', StudentResourceViewAction.as_view(), name='student-resource-view'),

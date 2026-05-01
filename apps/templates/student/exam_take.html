@@ -209,6 +209,22 @@
   </aside>
 </div>
 
+<div id="examConfig"
+     data-test-id="{{ test.id }}"
+     data-attempt-id="{{ attempt.id }}"
+     data-url-answer="{% url 'student-exam-api-answer' test_id=test.id %}"
+     data-url-proctor="{% url 'student-exam-api-proctor-event' test_id=test.id %}"
+     data-url-snapshot="{% url 'student-exam-api-snapshot' test_id=test.id %}"
+     data-url-submit="{% url 'student-exam-api-submit' test_id=test.id %}"
+     data-url-result-base="/student/exams/{{ test.id }}/result/"
+     data-ff-tab-switch="{% if feature_flags.tab_switch %}1{% else %}0{% endif %}"
+     data-ff-copy-paste="{% if feature_flags.copy_paste %}1{% else %}0{% endif %}"
+     data-ff-fullscreen="{% if feature_flags.fullscreen %}1{% else %}0{% endif %}"
+     data-ff-devtools="{% if feature_flags.devtools %}1{% else %}0{% endif %}"
+     data-ff-snapshot="{% if feature_flags.snapshot %}1{% else %}0{% endif %}"
+     data-ff-identity="{% if feature_flags.identity %}1{% else %}0{% endif %}"
+     style="display:none;"></div>
+
 <script>
 (function(){
   const TOTAL = {{ q_rows|length }};
@@ -218,9 +234,56 @@
   const timerEl = document.getElementById('timer');
   const timerVal = document.getElementById('timerVal');
   const pbarFill = document.getElementById('pbarFill');
+  const cfg = document.getElementById('examConfig');
+  const FF = {
+    tabSwitch:   cfg.dataset.ffTabSwitch === '1',
+    copyPaste:   cfg.dataset.ffCopyPaste === '1',
+    fullscreen:  cfg.dataset.ffFullscreen === '1',
+    devtools:    cfg.dataset.ffDevtools === '1',
+    snapshot:    cfg.dataset.ffSnapshot === '1',
+    identity:    cfg.dataset.ffIdentity === '1',
+  };
+  const URLS = {
+    answer:   cfg.dataset.urlAnswer,
+    proctor:  cfg.dataset.urlProctor,
+    snapshot: cfg.dataset.urlSnapshot,
+    submit:   cfg.dataset.urlSubmit,
+  };
   const flagged = new Set();
   let current = 1;
   let submitted = false;
+
+  // ── CSRF helper ──────────────────────────────────────────────────
+  function csrfToken(){
+    const inp = form.querySelector('input[name=csrfmiddlewaretoken]');
+    return inp ? inp.value : '';
+  }
+  async function postJSON(url, payload){
+    try {
+      const r = await fetch(url, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken(),
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: JSON.stringify(payload || {}),
+      });
+      return await r.json().catch(() => ({}));
+    } catch (e) { return {}; }
+  }
+  async function postForm(url, formData){
+    try {
+      const r = await fetch(url, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'X-CSRFToken': csrfToken(), 'X-Requested-With': 'XMLHttpRequest' },
+        body: formData,
+      });
+      return await r.json().catch(() => ({}));
+    } catch (e) { return {}; }
+  }
 
   // ── Timer ────────────────────────────────────────────────────────
   let remaining = parseInt(timerEl.dataset.remaining || '0', 10);
@@ -234,7 +297,7 @@
     timerVal.textContent = fmt(remaining);
     timerEl.classList.toggle('warn', remaining <= 300 && remaining > 60);
     timerEl.classList.toggle('danger', remaining > 0 && remaining <= 60);
-    if (remaining <= 0 && !submitted){ submitted = true; form.submit(); return; }
+    if (remaining <= 0 && !submitted){ submitted = true; finalSubmit(true); return; }
     remaining--;
   }
   tick(); setInterval(tick, 1000);
@@ -254,7 +317,7 @@
     window.scrollTo({top:0, behavior:'smooth'});
   }
 
-  // ── Update nav grid colors + counters ───────────────────────────
+  // ── Refresh nav grid colors + counters ───────────────────────────
   function refresh(){
     let answered = 0;
     navBtns.forEach(b => {
@@ -271,7 +334,43 @@
     document.getElementById('navCount').textContent = `${answered}/${TOTAL}`;
     pbarFill.style.width = (answered / TOTAL * 100) + '%';
   }
-  form.addEventListener('change', refresh);
+
+  // ── Auto-save (debounced 1.5s per question) ──────────────────────
+  const saveTimers = new Map();      // qid → timeout id
+  const lastSaved  = new Map();      // qid → last saved value
+  function scheduleSave(input){
+    const qname = input.name;             // e.g. q_<uuid>
+    const qid   = qname.slice(2);
+    const val   = input.checked ? input.value : '';
+    if (lastSaved.get(qid) === val) return;
+    clearTimeout(saveTimers.get(qid));
+    saveTimers.set(qid, setTimeout(async () => {
+      const r = await postJSON(URLS.answer, { question_id: qid, answer: val });
+      if (r && r.ok){ lastSaved.set(qid, val); }
+    }, 1500));
+  }
+
+  form.addEventListener('change', e => {
+    refresh();
+    if (e.target && e.target.matches('input[type=radio][name^="q_"]')){
+      scheduleSave(e.target);
+    }
+  });
+
+  async function flushPendingSaves(){
+    // Force save anything still pending
+    const promises = [];
+    for (const [qid, tid] of saveTimers.entries()){
+      clearTimeout(tid);
+      const inp = form.querySelector(`input[name="q_${qid}"]:checked`);
+      const val = inp ? inp.value : '';
+      if (lastSaved.get(qid) !== val){
+        promises.push(postJSON(URLS.answer, { question_id: qid, answer: val }));
+      }
+    }
+    saveTimers.clear();
+    if (promises.length) await Promise.all(promises);
+  }
 
   // ── Wiring ───────────────────────────────────────────────────────
   navBtns.forEach(b => b.addEventListener('click', () => show(parseInt(b.dataset.goto,10))));
@@ -280,6 +379,9 @@
   document.getElementById('clearBtn').addEventListener('click', () => {
     cards[current-1].querySelectorAll('input[type=radio]').forEach(i => { i.checked = false; });
     refresh();
+    // Save the cleared state
+    const any = cards[current-1].querySelector('input[type=radio][name^="q_"]');
+    if (any){ scheduleSave(any); }
   });
   document.getElementById('flagBtn').addEventListener('click', () => {
     if (flagged.has(current)) flagged.delete(current); else flagged.add(current);
@@ -287,15 +389,27 @@
     document.getElementById('flagLabel').textContent = flagged.has(current) ? 'Unmark' : 'Mark for Review';
   });
 
-  // Keyboard navigation
   document.addEventListener('keydown', e => {
     if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
     if (e.key === 'ArrowRight') show(current + 1);
     else if (e.key === 'ArrowLeft') show(current - 1);
   });
 
-  // ── Submit ───────────────────────────────────────────────────────
-  document.getElementById('submitBtn').addEventListener('click', () => {
+  // ── Submit (via REST API) ────────────────────────────────────────
+  async function finalSubmit(autoTimeUp){
+    if (submitted && !autoTimeUp) return;
+    submitted = true;
+    try { await flushPendingSaves(); } catch(e){}
+    const r = await postJSON(URLS.submit, {});
+    if (r && r.ok && r.redirect){
+      window.location = r.redirect;
+    } else {
+      // fall back to legacy synchronous post
+      form.submit();
+    }
+  }
+
+  document.getElementById('submitBtn').addEventListener('click', async () => {
     if (submitted) return;
     const answered = parseInt(document.getElementById('cAns').textContent, 10);
     const unanswered = TOTAL - answered;
@@ -303,14 +417,137 @@
     if (unanswered > 0) msg += `\n\n⚠ ${unanswered} question(s) will be left blank.`;
     if (flagged.size > 0) msg += `\n\n${flagged.size} question(s) marked for review.`;
     if (!confirm(msg)) return;
-    submitted = true;
-    form.submit();
+    await finalSubmit(false);
   });
 
   window.addEventListener('beforeunload', e => {
     if (submitted) return;
     e.preventDefault(); e.returnValue = '';
   });
+
+  // ===================================================================
+  // PROCTORING — Phase 3
+  // ===================================================================
+  function reportEvent(eventType, meta){
+    return postJSON(URLS.proctor, { event_type: eventType, meta: meta || {} })
+      .then(r => {
+        if (r && r.auto_submitted && r.redirect){
+          submitted = true;
+          alert('Your exam was auto-submitted because of repeated proctoring violations.');
+          window.location = r.redirect;
+        }
+        return r;
+      });
+  }
+
+  // Tab switch / blur
+  if (FF.tabSwitch){
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden' && !submitted){
+        reportEvent('TAB_SWITCH', { ts: Date.now() });
+      }
+    });
+    window.addEventListener('blur', () => {
+      if (!submitted) reportEvent('WINDOW_BLUR', { ts: Date.now() });
+    });
+  }
+
+  // Copy / paste / cut / context-menu
+  if (FF.copyPaste){
+    ['copy', 'cut', 'paste'].forEach(evt => {
+      document.addEventListener(evt, e => {
+        if (submitted) return;
+        e.preventDefault();
+        reportEvent(evt.toUpperCase(), {});
+      });
+    });
+    document.addEventListener('contextmenu', e => {
+      if (submitted) return;
+      e.preventDefault();
+      reportEvent('CONTEXT_MENU', {});
+    });
+  }
+
+  // Fullscreen lockdown
+  if (FF.fullscreen){
+    function enterFullscreen(){
+      const el = document.documentElement;
+      const req = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+      if (req){
+        try { req.call(el); } catch(e){}
+      }
+    }
+    // Engage on first user gesture (browser policy)
+    document.addEventListener('click', enterFullscreen, { once: true });
+    document.addEventListener('fullscreenchange', () => {
+      if (!document.fullscreenElement && !submitted){
+        reportEvent('FULLSCREEN_EXIT', {});
+        // re-prompt
+        setTimeout(enterFullscreen, 250);
+      }
+    });
+  }
+
+  // DevTools detection — measures the gap between window outer/inner size.
+  if (FF.devtools){
+    let warned = false;
+    setInterval(() => {
+      if (submitted || warned) return;
+      const wDiff = window.outerWidth  - window.innerWidth;
+      const hDiff = window.outerHeight - window.innerHeight;
+      if (wDiff > 200 || hDiff > 200){
+        warned = true;
+        reportEvent('DEVTOOLS', { wDiff, hDiff });
+      }
+    }, 2000);
+  }
+
+  // Webcam snapshots
+  if (FF.snapshot){
+    let videoEl = null, mediaStream = null, snapTimer = null;
+    async function startCamera(){
+      try {
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: { width: 320, height: 240 }, audio: false,
+        });
+        videoEl = document.createElement('video');
+        videoEl.autoplay = true; videoEl.playsInline = true; videoEl.muted = true;
+        videoEl.style.cssText = 'position:fixed;bottom:12px;right:12px;width:160px;height:120px;border:2px solid var(--primary);border-radius:8px;z-index:200;background:#000;';
+        videoEl.srcObject = mediaStream;
+        document.body.appendChild(videoEl);
+      } catch(e){
+        // User denied or device unavailable — log once and stop trying.
+        reportEvent('SNAPSHOT_CAMERA_DENIED', { error: String(e && e.name || e) });
+        return false;
+      }
+      return true;
+    }
+    async function takeSnapshot(){
+      if (!videoEl || submitted) return;
+      const w = 320, h = 240;
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      try { canvas.getContext('2d').drawImage(videoEl, 0, 0, w, h); } catch(e){ return; }
+      canvas.toBlob(async blob => {
+        if (!blob) return;
+        const fd = new FormData();
+        fd.append('snapshot', blob, 'snap.jpg');
+        await postForm(URLS.snapshot, fd);
+      }, 'image/jpeg', 0.7);
+    }
+    (async () => {
+      const ok = await startCamera();
+      if (ok){
+        // First snapshot 5 s after start, then every 30 s
+        setTimeout(takeSnapshot, 5000);
+        snapTimer = setInterval(takeSnapshot, 30000);
+      }
+    })();
+    window.addEventListener('beforeunload', () => {
+      if (snapTimer) clearInterval(snapTimer);
+      if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+    });
+  }
 
   // Initial state
   show(1); refresh();
