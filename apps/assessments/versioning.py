@@ -113,7 +113,7 @@ def take_snapshot(test: Test, *, actor=None, label: str = '', note: str = '',
     )
     log_exam_event(
         request=request, actor=actor,
-        action='TEST_VERSION_SNAPSHOT',
+        action='VERSION_SNAPSHOT',
         resource_type='Test', resource_id=test.id, resource_name=test.test_code,
         description=f'Snapshot v{n} taken — {label or "manual"}',
         extra_meta={'version_number': n, 'summary': summary},
@@ -178,7 +178,7 @@ def restore_version(version: TestVersion, *, actor=None, request=None) -> Test:
     test.refresh_from_db()
     log_exam_event(
         request=request, actor=actor,
-        action='TEST_VERSION_RESTORE',
+        action='VERSION_RESTORE',
         resource_type='Test', resource_id=test.id, resource_name=test.test_code,
         description=f'Restored to v{version.version_number}',
         old_values=pre_summary, new_values=version.summary,
