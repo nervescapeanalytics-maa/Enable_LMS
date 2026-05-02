@@ -491,6 +491,16 @@ class OfflineTestMarks(models.Model):
 
     student = models.ForeignKey('accounts.Student', on_delete=models.CASCADE, related_name='offline_marks')
     subject = models.ForeignKey('academics.Subject', on_delete=models.SET_NULL, null=True, blank=True)
+    # Optional link to a published Test record (lets the teacher dashboard
+    # auto-populate total marks and lets admin views pivot per Test).
+    test = models.ForeignKey(
+        Test, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='offline_marks',
+    )
+    batch = models.ForeignKey(
+        'academics.Batch', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='offline_marks',
+    )
 
     test_name = models.CharField(max_length=500)
     test_date = models.DateField(null=True, blank=True)
@@ -508,3 +518,7 @@ class OfflineTestMarks(models.Model):
     class Meta:
         db_table = 'offline_test_marks'
         verbose_name_plural = 'Offline test marks'
+        indexes = [
+            models.Index(fields=['tenant', 'test'], name='idx_offline_test'),
+            models.Index(fields=['tenant', 'batch'], name='idx_offline_batch'),
+        ]

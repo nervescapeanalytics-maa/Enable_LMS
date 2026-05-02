@@ -1,5 +1,348 @@
 {% extends 'base.html' %}
 {% load static %}
+{% block title %}Exams & Tests – Student Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --bg:#f9fafb; --card:#fff; --border:#e5e7eb;
+    --text:#0f172a; --muted:#64748b;
+    --primary:#4f46e5; --primary-soft:#eef2ff; --primary-dark:#3730a3;
+    --green:#10b981; --green-soft:#ecfdf5;
+    --amber:#f59e0b; --amber-soft:#fffbeb;
+    --rose:#ef4444; --rose-soft:#fef2f2;
+    --blue:#3b82f6; --blue-soft:#eff6ff;
+    --purple:#8b5cf6; --purple-soft:#f5f3ff;
+    --sidebar-bg:#0f172a; --sidebar-text:#cbd5e1; --sidebar-active:#4f46e5;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:var(--text);}
+
+  /* ── Layout ─────────────────────────────────────────── */
+  .ds{display:grid;grid-template-columns:260px 1fr;min-height:100vh;}
+
+  /* ── Sidebar ───────────────────────────────────────── */
+  .sd-side{background:var(--sidebar-bg);color:var(--sidebar-text);padding:20px 0;display:flex;flex-direction:column;}
+  .sd-brand{display:flex;align-items:center;gap:12px;padding:0 22px 24px;border-bottom:1px solid #1e293b;margin-bottom:14px;}
+  .sd-brand .logo{width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--purple));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px;}
+  .sd-brand .name{font-size:15px;font-weight:700;color:#fff;}
+  .sd-brand .sub{font-size:11px;color:#64748b;}
+
+  .sd-section{padding:14px 22px 6px;font-size:10px;font-weight:700;letter-spacing:1.6px;color:#64748b;text-transform:uppercase;}
+  .sd-link{display:flex;align-items:center;gap:11px;padding:10px 22px;color:var(--sidebar-text);text-decoration:none;font-size:13.5px;font-weight:500;transition:all .15s;}
+  .sd-link i{width:18px;text-align:center;font-size:14px;}
+  .sd-link:hover{background:#1e293b;color:#fff;}
+  .sd-link.active{background:linear-gradient(90deg,rgba(79,70,229,.18),transparent);color:#fff;border-left:3px solid var(--sidebar-active);padding-left:19px;}
+
+  /* ── Main ──────────────────────────────────────────── */
+  .sd-main{display:flex;flex-direction:column;}
+  .sd-top{background:#fff;border-bottom:1px solid var(--border);padding:14px 28px;display:flex;justify-content:space-between;align-items:center;}
+  .sd-crumb{font-size:13px;color:var(--muted);}
+  .sd-crumb a{color:var(--primary);text-decoration:none;}
+  .sd-crumb a:hover{text-decoration:underline;}
+  .sd-user{display:flex;align-items:center;gap:14px;}
+  .sd-user .bell{width:36px;height:36px;border-radius:50%;background:#f1f5f9;display:flex;align-items:center;justify-content:center;color:#475569;cursor:pointer;}
+  .sd-user .av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--purple));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;}
+
+  .sd-body{padding:24px 28px 60px;max-width:1400px;width:100%;}
+
+  .ph{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;flex-wrap:wrap;gap:14px;}
+  .ph h1{font-size:24px;font-weight:800;margin:0 0 4px;color:var(--text);}
+  .ph .sub{color:var(--muted);font-size:14px;}
+
+  /* ── Stat cards ─── */
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-bottom:22px;}
+  .stat{background:#fff;border:1px solid var(--border);border-radius:14px;padding:20px;display:flex;align-items:center;gap:16px;box-shadow:0 1px 2px rgba(0,0,0,.04);}
+  .stat .ico{width:46px;height:46px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+  .stat .ico.blue{background:var(--blue-soft);color:var(--blue);}
+  .stat .ico.green{background:var(--green-soft);color:var(--green);}
+  .stat .ico.amber{background:var(--amber-soft);color:var(--amber);}
+  .stat .ico.purple{background:var(--purple-soft);color:var(--purple);}
+  .stat .v{font-size:26px;font-weight:800;line-height:1.1;}
+  .stat .l{font-size:12.5px;color:var(--muted);margin-top:3px;font-weight:500;}
+
+  /* ── Tabs ─── */
+  .tabs{background:#fff;border:1px solid var(--border);border-radius:12px;padding:4px;display:inline-flex;gap:2px;margin-bottom:16px;}
+  .tab{background:transparent;border:none;padding:9px 18px;font-size:13.5px;font-weight:600;color:var(--muted);border-radius:9px;cursor:pointer;}
+  .tab.active{background:var(--primary-soft);color:var(--primary);}
+  .tab:hover:not(.active){background:#f1f5f9;color:var(--text);}
+
+  .pane{display:none;}
+  .pane.active{display:block;}
+
+  /* ── Card / table ─── */
+  .card{background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.04);}
+  table.list{width:100%;border-collapse:collapse;}
+  table.list th{background:#f8fafc;text-align:left;padding:13px 18px;font-size:11px;letter-spacing:.6px;color:var(--muted);text-transform:uppercase;font-weight:700;border-bottom:1px solid var(--border);}
+  table.list td{padding:14px 18px;border-bottom:1px solid #f1f5f9;font-size:14px;vertical-align:middle;}
+  table.list tr:last-child td{border-bottom:none;}
+  table.list tr:hover{background:#fafbfc;}
+
+  .test-mini strong{display:block;font-weight:600;color:var(--text);font-size:14px;}
+  .test-mini .meta{font-size:12px;color:var(--muted);margin-top:2px;}
+  .pct-bar{display:flex;align-items:center;gap:10px;}
+  .pct-bar .track{flex:0 0 80px;height:6px;background:#e5e7eb;border-radius:99px;overflow:hidden;}
+  .pct-bar .fill{height:100%;background:var(--primary);border-radius:99px;}
+  .pct-bar.pass .fill{background:var(--green);}
+  .pct-bar.fail .fill{background:var(--rose);}
+
+  .bdg{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;}
+  .bdg.pass{background:var(--green-soft);color:var(--green);}
+  .bdg.fail{background:var(--rose-soft);color:var(--rose);}
+  .bdg.gray{background:#f1f5f9;color:#475569;}
+  .bdg.blue{background:var(--blue-soft);color:var(--blue);}
+  .bdg.purple{background:var(--purple-soft);color:var(--purple);}
+
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;font-size:13px;font-weight:600;border-radius:8px;cursor:pointer;text-decoration:none;border:none;}
+  .btn-primary{background:linear-gradient(135deg,var(--primary),var(--purple));color:#fff;}
+  .btn-primary:hover{filter:brightness(1.1);}
+  .btn-outline{background:#fff;color:var(--primary);border:1px solid var(--primary-soft);}
+  .btn-outline:hover{background:var(--primary-soft);}
+  .btn-resume{background:var(--amber-soft);color:var(--amber);border:1px solid var(--amber);}
+  .btn-disabled{background:#f1f5f9;color:#94a3b8;cursor:not-allowed;}
+
+  .empty{padding:40px 20px;text-align:center;color:var(--muted);}
+  .empty .big{font-size:38px;color:#cbd5e1;margin-bottom:10px;}
+  .empty h3{margin:0 0 6px;font-size:15px;color:var(--text);}
+  .empty p{margin:0;font-size:13px;}
+
+  /* ── Test cards (Upcoming) ─── */
+  .test-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;padding:20px;}
+  .test-card{border:1px solid var(--border);border-radius:12px;padding:18px;background:#fff;}
+  .test-card .top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;gap:10px;}
+  .test-card .ttl{font-size:15px;font-weight:600;}
+  .test-card .ttl small{display:block;color:var(--muted);font-size:12px;font-weight:400;margin-top:3px;}
+  .test-card .info{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0;font-size:12px;color:var(--muted);}
+  .test-card .info strong{display:block;color:var(--text);font-size:13px;margin-top:2px;}
+  .test-card .footer{display:flex;justify-content:space-between;align-items:center;padding-top:14px;border-top:1px solid var(--border);}
+  .test-card .footer .att{font-size:12px;color:var(--muted);}
+  .test-card .footer .att strong{color:var(--text);}
+
+  @media (max-width:980px){.ds{grid-template-columns:1fr;}.sd-side{display:none;}}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="ds">
+  <!-- ─── Sidebar ─── -->
+  <aside class="sd-side">
+    <div class="sd-brand">
+      <span class="logo">E</span>
+      <div>
+        <div class="name">Student Dashboard</div>
+        <div class="sub">EMRS Online</div>
+      </div>
+    </div>
+
+    <div class="sd-section">Student Panel</div>
+    <a href="/student/dashboard/" class="sd-link"><i class="fas fa-th-large"></i> Dashboard</a>
+    <a href="/student/dashboard/live-classes" class="sd-link"><i class="fas fa-video"></i> Live Classes</a>
+    <a href="{% url 'student-schedule' %}" class="sd-link"><i class="fas fa-calendar"></i> My Schedule</a>
+    <a href="{% url 'student-resources' %}" class="sd-link"><i class="fas fa-book-open"></i> E-Books &amp; Resources</a>
+    <a href="/student/dashboard/video-lectures" class="sd-link"><i class="fas fa-play-circle"></i> Video Lectures</a>
+    <a href="{% url 'student-exam-list' %}" class="sd-link active"><i class="fas fa-clipboard-check"></i> Exams &amp; Tests</a>
+    <a href="/student/dashboard/attendance" class="sd-link"><i class="fas fa-calendar-check"></i> My Attendance</a>
+    <a href="/student/dashboard/ai-tools" class="sd-link"><i class="fas fa-brain"></i> AI Tools</a>
+    <div style="flex:1;"></div>
+    <a href="/logout/" class="sd-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
+  </aside>
+
+  <!-- ─── Main ─── -->
+  <main class="sd-main">
+    <div class="sd-top">
+      <div class="sd-crumb"><a href="/student/dashboard/">Home</a> &nbsp;›&nbsp; Exams &amp; Tests</div>
+      <div class="sd-user">
+        <div class="bell"><i class="fas fa-bell"></i></div>
+        <div class="av">{{ user_name|slice:":2"|upper }}</div>
+      </div>
+    </div>
+
+    <div class="sd-body">
+      <div class="ph">
+        <div>
+          <h1>Exams &amp; Tests</h1>
+          <div class="sub">Results, upcoming exams, and AI-powered performance analytics</div>
+        </div>
+      </div>
+
+      <!-- ─── Stat cards ─── -->
+      <div class="stats">
+        <div class="stat">
+          <div class="ico blue"><i class="fas fa-clipboard-list"></i></div>
+          <div>
+            <div class="v">{{ tests_taken|default:0 }}</div>
+            <div class="l">Tests Taken</div>
+          </div>
+        </div>
+        <div class="stat">
+          <div class="ico green"><i class="fas fa-bullseye"></i></div>
+          <div>
+            <div class="v">{% if avg_pct %}{{ avg_pct }}%{% else %}—{% endif %}</div>
+            <div class="l">Average Score</div>
+          </div>
+        </div>
+        <div class="stat">
+          <div class="ico amber"><i class="fas fa-medal"></i></div>
+          <div>
+            <div class="v">{% if best_pct %}{{ best_pct }}%{% else %}—{% endif %}</div>
+            <div class="l">Best Score</div>
+          </div>
+        </div>
+        <div class="stat">
+          <div class="ico purple"><i class="far fa-calendar"></i></div>
+          <div>
+            <div class="v">{{ upcoming_count|default:0 }}</div>
+            <div class="l">Upcoming</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Tabs ─── -->
+      <div class="tabs" id="tabs">
+        <button class="tab active" data-tab="results">Results</button>
+        <button class="tab" data-tab="upcoming">Upcoming</button>
+        <button class="tab" data-tab="analytics">Analytics</button>
+      </div>
+
+      <!-- ─── Results pane ─── -->
+      <div class="pane active" data-pane="results">
+        <div class="card">
+          {% if past %}
+          <table class="list">
+            <thead>
+              <tr>
+                <th>Test Name</th>
+                <th>Date</th>
+                <th>Subject</th>
+                <th>Score</th>
+                <th>%</th>
+                <th>Rank</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for a in past %}
+              <tr>
+                <td>
+                  <div class="test-mini">
+                    <strong>{{ a.test.title }}</strong>
+                    <div class="meta">{{ a.test.test_code }}</div>
+                  </div>
+                </td>
+                <td>{{ a.submitted_at|date:"d-M-Y" }}</td>
+                <td>{% if a.test.subject %}{{ a.test.subject.name }}{% else %}—{% endif %}</td>
+                <td><strong>{{ a.raw_score|default:"—" }}</strong>/{{ a.total_marks|default:"—" }}</td>
+                <td>
+                  <div class="pct-bar {% if a.result == 'PASS' %}pass{% elif a.result == 'FAIL' %}fail{% endif %}">
+                    <div class="track"><div class="fill" style="width:{{ a.percentage|default:0 }}%;"></div></div>
+                    <span style="font-weight:700;font-size:13px;">{{ a.percentage|default:"0" }}%</span>
+                  </div>
+                </td>
+                <td>{% if a.rank %}#{{ a.rank }}{% else %}—{% endif %}</td>
+                <td>
+                  {% if a.result == 'PASS' %}<span class="bdg pass"><i class="fas fa-check"></i> Pass</span>
+                  {% elif a.result == 'FAIL' %}<span class="bdg fail"><i class="fas fa-times"></i> Below Avg</span>
+                  {% else %}<span class="bdg gray">{{ a.result|default:"—" }}</span>{% endif %}
+                </td>
+                <td>
+                  <a class="btn btn-outline" href="{% url 'student-exam-result' test_id=a.test.id attempt_id=a.id %}">
+                    <i class="fas fa-chart-line"></i> View
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <div class="empty">
+            <div class="big"><i class="fas fa-chart-line"></i></div>
+            <h3>No completed tests yet</h3>
+            <p>Your results will appear here once you submit a test.</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- ─── Upcoming pane ─── -->
+      <div class="pane" data-pane="upcoming">
+        <div class="card">
+          {% if rows %}
+          <div class="test-grid">
+            {% for r in rows %}
+            <div class="test-card">
+              <div class="top">
+                <div class="ttl">
+                  {{ r.test.title }}
+                  <small>{{ r.test.test_code }}{% if r.chapter_name %} · {{ r.chapter_name }}{% endif %}</small>
+                </div>
+                <span class="bdg blue">{{ r.test.get_test_type_display }}</span>
+              </div>
+              <div class="info">
+                <div><i class="fas fa-flask" style="color:var(--purple);"></i> Subject<strong>{{ r.subject_name }}</strong></div>
+                <div><i class="far fa-clock" style="color:var(--blue);"></i> Duration<strong>{{ r.test.total_duration_minutes }} min</strong></div>
+                <div><i class="fas fa-star" style="color:var(--amber);"></i> Marks<strong>{{ r.test.total_marks }}</strong></div>
+                <div><i class="fas fa-list-ol" style="color:var(--green);"></i> Questions<strong>{{ r.test.total_questions }}</strong></div>
+              </div>
+              <div class="footer">
+                <span class="att">Attempts: <strong>{{ r.attempts_used }} / {{ r.test.max_attempts }}</strong></span>
+                {% if r.attempt and r.attempt.status == 'IN_PROGRESS' %}
+                <a class="btn btn-resume" href="{% url 'student-exam-take' test_id=r.test.id %}"><i class="fas fa-play"></i> Resume</a>
+                {% elif r.can_start %}
+                <a class="btn btn-primary" href="{% url 'student-exam-take' test_id=r.test.id %}"><i class="fas fa-play"></i> Start Test</a>
+                {% else %}
+                <span class="btn btn-disabled"><i class="fas fa-lock"></i> Used</span>
+                {% endif %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="empty">
+            <div class="big"><i class="fas fa-clipboard"></i></div>
+            <h3>No tests available right now</h3>
+            <p>Tests will appear here as soon as your teacher publishes them for your batch.</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- ─── Analytics pane ─── -->
+      <div class="pane" data-pane="analytics">
+        <div class="card" style="padding:28px;">
+          <h2 style="margin:0 0 18px;font-size:16px;font-weight:700;">Performance Summary</h2>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:18px;">
+            <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;">Tests Taken</div><div style="font-size:22px;font-weight:800;margin-top:4px;">{{ tests_taken|default:0 }}</div></div>
+            <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;">Average</div><div style="font-size:22px;font-weight:800;margin-top:4px;">{% if avg_pct %}{{ avg_pct }}%{% else %}—{% endif %}</div></div>
+            <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;">Best</div><div style="font-size:22px;font-weight:800;margin-top:4px;">{% if best_pct %}{{ best_pct }}%{% else %}—{% endif %}</div></div>
+            <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;">Pass</div><div style="font-size:22px;font-weight:800;margin-top:4px;color:var(--green);">{{ pass_count|default:0 }}</div></div>
+          </div>
+          <p style="margin:24px 0 0;font-size:13px;color:var(--muted);">Detailed AI-powered analytics, predicted rank bands, and underperformance alerts are available on the Analytics dashboard.</p>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+  (function(){
+    var tabs = document.querySelectorAll('#tabs .tab');
+    var panes = document.querySelectorAll('.pane');
+    tabs.forEach(function(t){
+      t.addEventListener('click', function(){
+        tabs.forEach(function(x){x.classList.remove('active');});
+        panes.forEach(function(p){p.classList.remove('active');});
+        t.classList.add('active');
+        var name = t.getAttribute('data-tab');
+        document.querySelector('.pane[data-pane="'+name+'"]').classList.add('active');
+      });
+    });
+  })();
+</script>
+{% endblock %}
+{% extends 'base.html' %}
+{% load static %}
 {% block title %}My Exams – Student Portal{% endblock %}
 
 {% block extra_css %}

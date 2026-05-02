@@ -10,7 +10,7 @@
   .badge-upd{background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:6px;font-size:.7rem;}
 </style>
 <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
-  <div><h2>Bulk Question Import</h2><p>CSV / XLSX upload with dry-run preview.</p></div>
+  <div><h2>Bulk Question Import</h2><p>CSV / XLSX / ZIP (with images) — upload with dry-run preview.</p></div>
   <a href="/staff/exams/import/template/" class="btn-primary" style="background:#475569;color:white;padding:9px 16px;border-radius:8px;text-decoration:none;">
     <i class="fas fa-download"></i> Download CSV template
   </a>
@@ -30,8 +30,9 @@
         </select>
       </div>
       <div style="flex:1;min-width:280px;">
-        <label style="display:block;font-weight:600;margin-bottom:6px;">File (.csv / .xlsx)</label>
-        <input type="file" name="file" accept=".csv,.xlsx" required style="width:100%;">
+        <label style="display:block;font-weight:600;margin-bottom:6px;">File (.csv / .xlsx / .zip)</label>
+        <input type="file" name="file" accept=".csv,.xlsx,.zip" required style="width:100%;">
+        <small style="display:block;color:#64748b;margin-top:4px;">ZIP layout: <code>questions.xlsx</code> + <code>images/*.png</code>. Reference images by filename in columns <code>question_image</code>, <code>option_a_image</code> …</small>
       </div>
       <div>
         <button type="submit" name="action" value="preview" class="btn-primary"
@@ -83,7 +84,7 @@
     {% csrf_token %}
     <input type="hidden" name="test_id" value="{{ test.id }}">
     <p style="color:#475569;font-size:.85rem;">Re-attach the same file and click <b>Apply</b> to commit. (Stateless preview — file is not stored.)</p>
-    <input type="file" name="file" accept=".csv,.xlsx" required>
+    <input type="file" name="file" accept=".csv,.xlsx,.zip" required>
     <button type="submit" name="action" value="apply" class="btn-primary"
       style="background:#16a34a;color:white;padding:10px 22px;border:none;border-radius:8px;font-weight:600;cursor:pointer;">
       <i class="fas fa-check"></i> Apply import

@@ -149,6 +149,7 @@ from assessments.views.student_exam_api import (
     ProctorEventView as StudentProctorEventView,
     ProctorSnapshotView as StudentProctorSnapshotView,
     ExamSubmitView as StudentExamSubmitView,
+    TestFeedbackSubmitView as StudentFeedbackSubmitView,
 )
 from core.student_schedule_view import StudentScheduleView
 from core.student_resources_view import (
@@ -167,6 +168,7 @@ urlpatterns += [
     path('student/exams/<uuid:test_id>/api/proctor-event/', StudentProctorEventView.as_view(),    name='student-exam-api-proctor-event'),
     path('student/exams/<uuid:test_id>/api/snapshot/',      StudentProctorSnapshotView.as_view(), name='student-exam-api-snapshot'),
     path('student/exams/<uuid:test_id>/api/submit/',        StudentExamSubmitView.as_view(),      name='student-exam-api-submit'),
+    path('student/exams/<uuid:test_id>/api/feedback/',      StudentFeedbackSubmitView.as_view(),  name='student-exam-api-feedback'),
     path('student/schedule/', StudentScheduleView.as_view(), name='student-schedule'),
     path('student/resources/', StudentResourceListView.as_view(), name='student-resources'),
     path('student/resources/<uuid:material_id>/view/', StudentResourceViewAction.as_view(), name='student-resource-view'),
@@ -181,7 +183,17 @@ urlpatterns += [
 # ============================================================================
 # TEACHER DASHBOARD — /teacher/*
 # ============================================================================
+from core.teacher_offline_marks import (
+    TeacherOfflineMarksView, TeacherTestApiView,
+)
+from core.teacher_published_tests import TeacherPublishedTestsView
+
 urlpatterns += [
+    # Server-rendered teacher pages — must come BEFORE the SPA catch-all
+    path('teacher/offline-marks/',   TeacherOfflineMarksView.as_view(), name='teacher-offline-marks'),
+    path('teacher/api/tests/',       TeacherTestApiView.as_view(),      name='teacher-api-tests'),
+    path('teacher/published-tests/', TeacherPublishedTestsView.as_view(), name='teacher-published-tests'),
+
     path('teacher/dashboard/', TeacherDashboardView.as_view(), name='teacher-dashboard'),
     re_path(r'^teacher/dashboard/(?P<path>.*)$', TeacherDashboardView.as_view(), name='teacher-dashboard-spa'),
 ]

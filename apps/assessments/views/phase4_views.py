@@ -81,7 +81,12 @@ class QuestionImportView(View):
 
         ext = (f.name.rsplit('.', 1)[-1] if '.' in f.name else '').lower()
         try:
-            rows = importers.parse_rows(f, ext)
+            if ext == 'zip':
+                # ZIP: extract images to MEDIA_ROOT and rewrite image columns
+                # to /media/... URLs before validation/apply.
+                rows = importers.parse_zip_with_assets(f)
+            else:
+                rows = importers.parse_rows(f, ext)
         except Exception as e:
             messages.error(request, f'Could not parse file: {e}')
             return redirect('staff-exam-import')

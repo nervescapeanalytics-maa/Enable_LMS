@@ -406,3 +406,82 @@ class ExamSubmitView(View):
                 kwargs={'test_id': test.id, 'attempt_id': attempt.id},
             ),
         })
+
+
+# ===========================================================================
+# Test Feedback (post-submission)
+# ===========================================================================
+class TestFeedbackSubmitView(View):
+    """POST { overall, difficulty, clarity, comments } — student feedback after submission.
+
+    Idempotent per (test, student, attempt): re-submitting updates the row.
+    """
+
+    def post(self, request, test_id):
+        student = _require_student(request)
+        if not student:
+            return _err('Not authenticated', 401)
+
+        from assessments.models import TestFeedback
+
+        try:
+            test = Test.objects.get(id=test_id, tenant=student.tenant, is_deleted=False)
+        except (Test.DoesNotExist, ValueError):
+            return _err('Test not found', 404)
+
+        # Caller may post JSON or HTML form
+        body = _json_body(request)
+        if not body and request.POST:
+            body = {k: v for k, v in request.POST.items()}
+
+        def _rate(v):
+            try:
+                n = int(v)
+            except (TypeError, ValueError):
+                return 0
+            return max(0, min(5, n))
+
+        overall = _rate(body.get('overall_rating') or body.get('overall'))
+        difficulty = _rate(body.get('difficulty_rating') or body.get('difficulty'))
+        clarity = _rate(body.get('clarity_rating') or body.get('clarity'))
+        comments = (body.get('comments') or '').strip()[:5000]
+        attempt_id = body.get('attempt_id') or None
+
+        if overall == 0 and difficulty == 0 and clarity == 0 and not comments:
+            return _err('At least one rating or comment required')
+
+        attempt_obj = None
+        if attempt_id:
+            attempt_obj = TestAttempt.objects.filter(
+                id=attempt_id, test=test, student=student,
+            ).first()
+
+        fb, created = TestFeedback.objects.update_or_create(
+            test=test, student=student, attempt=attempt_obj,
+            defaults={
+                'tenant': student.tenant,
+                'overall_rating': overall,
+                'difficulty_rating': difficulty,
+                'clarity_rating': clarity,
+                'comments': comments,
+            },
+        )
+
+        log_exam_event(
+            request=request, actor=student,
+            action='FEEDBACK_SUBMIT',
+            resource_type='Test', resource_id=test.id, resource_name=test.test_code,
+            description=f'feedback {"created" if created else "updated"}',
+            extra_meta={'overall': overall, 'difficulty': difficulty, 'clarity': clarity},
+        )
+
+        # Form submission → redirect; JSON → JSON response
+        if request.content_type and 'application/json' in request.content_type:
+            return JsonResponse({'ok': True, 'created': created, 'feedback_id': str(fb.id)})
+
+        from django.shortcuts import redirect
+        next_url = request.POST.get('next') or reverse(
+            'student-exam-result',
+            kwargs={'test_id': test.id, 'attempt_id': attempt_obj.id if attempt_obj else test.id},
+        )
+        return redirect(next_url + '?feedback=ok')

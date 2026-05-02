@@ -1,0 +1,238 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Tests &amp; Marks – Teacher Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --bg:#f9fafb; --card:#fff; --border:#e5e7eb;
+    --text:#0f172a; --muted:#64748b;
+    --primary:#4f46e5; --primary-soft:#eef2ff;
+    --green:#10b981; --green-soft:#ecfdf5;
+    --rose:#ef4444; --rose-soft:#fef2f2;
+    --amber:#f59e0b; --amber-soft:#fffbeb;
+    --purple:#8b5cf6; --purple-soft:#f5f3ff;
+    --sidebar-bg:#0f172a; --sidebar-text:#cbd5e1; --sidebar-active:#4f46e5;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:var(--text);}
+  .ds{display:grid;grid-template-columns:260px 1fr;min-height:100vh;}
+
+  .sd-side{background:var(--sidebar-bg);color:var(--sidebar-text);padding:20px 0;display:flex;flex-direction:column;}
+  .sd-brand{display:flex;align-items:center;gap:12px;padding:0 22px 24px;border-bottom:1px solid #1e293b;margin-bottom:14px;}
+  .sd-brand .logo{width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--purple));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px;}
+  .sd-brand .name{font-size:15px;font-weight:700;color:#fff;}
+  .sd-brand .sub{font-size:11px;color:#64748b;}
+  .sd-section{padding:14px 22px 6px;font-size:10px;font-weight:700;letter-spacing:1.6px;color:#64748b;text-transform:uppercase;}
+  .sd-link{display:flex;align-items:center;gap:11px;padding:10px 22px;color:var(--sidebar-text);text-decoration:none;font-size:13.5px;font-weight:500;}
+  .sd-link i{width:18px;text-align:center;font-size:14px;}
+  .sd-link:hover{background:#1e293b;color:#fff;}
+  .sd-link.active{background:linear-gradient(90deg,rgba(79,70,229,.18),transparent);color:#fff;border-left:3px solid var(--sidebar-active);padding-left:19px;}
+
+  .sd-main{display:flex;flex-direction:column;}
+  .sd-top{background:#fff;border-bottom:1px solid var(--border);padding:14px 28px;display:flex;justify-content:space-between;align-items:center;}
+  .sd-crumb{font-size:13px;color:var(--muted);}
+  .sd-crumb a{color:var(--primary);text-decoration:none;}
+  .sd-user{display:flex;align-items:center;gap:14px;}
+  .sd-user .av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--purple));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;}
+  .sd-body{padding:24px 28px 60px;max-width:1500px;width:100%;}
+  .ph h1{font-size:24px;font-weight:800;margin:0 0 4px;}
+  .ph .sub{color:var(--muted);font-size:14px;margin-bottom:22px;}
+
+  .selectors{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin-bottom:18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;align-items:end;}
+  .selectors label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+  .selectors select, .selectors input{width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:#fff;}
+  .info-bar{background:#eef2ff;border:1px solid #c7d2fe;color:#3730a3;border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:14px;display:flex;gap:14px;flex-wrap:wrap;}
+  .info-bar strong{color:#1e1b4b;}
+
+  .marks-card{background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+  table.grid{width:100%;border-collapse:collapse;}
+  table.grid th{background:#f8fafc;padding:12px 14px;text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);font-weight:700;}
+  table.grid td{padding:11px 14px;border-bottom:1px solid #f1f5f9;font-size:14px;vertical-align:middle;}
+  table.grid tr:last-child td{border-bottom:none;}
+  table.grid input[type=number]{width:90px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:14px;text-align:center;}
+  table.grid input[type=number]:focus{outline:2px solid var(--primary);border-color:var(--primary);}
+  .roll{font-size:13px;color:var(--muted);}
+  .stu-name{font-weight:600;color:var(--text);}
+  .total-cell{font-weight:700;color:var(--primary);text-align:center;font-size:15px;}
+
+  .actions{display:flex;justify-content:flex-end;gap:10px;padding:14px 18px;border-top:1px solid var(--border);background:#fafbfc;}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;font-size:13.5px;font-weight:600;border-radius:8px;cursor:pointer;text-decoration:none;border:none;}
+  .btn-primary{background:linear-gradient(135deg,var(--primary),var(--purple));color:#fff;}
+  .btn-light{background:#fff;color:var(--text);border:1px solid var(--border);}
+
+  .msg{padding:12px 16px;border-radius:8px;margin-bottom:14px;font-size:13.5px;}
+  .msg.success{background:var(--green-soft);color:var(--green);border:1px solid var(--green);}
+  .msg.error{background:var(--rose-soft);color:var(--rose);border:1px solid var(--rose);}
+  .msg.warning{background:var(--amber-soft);color:var(--amber);border:1px solid var(--amber);}
+
+  .empty{padding:40px 20px;text-align:center;color:var(--muted);}
+  .empty .big{font-size:38px;color:#cbd5e1;margin-bottom:10px;}
+
+  @media (max-width:980px){.ds{grid-template-columns:1fr;}.sd-side{display:none;}}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="ds">
+  <aside class="sd-side">
+    <div class="sd-brand">
+      <span class="logo">E</span>
+      <div>
+        <div class="name">Teacher Dashboard</div>
+        <div class="sub">EMRS Online</div>
+      </div>
+    </div>
+    <div class="sd-section">Teacher Panel</div>
+    <a href="/teacher/dashboard/" class="sd-link"><i class="fas fa-th-large"></i> Dashboard</a>
+    <a href="/teacher/dashboard/schedule" class="sd-link"><i class="fas fa-calendar"></i> My Schedule</a>
+    <a href="/teacher/dashboard/students" class="sd-link"><i class="fas fa-user-graduate"></i> Students</a>
+    <a href="/teacher/dashboard/attendance" class="sd-link"><i class="fas fa-calendar-check"></i> Attendance</a>
+    <a href="{% url 'teacher-offline-marks' %}" class="sd-link active"><i class="fas fa-clipboard-check"></i> Tests &amp; Marks</a>
+    <a href="/teacher/dashboard/published-tests" class="sd-link"><i class="fas fa-file-alt"></i> Published Tests</a>
+    <a href="/teacher/dashboard/live-classes" class="sd-link"><i class="fas fa-broadcast-tower"></i> Live Classes</a>
+    <a href="/teacher/dashboard/resources" class="sd-link"><i class="fas fa-book-open"></i> Resources</a>
+    <a href="/teacher/dashboard/class-schedule" class="sd-link"><i class="fas fa-clock"></i> Class Schedule</a>
+    <div style="flex:1;"></div>
+    <a href="/logout/" class="sd-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
+  </aside>
+
+  <main class="sd-main">
+    <div class="sd-top">
+      <div class="sd-crumb"><a href="/teacher/dashboard/">Teacher</a> &nbsp;›&nbsp; Tests &amp; Marks</div>
+      <div class="sd-user">
+        <div class="av">{{ user_name|slice:":2"|upper }}</div>
+      </div>
+    </div>
+
+    <div class="sd-body">
+      <div class="ph">
+        <h1>Tests &amp; Marks</h1>
+        <div class="sub">Manually enter offline test marks per student per subject. Total marks are auto-loaded from the published exam.</div>
+      </div>
+
+      {% if messages %}
+        {% for m in messages %}
+          <div class="msg {% if 'success' in m.tags %}success{% elif 'warning' in m.tags %}warning{% else %}error{% endif %}">{{ m }}</div>
+        {% endfor %}
+      {% endif %}
+
+      <!-- Selectors -->
+      <form method="get" action="{% url 'teacher-offline-marks' %}" id="selForm">
+        <div class="selectors">
+          <div>
+            <label>Class / Batch</label>
+            <select name="batch" onchange="document.getElementById('selForm').submit();">
+              <option value="">— Select class —</option>
+              {% for b in batches %}
+              <option value="{{ b.id }}" {% if selected_batch and selected_batch.id == b.id %}selected{% endif %}>{{ b.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label>Exam / Test</label>
+            <select name="test" {% if not selected_batch %}disabled{% endif %} onchange="document.getElementById('selForm').submit();">
+              <option value="">— Select test —</option>
+              {% for t in tests %}
+              <option value="{{ t.id }}" {% if selected_test and selected_test.id == t.id %}selected{% endif %}>{{ t.test_code }} — {{ t.title }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </form>
+
+      {% if selected_batch and selected_test %}
+        {% if subjects %}
+          <div class="info-bar">
+            <span><strong>Test:</strong> {{ selected_test.title }}</span>
+            <span><strong>Total Marks:</strong> {{ total_marks }}</span>
+            <span><strong>Per Subject:</strong> {{ per_subject_total }}</span>
+            <span><strong>Subjects:</strong> {{ subjects|length }}</span>
+            <span><strong>Students:</strong> {{ roster_rows|length }}</span>
+          </div>
+
+          <form method="post" action="{% url 'teacher-offline-marks' %}">
+            {% csrf_token %}
+            <input type="hidden" name="batch" value="{{ selected_batch.id }}">
+            <input type="hidden" name="test"  value="{{ selected_test.id }}">
+
+            <div class="marks-card">
+              <table class="grid">
+                <thead>
+                  <tr>
+                    <th style="width:60px;">Roll No</th>
+                    <th>Student Name</th>
+                    {% for s in subjects %}<th style="text-align:center;">{{ s.name|default:'—' }}<br><small style="font-weight:400;text-transform:none;letter-spacing:0;">/ {{ per_subject_total }}</small></th>{% endfor %}
+                    <th style="text-align:center;">Total Obtained</th>
+                    <th style="text-align:center;">/ {{ total_marks }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for r in roster_rows %}
+                  <tr data-row="{{ forloop.counter }}">
+                    <td><span class="roll">{{ forloop.counter }}</span></td>
+                    <td><span class="stu-name">{{ r.student.first_name }} {{ r.student.last_name }}</span></td>
+                    {% for cell in r.subjects %}
+                    <td style="text-align:center;">
+                      <input type="number" step="0.01" min="0" max="{{ per_subject_total }}"
+                             name="m_{{ r.student.id }}_{{ cell.subject.id|default:'none' }}"
+                             value="{{ cell.value|default_if_none:'' }}"
+                             class="m-cell" data-row="{{ forloop.parentloop.counter }}">
+                    </td>
+                    {% endfor %}
+                    <td class="total-cell" data-total-row="{{ forloop.counter }}">{{ r.total_obtained|default:0 }}</td>
+                    <td style="text-align:center;color:var(--muted);font-size:13px;">{{ total_marks }}</td>
+                  </tr>
+                  {% empty %}
+                  <tr><td colspan="{{ subjects|length|add:4 }}" class="empty">
+                    <div class="big"><i class="fas fa-user-graduate"></i></div>
+                    No students enrolled in this batch.
+                  </td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+
+              {% if roster_rows %}
+              <div class="actions">
+                <a href="{% url 'teacher-offline-marks' %}" class="btn btn-light">Reset</a>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Marks</button>
+              </div>
+              {% endif %}
+            </div>
+          </form>
+
+          <script>
+            // Live recompute total per row as the teacher types
+            (function(){
+              document.querySelectorAll('.m-cell').forEach(function(inp){
+                inp.addEventListener('input', function(){
+                  var row = inp.getAttribute('data-row');
+                  var tot = 0;
+                  document.querySelectorAll('.m-cell[data-row="'+row+'"]').forEach(function(c){
+                    var v = parseFloat(c.value);
+                    if (!isNaN(v)) tot += v;
+                  });
+                  var cell = document.querySelector('[data-total-row="'+row+'"]');
+                  if (cell) cell.textContent = (Math.round(tot*100)/100);
+                });
+              });
+            })();
+          </script>
+        {% else %}
+          <div class="marks-card empty">
+            <div class="big"><i class="fas fa-exclamation-circle"></i></div>
+            <h3 style="margin:0 0 6px;">No subjects configured for this test</h3>
+            <p style="margin:0;font-size:13px;">Ask the admin to add subjects (via TestSection) or set <code>Test.subject</code>.</p>
+          </div>
+        {% endif %}
+      {% else %}
+        <div class="marks-card empty">
+          <div class="big"><i class="fas fa-mouse-pointer"></i></div>
+          <h3 style="margin:0 0 6px;">Pick a class and a test to begin</h3>
+          <p style="margin:0;font-size:13px;">Total marks load automatically from the published test config.</p>
+        </div>
+      {% endif %}
+    </div>
+  </main>
+</div>
+{% endblock %}

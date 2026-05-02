@@ -35,7 +35,7 @@ import logging
 from decimal import Decimal
 from typing import Optional
 
-from django.db import transaction
+from django.db import transaction, models
 from django.db.models import Avg, Q
 from django.http import HttpResponseForbidden, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
@@ -195,12 +195,23 @@ class ExamListView(View):
         pass_count = past_qs.filter(result='PASS').count()
         avg = past_qs.aggregate(a=Avg('percentage'))['a'] or 0
         avg_pct = round(float(avg), 1) if avg else 0
+        # Best score % across all evaluated attempts
+        best_pct = past_qs.aggregate(b=models.Max('percentage'))['b'] if past_qs.exists() else None
+        try:
+            best_pct = round(float(best_pct), 1) if best_pct is not None else 0
+        except (TypeError, ValueError):
+            best_pct = 0
+        # Upcoming = visible tests that haven't started yet OR not attempted yet
+        upcoming_count = sum(1 for r in rows if r['attempts_used'] == 0)
 
         return render(request, self.template_name, {
             'rows': rows,
             'past': past,
             'pass_count': pass_count,
             'avg_pct': avg_pct,
+            'best_pct': best_pct,
+            'upcoming_count': upcoming_count,
+            'tests_taken': past_qs.count(),
             'student': student,
             'user_name': f"{student.first_name} {student.last_name}",
             'now': timezone.now(),
@@ -470,7 +481,21 @@ class ExamResultView(View):
             'attempt': attempt,
             'rows': rows,
             'show_solutions': bool(test.show_correct_answers),
+            'existing_feedback': self._existing_feedback(test, student, attempt),
+            'feedback_just_saved': request.GET.get('feedback') == 'ok',
         })
+
+    @staticmethod
+    def _existing_feedback(test, student, attempt):
+        from assessments.models import TestFeedback
+        return (
+            TestFeedback.objects
+            .filter(test=test, student=student, attempt=attempt)
+            .first()
+            or TestFeedback.objects
+            .filter(test=test, student=student, attempt__isnull=True)
+            .first()
+        )
 
 
 # ---------------------------------------------------------------------------

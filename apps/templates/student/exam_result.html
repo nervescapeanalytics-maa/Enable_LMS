@@ -258,5 +258,76 @@
       <div style="margin-top:10px;font-size:14px;">Detailed solutions are not available for this test.</div>
     </div>
   {% endif %}
+
+  <!-- Test Feedback (post-submission) -->
+  <div class="section-title"><span class="ico"><i class="fas fa-comment-dots"></i></span> Your Feedback</div>
+  {% if feedback_just_saved %}
+    <div style="background:var(--green-soft);color:var(--green);border:1px solid var(--green);padding:10px 14px;border-radius:8px;margin-bottom:12px;font-size:13px;font-weight:600;">
+      <i class="fas fa-check-circle"></i> Thank you — your feedback has been recorded.
+    </div>
+  {% endif %}
+  <form method="post"
+        action="{% url 'student-exam-api-feedback' test_id=test.id %}"
+        class="q-row"
+        style="display:block;">
+    {% csrf_token %}
+    <input type="hidden" name="attempt_id" value="{{ attempt.id }}">
+    <input type="hidden" name="next" value="{% url 'student-exam-result' test_id=test.id attempt_id=attempt.id %}">
+
+    <p style="margin:0 0 14px;font-size:13px;color:var(--muted);">
+      Help us improve future tests. Rate this assessment (1 = poor, 5 = excellent) and add any comment.
+    </p>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:14px;">
+      {% for field, label in feedback_fields %}{% endfor %}
+      <div>
+        <div class="lbl" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px;">Overall</div>
+        <select name="overall_rating" class="fb-rate" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:14px;">
+          {% with cur=existing_feedback.overall_rating|default:0 %}
+          <option value="0" {% if cur == 0 %}selected{% endif %}>—</option>
+          {% for n in "12345" %}
+          <option value="{{ n }}" {% if cur|stringformat:"s" == n %}selected{% endif %}>{{ n }}</option>
+          {% endfor %}
+          {% endwith %}
+        </select>
+      </div>
+      <div>
+        <div class="lbl" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px;">Difficulty</div>
+        <select name="difficulty_rating" class="fb-rate" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:14px;">
+          {% with cur=existing_feedback.difficulty_rating|default:0 %}
+          <option value="0" {% if cur == 0 %}selected{% endif %}>—</option>
+          {% for n in "12345" %}
+          <option value="{{ n }}" {% if cur|stringformat:"s" == n %}selected{% endif %}>{{ n }}</option>
+          {% endfor %}
+          {% endwith %}
+        </select>
+      </div>
+      <div>
+        <div class="lbl" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px;">Clarity</div>
+        <select name="clarity_rating" class="fb-rate" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:14px;">
+          {% with cur=existing_feedback.clarity_rating|default:0 %}
+          <option value="0" {% if cur == 0 %}selected{% endif %}>—</option>
+          {% for n in "12345" %}
+          <option value="{{ n }}" {% if cur|stringformat:"s" == n %}selected{% endif %}>{{ n }}</option>
+          {% endfor %}
+          {% endwith %}
+        </select>
+      </div>
+    </div>
+
+    <div style="margin-bottom:14px;">
+      <div class="lbl" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px;">Comments (optional)</div>
+      <textarea name="comments" rows="3" maxlength="5000"
+                style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;resize:vertical;"
+                placeholder="What worked? What could be better?">{{ existing_feedback.comments|default:'' }}</textarea>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;">
+      <button type="submit" class="btn btn-primary">
+        <i class="fas fa-paper-plane"></i> {% if existing_feedback %}Update{% else %}Submit{% endif %} Feedback
+      </button>
+    </div>
+  </form>
+
 </div>
 {% endblock %}

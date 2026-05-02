@@ -1,5 +1,5 @@
 """
-Question bulk import — CSV / XLSX.
+Question bulk import — CSV / XLSX / ZIP.
 
 Public API:
     parse_rows(file, ext)             -> list[dict]
@@ -11,15 +11,31 @@ The "dry-run preview" UI feeds the user through ``parse_rows`` then
 
 Collision policy: **update on collision** (matched by ``question_code``
 within the same ``test``). Wrapped in a single transaction.
+
+ZIP layout (expected):
+    questions.xlsx        (or questions.csv)   — required
+    images/               (optional)           — referenced by columns
+                                                  ``question_image``,
+                                                  ``option_a_image`` …
+                                                  ``option_e_image``
+                                                  using filenames like
+                                                  ``q1.png`` (relative).
 """
 from __future__ import annotations
 
 import csv
 import io
 import logging
+import os
+import shutil
+import tempfile
+import uuid
+import zipfile
 from decimal import Decimal, InvalidOperation
+from pathlib import Path
 from typing import Iterable, Optional
 
+from django.conf import settings
 from django.db import transaction
 
 from .models import Question, Test
@@ -36,8 +52,18 @@ REQUIRED_COLS = [
 OPTIONAL_COLS = [
     'option_e', 'difficulty', 'negative_marks', 'partial_marks',
     'answer_explanation', 'question_order', 'tags',
+    'question_image', 'option_a_image', 'option_b_image',
+    'option_c_image', 'option_d_image', 'option_e_image',
 ]
 ALL_COLS = REQUIRED_COLS + OPTIONAL_COLS
+
+# Columns whose value (when imported from a ZIP) is a relative filename
+# inside the ZIP that we publish as a media URL on the Question record.
+IMAGE_COLS = (
+    'question_image',
+    'option_a_image', 'option_b_image', 'option_c_image',
+    'option_d_image', 'option_e_image',
+)
 
 VALID_TYPES = {
     'MCQ_SINGLE', 'MCQ_MULTI', 'NUMERICAL', 'TRUE_FALSE',
@@ -84,7 +110,124 @@ def parse_rows(file_obj, ext: str) -> list[dict]:
         return _parse_csv(blob)
     if ext in ('xlsx', 'xls'):
         return _parse_xlsx(blob)
+    if ext == 'zip':
+        rows, _images_dir = _parse_zip(blob, register=False)
+        return rows
     raise ValueError(f'Unsupported file extension: {ext!r}')
+
+
+# ---------------------------------------------------------------------------
+# ZIP support
+# ---------------------------------------------------------------------------
+ALLOWED_IMAGE_EXTS = {'.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg'}
+
+
+def _parse_zip(blob: bytes, *, register: bool) -> tuple[list[dict], dict]:
+    """Extract a ZIP and return (rows, image_url_map).
+
+    The ZIP must contain exactly one of:
+        questions.xlsx, questions.csv, *.xlsx, *.csv
+
+    Image references in IMAGE_COLS are resolved to entries within the ZIP
+    (case-insensitive, slash-tolerant). When ``register`` is True, image
+    payloads are written under MEDIA_ROOT/question_images/<uuid>/<basename>
+    and the row column is rewritten to the corresponding /media/... URL.
+
+    On register=False, image columns are returned as-is (filenames).
+    """
+    rows: list[dict] = []
+    image_url_map: dict[str, str] = {}
+
+    try:
+        zf = zipfile.ZipFile(io.BytesIO(blob))
+    except zipfile.BadZipFile as e:
+        raise ValueError(f'Invalid ZIP archive: {e}') from e
+
+    # Find the spreadsheet
+    names = [n for n in zf.namelist() if not n.endswith('/')]
+    sheet_name = None
+    # Prefer canonical names
+    for cand in ('questions.xlsx', 'questions.csv'):
+        for n in names:
+            if Path(n).name.lower() == cand:
+                sheet_name = n
+                break
+        if sheet_name:
+            break
+    if not sheet_name:
+        for n in names:
+            low = n.lower()
+            if low.endswith('.xlsx') or low.endswith('.csv'):
+                sheet_name = n
+                break
+    if not sheet_name:
+        raise ValueError('ZIP must contain a questions.xlsx or questions.csv')
+
+    sheet_blob = zf.read(sheet_name)
+    if sheet_name.lower().endswith('.csv'):
+        rows = _parse_csv(sheet_blob)
+    else:
+        rows = _parse_xlsx(sheet_blob)
+
+    # Build a case-insensitive basename → zip-entry map for image lookup
+    by_basename: dict[str, str] = {}
+    for n in names:
+        if n == sheet_name:
+            continue
+        ext = Path(n).suffix.lower()
+        if ext in ALLOWED_IMAGE_EXTS:
+            by_basename[Path(n).name.lower()] = n
+
+    if not register:
+        zf.close()
+        return rows, image_url_map
+
+    # Persist images on disk under MEDIA_ROOT/question_images/<batch>/
+    media_root = Path(getattr(settings, 'MEDIA_ROOT', 'runtime/media'))
+    media_url = (getattr(settings, 'MEDIA_URL', '/media/') or '/media/').rstrip('/')
+    batch_dir_name = uuid.uuid4().hex[:12]
+    target_dir = media_root / 'question_images' / batch_dir_name
+    target_dir.mkdir(parents=True, exist_ok=True)
+
+    for row in rows:
+        for col in IMAGE_COLS:
+            ref = (row.get(col) or '').strip()
+            if not ref:
+                continue
+            # Resolve by basename (also accept full zip paths)
+            base = Path(ref).name.lower()
+            zip_entry = by_basename.get(base)
+            if not zip_entry:
+                # If they wrote a full path with slashes, try a strict match
+                norm = ref.replace('\\', '/').lstrip('/').lower()
+                for n in names:
+                    if n.lower() == norm:
+                        zip_entry = n
+                        break
+            if not zip_entry:
+                continue  # validate phase will not flag — image is optional
+
+            cached = image_url_map.get(zip_entry)
+            if not cached:
+                safe_name = Path(zip_entry).name
+                # Sanitise filename (avoid path traversal)
+                safe_name = safe_name.replace('/', '_').replace('\\', '_')
+                out_path = target_dir / safe_name
+                with zf.open(zip_entry) as src, open(out_path, 'wb') as dst:
+                    shutil.copyfileobj(src, dst)
+                cached = f'{media_url}/question_images/{batch_dir_name}/{safe_name}'
+                image_url_map[zip_entry] = cached
+            row[col] = cached
+
+    zf.close()
+    return rows, image_url_map
+
+
+def parse_zip_with_assets(file_obj) -> list[dict]:
+    """Convenience wrapper used by views that want image extraction."""
+    blob = file_obj.read() if hasattr(file_obj, 'read') else bytes(file_obj)
+    rows, _ = _parse_zip(blob, register=True)
+    return rows
 
 
 # ---------------------------------------------------------------------------
@@ -185,6 +328,14 @@ def validate_rows(rows: list[dict], *, test: Test, tenant) -> tuple[list[dict], 
             'partial_marks': partial,
             'answer_explanation': row.get('answer_explanation') or '',
             'question_order': order,
+            # Image URLs (already resolved to /media/... by parse_zip_with_assets,
+            # or empty when CSV/XLSX direct)
+            'question_image': row.get('question_image') or None,
+            'option_a_image': row.get('option_a_image') or None,
+            'option_b_image': row.get('option_b_image') or None,
+            'option_c_image': row.get('option_c_image') or None,
+            'option_d_image': row.get('option_d_image') or None,
+            'option_e_image': row.get('option_e_image') or None,
         })
     return cleaned, errors
 

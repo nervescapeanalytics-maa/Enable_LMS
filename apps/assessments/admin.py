@@ -250,7 +250,10 @@ class QuestionAdmin(ExamRBACMixin, ImportExportMixin, EnhancedModelAdmin):
     batch_display.admin_order_field = 'test__batch__name'
 
 
-@admin.register(TestAttempt)
+# Note: TestAttempt and TestAttemptAnswer are intentionally NOT registered with
+# the Django admin (per product requirement — these are operational records,
+# not authoring artefacts). The classes below are kept for code reference but
+# never call `admin.site.register()` on them.
 class TestAttemptAdmin(ExamRBACMixin, EnhancedModelAdmin):
     enf_hide_tools = True
     list_display = (
@@ -317,7 +320,6 @@ class TestAttemptAdmin(ExamRBACMixin, EnhancedModelAdmin):
     result_badge.short_description = 'Result'
 
 
-@admin.register(TestAttemptAnswer)
 class TestAttemptAnswerAdmin(ExamRBACMixin, EnhancedModelAdmin):
     enf_hide_tools = True
     list_display = ('attempt', 'question', 'status_badge', 'correct_badge', 'marks_awarded', 'time_spent_seconds')
