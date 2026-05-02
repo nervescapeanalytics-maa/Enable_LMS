@@ -510,6 +510,43 @@ class ExamResultView(View):
         # ── AI-style performance insights (heuristic, no LLM) ──
         ai_insights = _compute_ai_insights(attempt, rows, test, percentile)
 
+        # ── Attempt history (this student × this test, chronological) ──
+        attempt_history = [
+            {
+                'percentage': float(a.percentage or 0),
+                'raw_score': float(a.raw_score or 0),
+                'result': a.result or '',
+                'submitted_at': a.submitted_at.isoformat() if a.submitted_at else None,
+            }
+            for a in TestAttempt.objects.filter(
+                student=student, test=test,
+                status__in=['EVALUATED', 'SUBMITTED', 'AUTO_SUBMITTED'],
+            ).order_by('started_at', 'submitted_at')
+        ]
+
+        # ── Topic stats for the heat-map (use the same buckets as insights) ──
+        topic_stats = []
+        for t in (ai_insights.get('weak_topics') or []) + (ai_insights.get('strong_topics') or []):
+            topic_stats.append({'name': t['name'], 'pct': t['pct']})
+        # Fallback: if no weak/strong split (e.g. all topics in 50–75 band),
+        # surface all topics so the heat-map isn't empty.
+        if not topic_stats:
+            from collections import defaultdict
+            buckets = defaultdict(lambda: {'total': 0, 'correct': 0})
+            for r in rows:
+                q = r['question']
+                t_name = (q.topic.name if q.topic else
+                          (q.chapter.name if q.chapter else 'General'))
+                buckets[t_name]['total'] += 1
+                if r['is_correct']:
+                    buckets[t_name]['correct'] += 1
+            for name, v in buckets.items():
+                if v['total']:
+                    topic_stats.append({
+                        'name': name,
+                        'pct': round(v['correct'] / v['total'] * 100),
+                    })
+
         # Feedback popup logic — auto-show on first visit if nothing submitted yet
         existing_feedback = self._existing_feedback(test, student, attempt)
         show_feedback_popup = (
@@ -531,6 +568,8 @@ class ExamResultView(View):
             'percentile': percentile,
             'rank': rank,
             'ai_insights': ai_insights,
+            'attempt_history': attempt_history,
+            'topic_stats': topic_stats,
         })
 
     @staticmethod
