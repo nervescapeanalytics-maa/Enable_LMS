@@ -446,8 +446,11 @@ def export_test_zip(test: Test) -> bytes:
         writer.writerow(row)
 
     zbuf = io.BytesIO()
+    # Prepend UTF-8 BOM so Excel auto-detects encoding (avoids mojibake of
+    # math symbols like −, π, σ, etc. when opened on Windows).
+    csv_bytes = ('\ufeff' + sio.getvalue()).encode('utf-8')
     with zipfile.ZipFile(zbuf, 'w', zipfile.ZIP_DEFLATED) as z:
-        z.writestr('questions.csv', sio.getvalue())
+        z.writestr('questions.csv', csv_bytes)
         for src, arc in image_map.items():
             try:
                 z.write(src, arc)

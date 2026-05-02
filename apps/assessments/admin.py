@@ -63,6 +63,60 @@ TEST_META_HELP = (
     '  • {"category": "diagnostic", "purpose": "baseline"}\n'
     'Used by analytics + AI insights to classify and benchmark.'
 )
+
+# Predefined categories shown as a dropdown — mapped to test_meta['category'].
+TEST_META_CATEGORY_CHOICES = [
+    ('', '— Not set —'),
+    ('mock_test', 'Mock Test (full-pattern simulation)'),
+    ('practice_test', 'Practice Test (skill drills)'),
+    ('sectional_test', 'Sectional Test (single subject)'),
+    ('full_length', 'Full-Length Paper (full pattern)'),
+    ('diagnostic', 'Diagnostic Test (baseline / placement)'),
+    ('chapter_test', 'Chapter Test (topic mastery)'),
+    ('weekly_test', 'Weekly Test (recurring)'),
+    ('revision', 'Revision (recap)'),
+    ('previous_year', 'Previous-Year Paper'),
+]
+
+
+class TestAdminForm(forms.ModelForm):
+    """Replaces the raw JSON `test_meta` textarea with a friendly dropdown.
+
+    The dropdown maps to `test_meta['category']`. Other keys in `test_meta`
+    (e.g. `subject`, `round`, `exam`) are preserved untouched.
+    """
+
+    test_meta_category = forms.ChoiceField(
+        required=False,
+        choices=TEST_META_CATEGORY_CHOICES,
+        label='Test category (test_meta)',
+        help_text='Select the test category. Stored under test_meta["category"].',
+    )
+
+    class Meta:
+        model = Test
+        fields = '__all__'
+        exclude = ('test_meta',)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        existing = (self.instance.test_meta or {}) if self.instance else {}
+        if isinstance(existing, dict):
+            self.fields['test_meta_category'].initial = existing.get('category', '')
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        meta = instance.test_meta if isinstance(instance.test_meta, dict) else {}
+        cat = self.cleaned_data.get('test_meta_category') or ''
+        if cat:
+            meta['category'] = cat
+        else:
+            meta.pop('category', None)
+        instance.test_meta = meta or None
+        if commit:
+            instance.save()
+            self.save_m2m()
+        return instance
 from core.admin_utils import EnhancedModelAdmin, ImportExportMixin, export_as_csv, export_as_json, activate_selected, deactivate_selected, colored_status
 from assessments.permissions import (
     can_manage_exams, is_admin_full, get_logged_in_admin,
@@ -159,6 +213,7 @@ class TestSectionInline(admin.TabularInline):
 @admin.register(Test)
 class TestAdmin(ExamRBACMixin, ImportExportMixin, EnhancedModelAdmin):
     enf_hide_tools = True
+    form = TestAdminForm
     list_display = (
         'test_code', 'title', 'type_badge', 'exam_target',
         'status_badge', 'total_marks', 'duration_display', 'start_datetime',
@@ -213,7 +268,7 @@ class TestAdmin(ExamRBACMixin, ImportExportMixin, EnhancedModelAdmin):
         }),
         ('Lifecycle & extensions', {
             'fields': (
-                'is_deleted', 'published_at', 'published_by', 'test_meta',
+                'is_deleted', 'published_at', 'published_by', 'test_meta_category',
                 'ext_test_1', 'ext_test_2', 'ext_test_3', 'ext_test_4', 'ext_test_5',
                 'created_at', 'updated_at',
             ),
@@ -247,6 +302,22 @@ class TestAdmin(ExamRBACMixin, ImportExportMixin, EnhancedModelAdmin):
         if db_field.name == 'test_meta' and formfield is not None:
             formfield.help_text = TEST_META_HELP
         return formfield
+
+    def save_formset(self, request, form, formset, change):
+        """Auto-populate tenant on inline TestSection rows from the parent Test.
+
+        The admin form does not expose a `tenant` field on the inline, so new
+        sections would otherwise hit a NotNullViolation on save.
+        """
+        instances = formset.save(commit=False)
+        parent_tenant_id = getattr(form.instance, 'tenant_id', None)
+        for obj in instances:
+            if isinstance(obj, TestSection) and not obj.tenant_id and parent_tenant_id:
+                obj.tenant_id = parent_tenant_id
+            obj.save()
+        for obj in formset.deleted_objects:
+            obj.delete()
+        formset.save_m2m()
 
 
 @admin.register(TestSection)
