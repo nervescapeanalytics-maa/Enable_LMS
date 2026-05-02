@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Test Report – Teacher Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --bg:#f9fafb; --card:#fff; --border:#e5e7eb;
+    --text:#0f172a; --muted:#64748b;
+    --primary:#4f46e5; --primary-soft:#eef2ff;
+    --green:#10b981; --green-soft:#ecfdf5;
+    --rose:#ef4444; --rose-soft:#fef2f2;
+    --amber:#f59e0b; --amber-soft:#fffbeb;
+    --blue:#3b82f6; --blue-soft:#eff6ff;
+    --purple:#8b5cf6; --purple-soft:#f5f3ff;
+    --sidebar-bg:#0f172a; --sidebar-text:#cbd5e1; --sidebar-active:#4f46e5;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:var(--text);}
+  .ds{display:grid;grid-template-columns:260px 1fr;min-height:100vh;}
+  .sd-side{background:var(--sidebar-bg);color:var(--sidebar-text);padding:20px 0;display:flex;flex-direction:column;}
+  .sd-brand{display:flex;align-items:center;gap:12px;padding:0 22px 24px;border-bottom:1px solid #1e293b;margin-bottom:14px;}
+  .sd-brand .logo{width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--purple));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px;}
+  .sd-brand .name{font-size:15px;font-weight:700;color:#fff;}
+  .sd-brand .sub{font-size:11px;color:#64748b;}
+  .sd-section{padding:14px 22px 6px;font-size:10px;font-weight:700;letter-spacing:1.6px;color:#64748b;text-transform:uppercase;}
+  .sd-link{display:flex;align-items:center;gap:11px;padding:10px 22px;color:var(--sidebar-text);text-decoration:none;font-size:13.5px;font-weight:500;}
+  .sd-link i{width:18px;text-align:center;font-size:14px;}
+  .sd-link:hover{background:#1e293b;color:#fff;}
+  .sd-link.active{background:linear-gradient(90deg,rgba(79,70,229,.18),transparent);color:#fff;border-left:3px solid var(--sidebar-active);padding-left:19px;}
+  .sd-main{display:flex;flex-direction:column;}
+  .sd-top{background:#fff;border-bottom:1px solid var(--border);padding:14px 28px;display:flex;justify-content:space-between;align-items:center;}
+  .sd-crumb{font-size:13px;color:var(--muted);} .sd-crumb a{color:var(--primary);text-decoration:none;}
+  .sd-user{display:flex;align-items:center;gap:14px;}
+  .sd-user .av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--purple));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;}
+  .sd-body{padding:24px 28px 60px;max-width:1500px;width:100%;}
+  .ph h1{font-size:24px;font-weight:800;margin:0 0 4px;}
+  .ph .sub{color:var(--muted);font-size:14px;margin-bottom:18px;}
+
+  .tabs{display:flex;gap:24px;border-bottom:1px solid var(--border);margin-bottom:18px;}
+  .tabs a{padding:12px 4px;font-size:14px;font-weight:600;color:var(--muted);text-decoration:none;border-bottom:2px solid transparent;display:inline-flex;align-items:center;gap:8px;}
+  .tabs a.active{color:var(--primary);border-bottom-color:var(--primary);}
+  .tabs a i{font-size:13px;}
+
+  .selectors{background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr)) auto;gap:12px;align-items:end;}
+  .selectors label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+  .selectors select{width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:#fff;}
+
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:18px;}
+  .stat{background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px 18px;display:flex;align-items:center;gap:14px;}
+  .stat .ic{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;}
+  .stat.s-avg{background:var(--blue-soft);} .stat.s-avg .ic{background:#dbeafe;color:var(--blue);}
+  .stat.s-high{background:var(--green-soft);} .stat.s-high .ic{background:#d1fae5;color:var(--green);}
+  .stat.s-low{background:var(--rose-soft);} .stat.s-low .ic{background:#fee2e2;color:var(--rose);}
+  .stat.s-pass{background:var(--amber-soft);} .stat.s-pass .ic{background:#fef3c7;color:var(--amber);}
+  .stat .num{font-size:22px;font-weight:800;line-height:1.1;}
+  .stat .lab{font-size:12px;color:var(--muted);}
+
+  .report-card{background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+  .report-card .hd{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--border);}
+  table.rep{width:100%;border-collapse:collapse;}
+  table.rep th{background:#f8fafc;padding:12px 16px;text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);font-weight:700;}
+  table.rep td{padding:12px 16px;border-bottom:1px solid #f1f5f9;font-size:14px;vertical-align:middle;}
+  table.rep tr:last-child td{border-bottom:none;}
+  .rk{display:inline-flex;width:28px;height:28px;border-radius:50%;background:#f1f5f9;color:var(--text);font-weight:700;align-items:center;justify-content:center;font-size:13px;}
+  .rk-1{background:#fef3c7;color:#b45309;}
+  .rk-2{background:#e5e7eb;color:#374151;}
+  .rk-3{background:#fed7aa;color:#9a3412;}
+  .pcb{display:inline-block;width:160px;height:7px;background:#e5e7eb;border-radius:99px;overflow:hidden;vertical-align:middle;margin-right:10px;}
+  .pcb > span{display:block;height:100%;background:linear-gradient(90deg,#22c55e,#10b981);}
+  .pcb.warn > span{background:linear-gradient(90deg,#f59e0b,#fbbf24);}
+  .pcb.bad > span{background:linear-gradient(90deg,#ef4444,#f87171);}
+  .pill{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;}
+  .pill-pass{background:var(--green-soft);color:var(--green);border:1px solid #a7f3d0;}
+  .pill-fail{background:var(--rose-soft);color:var(--rose);border:1px solid #fecaca;}
+  .src{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-left:6px;}
+
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 14px;font-size:13px;font-weight:600;border-radius:8px;cursor:pointer;text-decoration:none;border:none;}
+  .btn-light{background:#fff;color:var(--text);border:1px solid var(--border);}
+  .btn-export{background:var(--green);color:#fff;}
+  .btn-export:hover{background:#059669;}
+
+  .empty{padding:48px 20px;text-align:center;color:var(--muted);background:#fff;border:1px solid var(--border);border-radius:14px;}
+  .empty .big{font-size:38px;color:#cbd5e1;margin-bottom:10px;}
+  .empty h3{margin:0 0 6px;}
+  @media (max-width:980px){.ds{grid-template-columns:1fr;}.sd-side{display:none;}}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="ds">
+  <aside class="sd-side">
+    <div class="sd-brand">
+      <span class="logo">E</span>
+      <div><div class="name">Teacher Dashboard</div><div class="sub">EMRS Online</div></div>
+    </div>
+    <div class="sd-section">Teacher Panel</div>
+    <a href="/teacher/dashboard/" class="sd-link"><i class="fas fa-th-large"></i> Dashboard</a>
+    <a href="/teacher/dashboard/schedule" class="sd-link"><i class="fas fa-calendar"></i> My Schedule</a>
+    <a href="/teacher/dashboard/students" class="sd-link"><i class="fas fa-user-graduate"></i> Students</a>
+    <a href="/teacher/dashboard/attendance" class="sd-link"><i class="fas fa-calendar-check"></i> Attendance</a>
+    <a href="{% url 'teacher-offline-marks' %}" class="sd-link active"><i class="fas fa-clipboard-check"></i> Tests &amp; Marks</a>
+    <a href="/teacher/dashboard/published-tests" class="sd-link"><i class="fas fa-file-alt"></i> Published Tests</a>
+    <a href="/teacher/dashboard/live-classes" class="sd-link"><i class="fas fa-broadcast-tower"></i> Live Classes</a>
+    <a href="/teacher/dashboard/resources" class="sd-link"><i class="fas fa-book-open"></i> Resources</a>
+    <a href="/teacher/dashboard/class-schedule" class="sd-link"><i class="fas fa-clock"></i> Class Schedule</a>
+    <div style="flex:1;"></div>
+    <a href="/logout/" class="sd-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
+  </aside>
+
+  <main class="sd-main">
+    <div class="sd-top">
+      <div class="sd-crumb"><a href="/teacher/dashboard/">Teacher</a> &nbsp;›&nbsp; Tests &amp; Marks</div>
+      <div class="sd-user"><div class="av">{{ user_name|slice:":2"|upper }}</div></div>
+    </div>
+
+    <div class="sd-body">
+      <div class="ph">
+        <h1>Tests &amp; Marks</h1>
+        <div class="sub">Update test marks and view test reports.</div>
+      </div>
+
+      <div class="tabs">
+        <a href="{% url 'teacher-offline-marks' %}{% if selected_batch %}?batch={{ selected_batch.id }}{% if selected_test %}&test={{ selected_test.id }}{% endif %}{% endif %}">
+          <i class="fas fa-edit"></i> Update Marks
+        </a>
+        <a href="{% url 'teacher-test-report' %}{% if selected_batch %}?batch={{ selected_batch.id }}{% if selected_test %}&test={{ selected_test.id }}{% endif %}{% endif %}" class="active">
+          <i class="fas fa-chart-bar"></i> Test Report
+        </a>
+      </div>
+
+      <form method="get" id="selForm">
+        <div class="selectors">
+          <div>
+            <label>Class / Batch</label>
+            <select name="batch" onchange="document.getElementById('selForm').submit();">
+              <option value="">— Select class —</option>
+              {% for b in batches %}<option value="{{ b.id }}" {% if selected_batch and selected_batch.id == b.id %}selected{% endif %}>{{ b.name }}</option>{% endfor %}
+            </select>
+          </div>
+          <div>
+            <label>Exam / Test</label>
+            <select name="test" {% if not selected_batch %}disabled{% endif %} onchange="document.getElementById('selForm').submit();">
+              <option value="">— Select test —</option>
+              {% for t in tests %}<option value="{{ t.id }}" {% if selected_test and selected_test.id == t.id %}selected{% endif %}>{{ t.test_code }} — {{ t.title }}</option>{% endfor %}
+            </select>
+          </div>
+          {% if rows %}
+          <div>
+            <a href="?batch={{ selected_batch.id }}&test={{ selected_test.id }}&export=excel"
+               class="btn btn-export"><i class="fas fa-download"></i> Export to Excel</a>
+          </div>
+          {% endif %}
+        </div>
+      </form>
+
+      {% if stats %}
+      <div class="stat-grid">
+        <div class="stat s-avg"><div class="ic"><i class="fas fa-chart-bar"></i></div>
+          <div><div class="num">{{ stats.average }}/{{ stats.total_max|floatformat:0 }}</div><div class="lab">Average Score</div></div>
+        </div>
+        <div class="stat s-high"><div class="ic"><i class="fas fa-arrow-trend-up"></i></div>
+          <div><div class="num">{{ stats.highest|floatformat:0 }}/{{ stats.total_max|floatformat:0 }}</div><div class="lab">Highest Score</div></div>
+        </div>
+        <div class="stat s-low"><div class="ic"><i class="fas fa-arrow-trend-down"></i></div>
+          <div><div class="num">{{ stats.lowest|floatformat:0 }}/{{ stats.total_max|floatformat:0 }}</div><div class="lab">Lowest Score</div></div>
+        </div>
+        <div class="stat s-pass"><div class="ic"><i class="fas fa-trophy"></i></div>
+          <div><div class="num">{{ stats.pass_rate }}%</div><div class="lab">Pass Rate ({{ stats.pass_count }}/{{ stats.total_count }})</div></div>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if rows %}
+      <div class="report-card">
+        <table class="rep">
+          <thead>
+            <tr>
+              <th style="width:80px;">Rank</th>
+              <th>Student Name</th>
+              <th style="width:140px;">Marks</th>
+              <th style="width:280px;">Percentage</th>
+              <th style="width:100px;text-align:right;">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in rows %}
+            <tr>
+              <td><span class="rk rk-{{ r.rank }}">{{ r.rank }}</span></td>
+              <td>
+                <strong>{{ r.student.first_name }} {{ r.student.last_name }}</strong>
+                <span class="src">{{ r.source }}</span>
+              </td>
+              <td><strong>{{ r.obtained|floatformat:0 }}</strong>/{{ total_marks|floatformat:0 }}</td>
+              <td>
+                <span class="pcb {% if r.percentage < passing_pct %}bad{% elif r.percentage < 75 %}warn{% endif %}"><span style="width:{{ r.percentage }}%;"></span></span>
+                <strong>{{ r.percentage }}%</strong>
+              </td>
+              <td style="text-align:right;">
+                {% if r.is_pass %}<span class="pill pill-pass">Pass</span>{% else %}<span class="pill pill-fail">Fail</span>{% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% elif selected_batch and selected_test %}
+        <div class="empty">
+          <div class="big"><i class="fas fa-chart-line"></i></div>
+          <h3>No marks recorded yet</h3>
+          <p>Once students attempt this test online or marks are entered offline, the report will populate here.</p>
+        </div>
+      {% else %}
+        <div class="empty">
+          <div class="big"><i class="fas fa-mouse-pointer"></i></div>
+          <h3>Pick a class and a test</h3>
+          <p>Choose a class and an exam above to view ranked results and statistics.</p>
+        </div>
+      {% endif %}
+    </div>
+  </main>
+</div>
+{% endblock %}

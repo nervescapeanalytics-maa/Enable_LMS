@@ -184,13 +184,14 @@ urlpatterns += [
 # TEACHER DASHBOARD — /teacher/*
 # ============================================================================
 from core.teacher_offline_marks import (
-    TeacherOfflineMarksView, TeacherTestApiView,
+    TeacherOfflineMarksView, TeacherTestApiView, TeacherTestReportView,
 )
 from core.teacher_published_tests import TeacherPublishedTestsView
 
 urlpatterns += [
     # Server-rendered teacher pages — must come BEFORE the SPA catch-all
     path('teacher/offline-marks/',   TeacherOfflineMarksView.as_view(), name='teacher-offline-marks'),
+    path('teacher/test-report/',     TeacherTestReportView.as_view(),   name='teacher-test-report'),
     path('teacher/api/tests/',       TeacherTestApiView.as_view(),      name='teacher-api-tests'),
     path('teacher/published-tests/', TeacherPublishedTestsView.as_view(), name='teacher-published-tests'),
 

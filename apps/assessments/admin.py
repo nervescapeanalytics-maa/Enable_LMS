@@ -338,6 +338,100 @@ class TestSectionAdmin(ExamRBACMixin, EnhancedModelAdmin):
         }),
     )
 
+    # ------------------------------------------------------------------
+    # Custom admin URLs: direct ZIP export + ZIP import (no /staff/ redirect)
+    # ------------------------------------------------------------------
+    def get_urls(self):
+        urls = super().get_urls()
+        custom = [
+            path('export-zip/', self.admin_site.admin_view(self.export_zip_view),
+                 name='assessments_testsection_export_zip'),
+            path('import-zip/', self.admin_site.admin_view(self.import_zip_view),
+                 name='assessments_testsection_import_zip'),
+        ]
+        return custom + urls
+
+    def changelist_view(self, request, extra_context=None):
+        # Inject the list of tests into the changelist context so the
+        # toolbar's Export/Import dropdowns can be populated inline.
+        extra_context = extra_context or {}
+        extra_context['available_tests'] = (
+            Test.objects.filter(is_deleted=False)
+            .order_by('-created_at')
+            .values('id', 'test_code', 'title')[:300]
+        )
+        return super().changelist_view(request, extra_context=extra_context)
+
+    def export_zip_view(self, request):
+        """Stream a ZIP for the selected test directly — no redirect."""
+        if not self._exam_has_access(request, write=False):
+            return HttpResponse('Forbidden', status=403)
+        test_id = request.POST.get('test_id') or request.GET.get('test_id')
+        if not test_id:
+            messages.error(request, 'Pick a test to export.')
+            return redirect('admin:assessments_testsection_changelist')
+        try:
+            test = Test.objects.get(id=test_id, is_deleted=False)
+        except Test.DoesNotExist:
+            messages.error(request, 'Test not found.')
+            return redirect('admin:assessments_testsection_changelist')
+        try:
+            blob = _exam_importers.export_test_zip(test)
+        except Exception as e:  # noqa: BLE001
+            messages.error(request, f'Export failed: {e}')
+            return redirect('admin:assessments_testsection_changelist')
+        safe = (test.test_code or 'test').replace('/', '_').replace(' ', '_')
+        resp = HttpResponse(blob, content_type='application/zip')
+        resp['Content-Disposition'] = f'attachment; filename="{safe}_questions.zip"'
+        return resp
+
+    def import_zip_view(self, request):
+        """Accept a ZIP upload + target test inline — no redirect to /staff/."""
+        if not self._exam_has_access(request, write=True):
+            return HttpResponse('Forbidden', status=403)
+        if request.method != 'POST':
+            messages.error(request, 'Use the Import ZIP form.')
+            return redirect('admin:assessments_testsection_changelist')
+        test_id = request.POST.get('test_id')
+        f = request.FILES.get('file')
+        if not test_id or not f:
+            messages.error(request, 'Both a target test and a ZIP file are required.')
+            return redirect('admin:assessments_testsection_changelist')
+        try:
+            test = Test.objects.get(id=test_id, is_deleted=False)
+        except Test.DoesNotExist:
+            messages.error(request, 'Test not found.')
+            return redirect('admin:assessments_testsection_changelist')
+        try:
+            ext = (f.name.rsplit('.', 1)[-1] if '.' in f.name else '').lower()
+            if ext != 'zip':
+                messages.error(request, 'File must be a .zip archive.')
+                return redirect('admin:assessments_testsection_changelist')
+            rows = _exam_importers.parse_zip_with_assets(f)
+            cleaned, errors = _exam_importers.validate_rows(
+                rows, test=test, tenant=test.tenant,
+            )
+            if errors:
+                messages.error(
+                    request,
+                    f'Import rejected — {len(errors)} validation error(s). '
+                    f'First: {errors[0].get("message", "?")}',
+                )
+                return redirect('admin:assessments_testsection_changelist')
+            actor = get_logged_in_admin(request) or request.user
+            result = _exam_importers.apply_rows(
+                cleaned, test=test, tenant=test.tenant,
+                actor=actor, request=request,
+            )
+            messages.success(
+                request,
+                f'Imported {result["total"]} questions into "{test.title}" '
+                f'({result["created"]} new, {result["updated"]} updated).',
+            )
+        except Exception as e:  # noqa: BLE001
+            messages.error(request, f'Import failed: {e}')
+        return redirect('admin:assessments_testsection_changelist')
+
 
 @admin.register(Question)
 class QuestionAdmin(ExamRBACMixin, ImportExportMixin, EnhancedModelAdmin):

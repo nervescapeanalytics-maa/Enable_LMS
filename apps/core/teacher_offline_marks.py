@@ -50,15 +50,50 @@ def _require_teacher(request) -> Optional[Teacher]:
 
 
 def _teacher_batches(teacher: Teacher):
-    return (
+    """Batches the teacher is assigned to via BatchTeacher.
+
+    Fallback: if no BatchTeacher rows exist for this teacher (typical for
+    fresh tenants where the M2M hasn't been seeded yet), surface all
+    batches in the same tenant so the teacher can still pick a class.
+    Admin can later restrict via BatchTeacher rows.
+    """
+    explicit = (
         Batch.objects
-        .filter(
-            tenant=teacher.tenant,
-            batch_teachers__teacher=teacher,
-        )
+        .filter(tenant=teacher.tenant, batch_teachers__teacher=teacher)
         .distinct()
         .order_by('name')
     )
+    if explicit.exists():
+        return explicit
+    return Batch.objects.filter(tenant=teacher.tenant).order_by('name')
+
+
+def _resolve_teacher_batch(teacher: Teacher, batch_id: str) -> Optional[Batch]:
+    """Look up a Batch the teacher is allowed to act on.
+
+    Strict path: BatchTeacher row exists. Lenient fallback: same tenant
+    when the teacher has no BatchTeacher rows at all.
+    """
+    if not batch_id:
+        return None
+    try:
+        # Strict: explicit M2M row
+        return Batch.objects.get(
+            id=batch_id, tenant=teacher.tenant,
+            batch_teachers__teacher=teacher,
+        )
+    except (Batch.DoesNotExist, ValueError):
+        pass
+    # Lenient: only if teacher has NO explicit assignments in this tenant
+    has_any = BatchTeacher.objects.filter(
+        tenant=teacher.tenant, teacher=teacher,
+    ).exists()
+    if has_any:
+        return None
+    try:
+        return Batch.objects.get(id=batch_id, tenant=teacher.tenant)
+    except (Batch.DoesNotExist, ValueError):
+        return None
 
 
 def _tests_for_batch(teacher: Teacher, batch: Optional[Batch]):
@@ -127,15 +162,7 @@ class TeacherOfflineMarksView(View):
         batch_id = request.GET.get('batch') or ''
         test_id = request.GET.get('test') or ''
 
-        selected_batch = None
-        if batch_id:
-            try:
-                selected_batch = Batch.objects.get(
-                    id=batch_id, tenant=teacher.tenant,
-                    batch_teachers__teacher=teacher,
-                )
-            except (Batch.DoesNotExist, ValueError):
-                selected_batch = None
+        selected_batch = _resolve_teacher_batch(teacher, batch_id)
 
         tests = list(_tests_for_batch(teacher, selected_batch))
 
@@ -212,12 +239,8 @@ class TeacherOfflineMarksView(View):
             messages.error(request, 'Pick a class and a test first.')
             return redirect(reverse('teacher-offline-marks'))
 
-        try:
-            batch = Batch.objects.get(
-                id=batch_id, tenant=teacher.tenant,
-                batch_teachers__teacher=teacher,
-            )
-        except (Batch.DoesNotExist, ValueError):
+        batch = _resolve_teacher_batch(teacher, batch_id)
+        if batch is None:
             return HttpResponse('Forbidden', status=403)
 
         try:
@@ -296,12 +319,8 @@ class TeacherTestApiView(View):
         batch_id = request.GET.get('batch')
         batch = None
         if batch_id:
-            try:
-                batch = Batch.objects.get(
-                    id=batch_id, tenant=teacher.tenant,
-                    batch_teachers__teacher=teacher,
-                )
-            except (Batch.DoesNotExist, ValueError):
+            batch = _resolve_teacher_batch(teacher, batch_id)
+            if batch is None:
                 return JsonResponse({'ok': False}, status=404)
         tests = _tests_for_batch(teacher, batch)
         return JsonResponse({
@@ -315,3 +334,136 @@ class TeacherTestApiView(View):
                 for t in tests
             ],
         })
+
+
+# ---------------------------------------------------------------------------
+# Test Report tab — ranked roster + summary stats + Excel export
+# ---------------------------------------------------------------------------
+class TeacherTestReportView(View):
+    """Renders ranked results for a (batch, test) pair with average / highest /
+    lowest / pass-rate stat cards. Pulls totals from OfflineTestMarks; if
+    online attempts exist they are also folded in (best score per student)."""
+
+    template_name = 'teacher/test_report.html'
+
+    def get(self, request):
+        teacher = _require_teacher(request)
+        if not teacher:
+            return redirect('/login/?role=teacher')
+
+        batches = list(_teacher_batches(teacher))
+        batch_id = request.GET.get('batch') or ''
+        test_id = request.GET.get('test') or ''
+        export = request.GET.get('export') == 'excel'
+
+        selected_batch = _resolve_teacher_batch(teacher, batch_id)
+
+        tests = list(_tests_for_batch(teacher, selected_batch))
+        selected_test = None
+        if test_id and selected_batch is not None:
+            try:
+                selected_test = Test.objects.get(
+                    id=test_id, tenant=teacher.tenant, is_deleted=False,
+                )
+            except (Test.DoesNotExist, ValueError):
+                selected_test = None
+
+        rows = []
+        stats = None
+        total_max = Decimal('0')
+        passing_pct = Decimal('33')
+
+        if selected_batch and selected_test:
+            students = _batch_students(selected_batch)
+            total_max = selected_test.total_marks or Decimal('0')
+            passing_pct = selected_test.passing_percent or Decimal('33')
+
+            # Aggregate offline marks by student (sum across subjects/sections).
+            offline_totals: dict = {}
+            for m in OfflineTestMarks.objects.filter(
+                tenant=teacher.tenant, test=selected_test, student__in=students,
+            ):
+                offline_totals.setdefault(m.student_id, Decimal('0'))
+                offline_totals[m.student_id] += (m.marks_obtained or Decimal('0'))
+
+            # Online attempts — pick best (highest score) submitted attempt per student.
+            online_best: dict = {}
+            try:
+                from assessments.models import TestAttempt
+                for a in TestAttempt.objects.filter(
+                    tenant=teacher.tenant, test=selected_test,
+                    student__in=students, status__in=['SUBMITTED', 'GRADED', 'COMPLETED'],
+                ):
+                    cur = online_best.get(a.student_id)
+                    sc = a.total_score or Decimal('0')
+                    if cur is None or sc > cur:
+                        online_best[a.student_id] = sc
+            except Exception:  # noqa: BLE001 — model fields may differ across envs
+                pass
+
+            tmp = []
+            for s in students:
+                obt = offline_totals.get(s.id)
+                onl = online_best.get(s.id)
+                # Prefer the higher of the two if both exist
+                if obt is None and onl is None:
+                    continue
+                final = max([v for v in (obt, onl) if v is not None])
+                pct = (final / total_max * Decimal('100')) if total_max else Decimal('0')
+                tmp.append({
+                    'student': s,
+                    'obtained': final,
+                    'percentage': pct.quantize(Decimal('0.1')),
+                    'is_pass': pct >= passing_pct,
+                    'source': 'online' if (onl is not None and (obt is None or onl >= obt)) else 'offline',
+                })
+            tmp.sort(key=lambda r: (-float(r['obtained']), r['student'].first_name or ''))
+            for i, r in enumerate(tmp, start=1):
+                r['rank'] = i
+                rows.append(r)
+
+            if rows:
+                marks = [float(r['obtained']) for r in rows]
+                pass_count = sum(1 for r in rows if r['is_pass'])
+                stats = {
+                    'average': round(sum(marks) / len(marks), 1),
+                    'highest': max(marks),
+                    'lowest': min(marks),
+                    'pass_count': pass_count,
+                    'total_count': len(rows),
+                    'pass_rate': round(pass_count / len(rows) * 100),
+                    'total_max': float(total_max),
+                }
+
+        if export and rows and selected_test:
+            import csv as _csv
+            import io as _io
+            sio = _io.StringIO()
+            sio.write('\ufeff')  # UTF-8 BOM for Excel
+            w = _csv.writer(sio)
+            w.writerow(['Rank', 'Student', 'Marks', 'Total', 'Percentage', 'Status', 'Source'])
+            for r in rows:
+                full = f"{r['student'].first_name or ''} {r['student'].last_name or ''}".strip()
+                w.writerow([
+                    r['rank'], full, r['obtained'], total_max,
+                    f"{r['percentage']}%", 'Pass' if r['is_pass'] else 'Fail', r['source'],
+                ])
+            safe = (selected_test.test_code or 'test').replace('/', '_').replace(' ', '_')
+            resp = HttpResponse(sio.getvalue().encode('utf-8'),
+                                content_type='text/csv; charset=utf-8')
+            resp['Content-Disposition'] = f'attachment; filename="{safe}_report.csv"'
+            return resp
+
+        return render(request, self.template_name, {
+            'teacher': teacher,
+            'user_name': f'{teacher.first_name} {teacher.last_name}',
+            'batches': batches,
+            'tests': tests,
+            'selected_batch': selected_batch,
+            'selected_test': selected_test,
+            'rows': rows,
+            'stats': stats,
+            'total_marks': total_max,
+            'passing_pct': passing_pct,
+        })
+

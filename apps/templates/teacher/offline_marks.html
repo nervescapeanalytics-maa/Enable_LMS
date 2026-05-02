@@ -111,6 +111,17 @@
         <div class="sub">Manually enter offline test marks per student per subject. Total marks are auto-loaded from the published exam.</div>
       </div>
 
+      <div style="display:flex;gap:24px;border-bottom:1px solid var(--border);margin-bottom:18px;">
+        <a href="{% url 'teacher-offline-marks' %}{% if selected_batch %}?batch={{ selected_batch.id }}{% if selected_test %}&test={{ selected_test.id }}{% endif %}{% endif %}"
+           style="padding:12px 4px;font-size:14px;font-weight:600;color:var(--primary);text-decoration:none;border-bottom:2px solid var(--primary);display:inline-flex;align-items:center;gap:8px;">
+          <i class="fas fa-edit"></i> Update Marks
+        </a>
+        <a href="{% url 'teacher-test-report' %}{% if selected_batch %}?batch={{ selected_batch.id }}{% if selected_test %}&test={{ selected_test.id }}{% endif %}{% endif %}"
+           style="padding:12px 4px;font-size:14px;font-weight:600;color:var(--muted);text-decoration:none;border-bottom:2px solid transparent;display:inline-flex;align-items:center;gap:8px;">
+          <i class="fas fa-chart-bar"></i> Test Report
+        </a>
+      </div>
+
       {% if messages %}
         {% for m in messages %}
           <div class="msg {% if 'success' in m.tags %}success{% elif 'warning' in m.tags %}warning{% else %}error{% endif %}">{{ m }}</div>

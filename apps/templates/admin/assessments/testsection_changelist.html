@@ -2,15 +2,59 @@
 {% load i18n admin_urls %}
 
 {% block object-tools-items %}
+  {# Inline Export ZIP - picks a test then streams the ZIP directly (no /staff/ redirect). #}
   <li>
-    <a href="{% url 'staff-exam-import' %}" class="addlink" style="background:#0ea5e9;border-color:#0ea5e9;">
-      {% trans 'Import ZIP' %}
-    </a>
+    <details class="enf-export-zip-details" style="display:inline-block;position:relative;">
+      <summary class="addlink" style="background:#10b981;border-color:#10b981;cursor:pointer;list-style:none;display:inline-flex;align-items:center;">
+        + {% trans 'Export ZIP' %}
+      </summary>
+      <form method="post" action="{% url 'admin:assessments_testsection_export_zip' %}" style="position:absolute;right:0;top:100%;z-index:50;background:#fff;border:1px solid #d1d5db;border-radius:8px;padding:12px;box-shadow:0 8px 24px rgba(0,0,0,0.12);min-width:340px;margin-top:6px;">
+        {% csrf_token %}
+        <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px;">{% trans 'Select test to export' %}</label>
+        <select name="test_id" required style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;margin-bottom:10px;">
+          <option value="">- {% trans 'Pick a test' %} -</option>
+          {% for t in available_tests %}<option value="{{ t.id }}">{{ t.test_code }} - {{ t.title }}</option>{% endfor %}
+        </select>
+        <button type="submit" style="background:#10b981;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-weight:600;cursor:pointer;width:100%;">↓ {% trans 'Download ZIP' %}</button>
+      </form>
+    </details>
   </li>
+
+  {# Inline Import ZIP - modal-style file picker; submits to admin endpoint, no /staff/ redirect. #}
   <li>
-    <a href="{% url 'staff-exam-export-zip-picker' %}" class="addlink" style="background:#10b981;border-color:#10b981;">
-      {% trans 'Export ZIP' %}
-    </a>
+    <details class="enf-import-zip-details" style="display:inline-block;position:relative;">
+      <summary class="addlink" style="background:#0ea5e9;border-color:#0ea5e9;cursor:pointer;list-style:none;display:inline-flex;align-items:center;">
+        + {% trans 'Import ZIP' %}
+      </summary>
+      <form method="post" enctype="multipart/form-data" action="{% url 'admin:assessments_testsection_import_zip' %}" style="position:absolute;right:0;top:100%;z-index:50;background:#fff;border:1px solid #d1d5db;border-radius:8px;padding:12px;box-shadow:0 8px 24px rgba(0,0,0,0.12);min-width:360px;margin-top:6px;">
+        {% csrf_token %}
+        <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px;">{% trans 'Target test' %}</label>
+        <select name="test_id" required style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;margin-bottom:10px;">
+          <option value="">- {% trans 'Pick a test' %} -</option>
+          {% for t in available_tests %}<option value="{{ t.id }}">{{ t.test_code }} - {{ t.title }}</option>{% endfor %}
+        </select>
+        <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px;">{% trans 'ZIP archive' %}</label>
+        <input type="file" name="file" accept=".zip,application/zip" required style="width:100%;padding:6px;border:1px dashed #9ca3af;border-radius:6px;font-size:13px;margin-bottom:10px;background:#f9fafb;">
+        <button type="submit" style="background:#0ea5e9;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-weight:600;cursor:pointer;width:100%;">↑ {% trans 'Upload &amp; Import' %}</button>
+        <p style="font-size:11px;color:#6b7280;margin:8px 0 0;">ZIP must contain <code>questions.csv</code> (or .xlsx) and an <code>images/</code> folder.</p>
+      </form>
+    </details>
   </li>
+
   {{ block.super }}
+
+  <script>
+    (function () {
+      function closeOthers(except) {
+        document.querySelectorAll('details.enf-export-zip-details, details.enf-import-zip-details').forEach(function (d) { if (d !== except) d.removeAttribute('open'); });
+      }
+      document.addEventListener('click', function (e) {
+        var inside = e.target.closest('details.enf-export-zip-details, details.enf-import-zip-details');
+        if (!inside) closeOthers(null);
+      });
+      document.querySelectorAll('details.enf-export-zip-details, details.enf-import-zip-details').forEach(function (d) {
+        d.addEventListener('toggle', function () { if (d.open) closeOthers(d); });
+      });
+    })();
+  </script>
 {% endblock %}
