@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django import forms
 from django.http import HttpResponse
 from django.urls import path, reverse
 from django.shortcuts import redirect
@@ -7,6 +8,60 @@ from django.utils.html import format_html
 from assessments.models import (
     Test, TestSection, Question, TestAttempt,
     TestAttemptAnswer, TestFeedback, OfflineTestMarks
+)
+
+
+# ---------------------------------------------------------------------------
+# Section name suggestions (presented as a datalist-backed dropdown so admins
+# can either pick a common subject or type a custom value).
+# ---------------------------------------------------------------------------
+SECTION_NAME_CHOICES = [
+    'Mathematics',
+    'Physics',
+    'Chemistry',
+    'Biology',
+    'Botany',
+    'Zoology',
+    'English',
+    'Logical Reasoning',
+    'Quantitative Aptitude',
+    'General Knowledge',
+    'Computer Science',
+    'Section A',
+    'Section B',
+    'Section C',
+]
+
+
+class _SectionNameSelectWidget(forms.TextInput):
+    """Free-text input bound to a <datalist> for autosuggest dropdown."""
+
+    def render(self, name, value, attrs=None, renderer=None):
+        from django.utils.safestring import mark_safe
+        attrs = (attrs or {}).copy()
+        attrs.setdefault('list', 'lms-section-names')
+        attrs.setdefault('placeholder', 'Pick or type — Mathematics, Physics, …')
+        html = super().render(name, value, attrs, renderer)
+        opts = ''.join(f'<option value="{c}">' for c in SECTION_NAME_CHOICES)
+        return mark_safe(f'{html}<datalist id="lms-section-names">{opts}</datalist>')
+
+
+class TestSectionAdminForm(forms.ModelForm):
+    class Meta:
+        model = TestSection
+        fields = '__all__'
+        widgets = {'section_name': _SectionNameSelectWidget()}
+
+
+# Help text describing JSON test_meta use cases — surfaced in the admin form.
+TEST_META_HELP = (
+    'JSON metadata for this test. Common use cases:\n'
+    '  • {"category": "mock_test", "round": 1}\n'
+    '  • {"category": "practice_test", "topic_focus": "kinematics"}\n'
+    '  • {"category": "sectional_test", "subject": "physics"}\n'
+    '  • {"category": "full_length", "exam": "JEE_MAIN"}\n'
+    '  • {"category": "diagnostic", "purpose": "baseline"}\n'
+    'Used by analytics + AI insights to classify and benchmark.'
 )
 from core.admin_utils import EnhancedModelAdmin, ImportExportMixin, export_as_csv, export_as_json, activate_selected, deactivate_selected, colored_status
 from assessments.permissions import (
@@ -95,6 +150,7 @@ class ExamRBACMixin:
 
 class TestSectionInline(admin.TabularInline):
     model = TestSection
+    form = TestSectionAdminForm
     extra = 0
     fields = ('section_name', 'section_order', 'total_questions', 'max_marks')
     show_change_link = True
@@ -186,10 +242,17 @@ class TestAdmin(ExamRBACMixin, ImportExportMixin, EnhancedModelAdmin):
         return '-'
     duration_display.short_description = 'Duration'
 
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        formfield = super().formfield_for_dbfield(db_field, request, **kwargs)
+        if db_field.name == 'test_meta' and formfield is not None:
+            formfield.help_text = TEST_META_HELP
+        return formfield
+
 
 @admin.register(TestSection)
 class TestSectionAdmin(ExamRBACMixin, EnhancedModelAdmin):
     enf_hide_tools = True
+    form = TestSectionAdminForm
     change_list_template = 'admin/assessments/testsection_changelist.html'
     list_display = ('test', 'section_name', 'section_order', 'total_questions', 'max_marks')
     list_filter = ('test',)

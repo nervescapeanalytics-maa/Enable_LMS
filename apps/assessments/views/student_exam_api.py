@@ -302,7 +302,7 @@ class ProctorEventView(View):
             resp['redirect'] = reverse(
                 'student-exam-result',
                 kwargs={'test_id': test.id, 'attempt_id': attempt.id},
-            )
+            ) + '?submitted=1'
 
         return JsonResponse(resp)
 
@@ -404,7 +404,7 @@ class ExamSubmitView(View):
             'redirect': reverse(
                 'student-exam-result',
                 kwargs={'test_id': test.id, 'attempt_id': attempt.id},
-            ),
+            ) + '?submitted=1',
         })
 
 

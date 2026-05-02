@@ -183,9 +183,99 @@
         <div class="row"><span>Attempted</span><strong>{{ attempt.attempted|default:0 }}</strong></div>
         <div class="row"><span>Accuracy</span><strong>{% if attempt.attempted %}{% widthratio attempt.correct attempt.attempted 100 %}%{% else %}—{% endif %}</strong></div>
         <div class="row"><span>Status</span><strong>{{ attempt.status }}</strong></div>
+        {% if percentile is not None %}<div class="row"><span>Percentile</span><strong>{{ percentile }}%</strong></div>{% endif %}
+        {% if rank %}<div class="row"><span>Rank</span><strong>#{{ rank }}{% if cohort_size %} of {{ cohort_size }}{% endif %}</strong></div>{% endif %}
       </div>
     </div>
   </div>
+
+  <!-- ─── AI Performance Insights ─── -->
+  {% if ai_insights %}
+  <div style="margin-top:24px;background:#fff;border:1px solid var(--border);border-radius:14px;padding:24px 26px;
+              border-left:4px solid {% if ai_insights.tone == 'celebrate' %}#10b981{% elif ai_insights.tone == 'positive' %}#3b82f6{% elif ai_insights.tone == 'supportive' %}#f59e0b{% else %}#8b5cf6{% endif %};">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+      <span style="background:linear-gradient(135deg,#4f46e5,#8b5cf6);color:#fff;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;letter-spacing:.5px;">
+        <i class="fas fa-brain"></i> AI INSIGHTS
+      </span>
+      <span style="font-size:11px;color:var(--muted);">Personalised analysis of your performance</span>
+    </div>
+    <h2 style="margin:0 0 6px;font-size:20px;font-weight:800;">{{ ai_insights.headline }}</h2>
+    <p style="margin:0 0 18px;font-size:14px;color:var(--muted);line-height:1.55;">{{ ai_insights.message }}</p>
+
+    {% if ai_insights.subject_breakdown %}
+    <div style="margin-bottom:18px;">
+      <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">Subject-wise accuracy</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;">
+        {% for s in ai_insights.subject_breakdown %}
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:10px 12px;">
+          <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:6px;">
+            <span>{{ s.name }}</span><span>{{ s.pct }}%</span>
+          </div>
+          <div style="height:6px;background:#e5e7eb;border-radius:99px;overflow:hidden;">
+            <div style="height:100%;width:{{ s.pct }}%;background:{% if s.pct >= 75 %}#10b981{% elif s.pct >= 50 %}#3b82f6{% elif s.pct >= 25 %}#f59e0b{% else %}#ef4444{% endif %};"></div>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">{{ s.correct }}/{{ s.total }} correct</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if ai_insights.weak_topics or ai_insights.strong_topics %}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;">
+      {% if ai_insights.weak_topics %}
+      <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px;">
+        <div style="font-size:12px;font-weight:700;color:#991b1b;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">
+          <i class="fas fa-exclamation-triangle"></i> Areas to focus
+        </div>
+        {% for t in ai_insights.weak_topics %}
+        <div style="font-size:13px;display:flex;justify-content:space-between;padding:4px 0;border-top:1px dashed #fecaca;">
+          <span>{{ t.name }}</span><strong style="color:#dc2626;">{{ t.pct }}%</strong>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% if ai_insights.strong_topics %}
+      <div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:10px;padding:14px;">
+        <div style="font-size:12px;font-weight:700;color:#065f46;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">
+          <i class="fas fa-trophy"></i> Strengths
+        </div>
+        {% for t in ai_insights.strong_topics %}
+        <div style="font-size:13px;display:flex;justify-content:space-between;padding:4px 0;border-top:1px dashed #a7f3d0;">
+          <span>{{ t.name }}</span><strong style="color:#059669;">{{ t.pct }}%</strong>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% if ai_insights.roadmap %}
+    <div>
+      <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;">
+        <i class="fas fa-route"></i> Your study roadmap
+      </div>
+      {% for step in ai_insights.roadmap %}
+      <div style="display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--border);">
+        <div style="width:34px;height:34px;border-radius:8px;background:var(--primary-soft);color:var(--primary);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i class="fas {{ step.icon }}"></i>
+        </div>
+        <div>
+          <div style="font-size:14px;font-weight:600;">{{ step.title }}</div>
+          <div style="font-size:12.5px;color:var(--muted);margin-top:2px;">{{ step.detail }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if ai_insights.time_pressure %}
+    <div style="margin-top:14px;padding:10px 14px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;font-size:13px;color:#92400e;">
+      <i class="fas fa-clock"></i> {{ ai_insights.time_pressure }}
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
 
   <script>
     // Animate the ring
@@ -330,4 +420,52 @@
   </form>
 
 </div>
+
+{% if show_feedback_popup %}
+<!-- Auto-shown post-submission feedback modal -->
+<div id="fbModal" style="position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;">
+  <div style="background:#fff;border-radius:14px;max-width:520px;width:100%;padding:28px 30px;box-shadow:0 18px 50px rgba(0,0,0,.25);">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+      <h2 style="margin:0;font-size:20px;font-weight:800;">📝 How was the test?</h2>
+      <button type="button" onclick="document.getElementById('fbModal').remove()" style="border:none;background:transparent;font-size:22px;color:#64748b;cursor:pointer;line-height:1;">&times;</button>
+    </div>
+    <p style="margin:0 0 18px;font-size:13.5px;color:#64748b;">Quick rating helps us improve future tests for you. Takes 10 seconds.</p>
+    <form method="post" action="{% url 'student-exam-api-feedback' test_id=test.id %}">
+      {% csrf_token %}
+      <input type="hidden" name="attempt_id" value="{{ attempt.id }}">
+      <input type="hidden" name="next" value="{% url 'student-exam-result' test_id=test.id attempt_id=attempt.id %}">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px;">
+        <div>
+          <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:4px;">Overall</div>
+          <select name="overall_rating" required style="width:100%;padding:9px 10px;border:1px solid #e2e8f0;border-radius:8px;">
+            {% for n in "12345" %}<option value="{{ n }}" {% if forloop.counter == 4 %}selected{% endif %}>{{ n }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:4px;">Difficulty</div>
+          <select name="difficulty_rating" required style="width:100%;padding:9px 10px;border:1px solid #e2e8f0;border-radius:8px;">
+            {% for n in "12345" %}<option value="{{ n }}" {% if forloop.counter == 3 %}selected{% endif %}>{{ n }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:4px;">Clarity</div>
+          <select name="clarity_rating" required style="width:100%;padding:9px 10px;border:1px solid #e2e8f0;border-radius:8px;">
+            {% for n in "12345" %}<option value="{{ n }}" {% if forloop.counter == 4 %}selected{% endif %}>{{ n }}</option>{% endfor %}
+          </select>
+        </div>
+      </div>
+      <div style="margin-bottom:16px;">
+        <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:4px;">Comments (optional)</div>
+        <textarea name="comments" rows="2" maxlength="5000"
+                  style="width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:14px;resize:vertical;"
+                  placeholder="Anything we should improve?"></textarea>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;">
+        <button type="button" onclick="document.getElementById('fbModal').remove()" style="background:#f1f5f9;color:#0f172a;border:none;padding:9px 18px;border-radius:8px;font-weight:600;cursor:pointer;">Maybe later</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Submit feedback</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
 {% endblock %}

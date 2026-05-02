@@ -204,13 +204,29 @@ class ExamListView(View):
         # Upcoming = visible tests that haven't started yet OR not attempted yet
         upcoming_count = sum(1 for r in rows if r['attempts_used'] == 0)
 
+        # Split rows into "Upcoming" (not yet attempted) vs "Exams Taken"
+        upcoming_rows = [r for r in rows if r['attempts_used'] == 0]
+        # Sort by start_datetime ascending so soonest is first
+        upcoming_rows.sort(
+            key=lambda r: (r['test'].start_datetime is None,
+                           r['test'].start_datetime or timezone.now())
+        )
+        # Reminder banner: tests starting within next 48 hours
+        soon_cutoff = timezone.now() + __import__('datetime').timedelta(hours=48)
+        upcoming_soon = [
+            r for r in upcoming_rows
+            if r['test'].start_datetime and r['test'].start_datetime <= soon_cutoff
+        ]
+
         return render(request, self.template_name, {
             'rows': rows,
+            'upcoming_rows': upcoming_rows,
+            'upcoming_soon': upcoming_soon,
             'past': past,
             'pass_count': pass_count,
             'avg_pct': avg_pct,
             'best_pct': best_pct,
-            'upcoming_count': upcoming_count,
+            'upcoming_count': len(upcoming_rows),
             'tests_taken': past_qs.count(),
             'student': student,
             'user_name': f"{student.first_name} {student.last_name}",
@@ -438,7 +454,9 @@ class ExamTakeView(View):
             attempt.save()
 
         return redirect(
-            'student-exam-result', test_id=test.id, attempt_id=attempt.id,
+            reverse('student-exam-result',
+                    kwargs={'test_id': test.id, 'attempt_id': attempt.id})
+            + '?submitted=1'
         )
 
 
@@ -459,7 +477,7 @@ class ExamResultView(View):
         answers = (
             TestAttemptAnswer.objects
             .filter(attempt=attempt)
-            .select_related('question')
+            .select_related('question', 'question__subject', 'question__topic', 'question__section')
             .order_by('question__question_order')
         )
 
@@ -474,6 +492,31 @@ class ExamResultView(View):
                 'status': a.status,
             })
 
+        # ── Percentile + rank computation across the cohort ──
+        cohort = (
+            TestAttempt.objects
+            .filter(test=test, status__in=['EVALUATED', 'SUBMITTED', 'AUTO_SUBMITTED'])
+            .exclude(percentage__isnull=True)
+        )
+        cohort_size = cohort.count()
+        percentile = None
+        rank = attempt.rank
+        if cohort_size > 1 and attempt.percentage is not None:
+            below = cohort.filter(percentage__lt=attempt.percentage).count()
+            percentile = round((below / cohort_size) * 100, 1)
+            if rank is None:
+                rank = cohort.filter(percentage__gt=attempt.percentage).count() + 1
+
+        # ── AI-style performance insights (heuristic, no LLM) ──
+        ai_insights = _compute_ai_insights(attempt, rows, test, percentile)
+
+        # Feedback popup logic — auto-show on first visit if nothing submitted yet
+        existing_feedback = self._existing_feedback(test, student, attempt)
+        show_feedback_popup = (
+            request.GET.get('submitted') == '1'
+            and existing_feedback is None
+        )
+
         return render(request, self.template_name, {
             'student': student,
             'user_name': f"{student.first_name} {student.last_name}",
@@ -481,8 +524,13 @@ class ExamResultView(View):
             'attempt': attempt,
             'rows': rows,
             'show_solutions': bool(test.show_correct_answers),
-            'existing_feedback': self._existing_feedback(test, student, attempt),
+            'existing_feedback': existing_feedback,
             'feedback_just_saved': request.GET.get('feedback') == 'ok',
+            'show_feedback_popup': show_feedback_popup,
+            'cohort_size': cohort_size,
+            'percentile': percentile,
+            'rank': rank,
+            'ai_insights': ai_insights,
         })
 
     @staticmethod
@@ -496,6 +544,125 @@ class ExamResultView(View):
             .filter(test=test, student=student, attempt__isnull=True)
             .first()
         )
+
+
+# ---------------------------------------------------------------------------
+# AI-style performance insights — heuristic, deterministic, no LLM call.
+# Returns a dict with: tone, headline, message, subject_breakdown, weak_topics,
+# strong_topics, roadmap (list of action items), accuracy, time_pressure.
+# ---------------------------------------------------------------------------
+def _compute_ai_insights(attempt, rows, test, percentile):
+    pct = float(attempt.percentage or 0)
+    passed = (attempt.result == 'PASS')
+
+    # Per-subject + per-topic accuracy buckets
+    subj = {}
+    topic = {}
+    for r in rows:
+        q = r['question']
+        s_name = q.subject.name if q.subject else 'General'
+        t_name = q.topic.name if q.topic else (q.chapter.name if q.chapter else 'General')
+        subj.setdefault(s_name, {'total': 0, 'correct': 0})
+        topic.setdefault(t_name, {'total': 0, 'correct': 0})
+        subj[s_name]['total'] += 1
+        topic[t_name]['total'] += 1
+        if r['is_correct']:
+            subj[s_name]['correct'] += 1
+            topic[t_name]['correct'] += 1
+
+    def _pct(d):
+        return round((d['correct'] / d['total']) * 100, 1) if d['total'] else 0
+
+    subject_breakdown = sorted(
+        ({'name': k, 'total': v['total'], 'correct': v['correct'], 'pct': _pct(v)}
+         for k, v in subj.items()),
+        key=lambda x: x['pct'], reverse=True,
+    )
+    topic_list = [
+        {'name': k, 'total': v['total'], 'correct': v['correct'], 'pct': _pct(v)}
+        for k, v in topic.items() if v['total'] >= 1
+    ]
+    weak_topics = sorted([t for t in topic_list if t['pct'] < 50],
+                         key=lambda x: x['pct'])[:5]
+    strong_topics = sorted([t for t in topic_list if t['pct'] >= 75],
+                           key=lambda x: x['pct'], reverse=True)[:5]
+
+    # Time pressure: did the student rush or spend extra?
+    duration_s = (test.total_duration_minutes or 0) * 60
+    taken_s = attempt.time_taken_seconds or 0
+    time_pressure = None
+    if duration_s and taken_s:
+        ratio = taken_s / duration_s
+        if ratio < 0.5:
+            time_pressure = 'You finished in less than half the time — re-read questions before answering.'
+        elif ratio > 0.95:
+            time_pressure = 'You used nearly the full time — practice timed mocks to improve speed.'
+
+    # Tone + headline (psychology-driven messaging)
+    if passed and pct >= 85:
+        tone = 'celebrate'
+        headline = '🌟 Outstanding! You’ve mastered these concepts.'
+        message = ('Top-tier performance. Keep this momentum — '
+                   'tackle harder mocks and aim for full-length papers next.')
+    elif passed:
+        tone = 'positive'
+        headline = '✅ Great job! You cleared the test.'
+        message = ('Solid pass. Polish your weak topics below and you’ll '
+                   'jump into the high-percentile band soon.')
+    elif pct >= 50:
+        tone = 'supportive'
+        headline = '💪 You’re almost there!'
+        message = ('You’re close to the cut-off. Focus on the topics flagged '
+                   'below — small targeted practice will tip you over.')
+    elif pct >= 25:
+        tone = 'supportive'
+        headline = '📚 Keep going — every attempt counts.'
+        message = ('Build foundations first. Spend a focused week on the '
+                   'weak topics below before retaking this test.')
+    else:
+        tone = 'encourage'
+        headline = '🌱 Start with the basics — you’ve got this.'
+        message = ('Review concept videos for the weak topics, then attempt '
+                   'an easier practice test to build confidence.')
+
+    # Roadmap (deterministic action plan)
+    roadmap = []
+    for w in weak_topics[:3]:
+        roadmap.append({
+            'icon': 'fa-bullseye',
+            'title': f'Practice 10 questions on "{w["name"]}"',
+            'detail': f'Current accuracy {w["pct"]}% — target 75%+',
+        })
+    if attempt.skipped and attempt.skipped > 0:
+        roadmap.append({
+            'icon': 'fa-clock',
+            'title': f'Reduce skipped questions ({attempt.skipped} left blank)',
+            'detail': 'Even a guess on MCQs improves expected score.',
+        })
+    if percentile is not None and percentile < 50:
+        roadmap.append({
+            'icon': 'fa-chart-line',
+            'title': 'Take 3 timed practice tests this week',
+            'detail': f'You are at {percentile} percentile — sustained practice moves you up fast.',
+        })
+    if not roadmap:
+        roadmap.append({
+            'icon': 'fa-trophy',
+            'title': 'Attempt a harder mock to push your ceiling',
+            'detail': 'Your fundamentals are solid — challenge yourself.',
+        })
+
+    return {
+        'tone': tone,
+        'headline': headline,
+        'message': message,
+        'percentage': pct,
+        'subject_breakdown': subject_breakdown,
+        'weak_topics': weak_topics,
+        'strong_topics': strong_topics,
+        'roadmap': roadmap,
+        'time_pressure': time_pressure,
+    }
 
 
 # ---------------------------------------------------------------------------

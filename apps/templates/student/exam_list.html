@@ -201,8 +201,24 @@
       <div class="tabs" id="tabs">
         <button class="tab active" data-tab="results">Results</button>
         <button class="tab" data-tab="upcoming">Upcoming</button>
+        <button class="tab" data-tab="taken">Exams Taken</button>
         <button class="tab" data-tab="analytics">Analytics</button>
       </div>
+
+      {% if upcoming_soon %}
+      <div style="background:#fffbeb;border:1px solid #f59e0b;border-radius:10px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px;">
+        <i class="fas fa-bell" style="color:#f59e0b;font-size:18px;"></i>
+        <div style="flex:1;font-size:13px;color:#92400e;">
+          <strong>Upcoming exam reminder:</strong>
+          {% for r in upcoming_soon %}
+            <span style="display:inline-block;margin-left:6px;">
+              {{ r.test.title }}
+              {% if r.test.start_datetime %} · {{ r.test.start_datetime|date:"d M, H:i" }}{% endif %}{% if not forloop.last %},{% endif %}
+            </span>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
 
       <!-- ─── Results pane ─── -->
       <div class="pane active" data-pane="results">
@@ -267,9 +283,9 @@
       <!-- ─── Upcoming pane ─── -->
       <div class="pane" data-pane="upcoming">
         <div class="card">
-          {% if rows %}
+          {% if upcoming_rows %}
           <div class="test-grid">
-            {% for r in rows %}
+            {% for r in upcoming_rows %}
             <div class="test-card">
               <div class="top">
                 <div class="ttl">
@@ -278,6 +294,12 @@
                 </div>
                 <span class="bdg blue">{{ r.test.get_test_type_display }}</span>
               </div>
+              {% if r.test.start_datetime %}
+              <div style="background:var(--primary-soft);color:var(--primary);border-radius:8px;padding:8px 12px;font-size:12.5px;font-weight:600;margin-bottom:10px;">
+                <i class="far fa-calendar-alt"></i> Starts {{ r.test.start_datetime|date:"d M Y, H:i" }}
+                {% if r.test.end_datetime %} · ends {{ r.test.end_datetime|date:"d M, H:i" }}{% endif %}
+              </div>
+              {% endif %}
               <div class="info">
                 <div><i class="fas fa-flask" style="color:var(--purple);"></i> Subject<strong>{{ r.subject_name }}</strong></div>
                 <div><i class="far fa-clock" style="color:var(--blue);"></i> Duration<strong>{{ r.test.total_duration_minutes }} min</strong></div>
@@ -300,8 +322,61 @@
           {% else %}
           <div class="empty">
             <div class="big"><i class="fas fa-clipboard"></i></div>
-            <h3>No tests available right now</h3>
+            <h3>No upcoming exams</h3>
             <p>Tests will appear here as soon as your teacher publishes them for your batch.</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- ─── Exams Taken pane ─── -->
+      <div class="pane" data-pane="taken">
+        <div class="card">
+          {% if past %}
+          <table class="list">
+            <thead>
+              <tr>
+                <th>Test Name</th>
+                <th>Subject</th>
+                <th>Submitted</th>
+                <th>Score</th>
+                <th>%</th>
+                <th>Result</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for a in past %}
+              <tr>
+                <td>
+                  <div class="test-mini">
+                    <strong>{{ a.test.title }}</strong>
+                    <div class="meta">{{ a.test.test_code }}</div>
+                  </div>
+                </td>
+                <td>{% if a.test.subject %}{{ a.test.subject.name }}{% else %}—{% endif %}</td>
+                <td>{{ a.submitted_at|date:"d-M-Y H:i" }}</td>
+                <td><strong>{{ a.raw_score|default:"—" }}</strong>/{{ a.total_marks|default:"—" }}</td>
+                <td>{{ a.percentage|default:"0" }}%</td>
+                <td>
+                  {% if a.result == 'PASS' %}<span class="bdg pass"><i class="fas fa-check"></i> Pass</span>
+                  {% elif a.result == 'FAIL' %}<span class="bdg fail"><i class="fas fa-times"></i> Below Avg</span>
+                  {% else %}<span class="bdg gray">{{ a.result|default:"—" }}</span>{% endif %}
+                </td>
+                <td>
+                  <a class="btn btn-outline" href="{% url 'student-exam-result' test_id=a.test.id attempt_id=a.id %}">
+                    <i class="fas fa-eye"></i> View
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <div class="empty">
+            <div class="big"><i class="fas fa-history"></i></div>
+            <h3>No exams taken yet</h3>
+            <p>Once you submit a test it will be listed here.</p>
           </div>
           {% endif %}
         </div>

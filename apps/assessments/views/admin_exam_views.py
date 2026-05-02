@@ -60,7 +60,29 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 def _gate(request):
-    """Centralised gate. Returns (admin_user_or_None, redirect_or_None)."""
+    """Centralised gate. Returns (admin_user_or_None, redirect_or_None).
+
+    Accepts three auth paths:
+      1. Django superuser logged in via `/admin/` (overrides any stale legacy session).
+      2. Legacy session-based ADMIN auth (`session['user_type'] == 'ADMIN'`).
+      3. Otherwise, blocks TEACHER and unauthenticated callers.
+    """
+    # Path 1 — Django superuser/staff coming from /admin/ context.
+    dj_user = getattr(request, 'user', None)
+    if dj_user is not None and dj_user.is_authenticated and (
+        dj_user.is_superuser or dj_user.is_staff
+    ):
+        from accounts.models import Admin
+        admin_user = None
+        email = getattr(dj_user, 'email', '') or ''
+        if email:
+            admin_user = Admin.objects.filter(email__iexact=email).first()
+        if admin_user is None:
+            admin_user = Admin.objects.order_by('created_at').first()
+        if admin_user is not None:
+            return admin_user, None
+
+    # Path 2/3 — legacy session-based.
     if request.session.get('user_type') == 'TEACHER':
         return None, _forbidden(request, 'Teachers cannot access the exams module.')
     admin_user = get_logged_in_admin(request)
