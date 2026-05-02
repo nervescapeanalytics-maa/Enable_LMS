@@ -135,6 +135,53 @@ def question_import_template(request):
 
 
 # ===========================================================================
+# ZIP EXPORT  /staff/exams/export-zip/
+# ===========================================================================
+class ZipExportPickerView(View):
+    """Lightweight picker: choose a Test and download a ZIP of its questions."""
+
+    template_name = 'exams/admin_zip_export.html'
+
+    def get(self, request):
+        admin_user, redir = _gate(request)
+        if redir:
+            return redir
+        ctx = _exam_ctx(request, admin_user, active_page='exam-import',
+                        page_title='Export Test as ZIP')
+        ctx['tests'] = Test.objects.filter(is_deleted=False).order_by('-created_at')[:300]
+        return render(request, self.template_name, ctx)
+
+    def post(self, request):
+        admin_user, redir = _gate(request)
+        if redir:
+            return redir
+        test_id = request.POST.get('test_id')
+        if not test_id:
+            messages.error(request, 'Pick a test to export.')
+            return redirect('staff-exam-export-zip-picker')
+        test = get_object_or_404(Test, id=test_id, is_deleted=False)
+        try:
+            blob = importers.export_test_zip(test)
+        except Exception as e:  # noqa: BLE001
+            logger.exception('ZIP export failed for test %s', test.id)
+            messages.error(request, f'Export failed: {e}')
+            return redirect('staff-exam-export-zip-picker')
+
+        log_exam_event(
+            request=request, actor=admin_user,
+            action='TEST_EXPORT_ZIP',
+            resource_type='Test', resource_id=test.id,
+            resource_name=test.test_code,
+            description=f'exported test {test.test_code} as ZIP ({len(blob)} bytes)',
+        )
+
+        safe = (test.test_code or 'test').replace('/', '_').replace(' ', '_')
+        resp = HttpResponse(blob, content_type='application/zip')
+        resp['Content-Disposition'] = f'attachment; filename="{safe}_questions.zip"'
+        return resp
+
+
+# ===========================================================================
 # TEST VERSIONS  /staff/exams/<test_id>/versions/
 # ===========================================================================
 class TestVersionListView(View):

@@ -145,29 +145,43 @@ def _parse_zip(blob: bytes, *, register: bool) -> tuple[list[dict], dict]:
 
     # Find the spreadsheet
     names = [n for n in zf.namelist() if not n.endswith('/')]
-    sheet_name = None
-    # Prefer canonical names
-    for cand in ('questions.xlsx', 'questions.csv'):
-        for n in names:
-            if Path(n).name.lower() == cand:
-                sheet_name = n
-                break
-        if sheet_name:
-            break
-    if not sheet_name:
-        for n in names:
-            low = n.lower()
-            if low.endswith('.xlsx') or low.endswith('.csv'):
-                sheet_name = n
-                break
-    if not sheet_name:
-        raise ValueError('ZIP must contain a questions.xlsx or questions.csv')
 
-    sheet_blob = zf.read(sheet_name)
-    if sheet_name.lower().endswith('.csv'):
-        rows = _parse_csv(sheet_blob)
+    # ── QTI 1.x / 2.x detection ────────────────────────────────────────────
+    # QTI Content Packages always carry an imsmanifest.xml at the root.
+    # Convert MCQ items to our row schema in-flight.
+    is_qti = any(Path(n).name.lower() == 'imsmanifest.xml' for n in names)
+    if is_qti:
+        try:
+            qti_rows = _parse_qti(zf, names)
+        except Exception as e:  # noqa: BLE001
+            zf.close()
+            raise ValueError(f'QTI parsing failed: {e}') from e
+        # Allow image co-registration alongside QTI items
+        rows = qti_rows
+        sheet_name = None
     else:
-        rows = _parse_xlsx(sheet_blob)
+        sheet_name = None
+        for cand in ('questions.xlsx', 'questions.csv'):
+            for n in names:
+                if Path(n).name.lower() == cand:
+                    sheet_name = n
+                    break
+            if sheet_name:
+                break
+        if not sheet_name:
+            for n in names:
+                low = n.lower()
+                if low.endswith('.xlsx') or low.endswith('.csv'):
+                    sheet_name = n
+                    break
+        if not sheet_name:
+            raise ValueError('ZIP must contain questions.xlsx, questions.csv, or imsmanifest.xml (QTI)')
+
+        sheet_blob = zf.read(sheet_name)
+        if sheet_name.lower().endswith('.csv'):
+            rows = _parse_csv(sheet_blob)
+        else:
+            rows = _parse_xlsx(sheet_blob)
 
     # Build a case-insensitive basename → zip-entry map for image lookup
     by_basename: dict[str, str] = {}
@@ -228,6 +242,225 @@ def parse_zip_with_assets(file_obj) -> list[dict]:
     blob = file_obj.read() if hasattr(file_obj, 'read') else bytes(file_obj)
     rows, _ = _parse_zip(blob, register=True)
     return rows
+
+
+# ---------------------------------------------------------------------------
+# QTI 1.x / 2.x  (best-effort MCQ_SINGLE / MCQ_MULTI / TRUE_FALSE)
+# ---------------------------------------------------------------------------
+def _qti_strip(s):
+    if s is None:
+        return ''
+    return ' '.join(str(s).split()).strip()
+
+
+def _parse_qti(zf: zipfile.ZipFile, names: list[str]) -> list[dict]:
+    """Parse a QTI Content Package (1.x or 2.x) into row dicts.
+
+    Heuristic: search every *.xml entry for ``assessmentItem`` (QTI 2.x) or
+    ``item``/``response_lid`` (QTI 1.x). Unsupported item types are skipped
+    with a warning rather than failing the whole import.
+    """
+    import re
+    import xml.etree.ElementTree as ET
+
+    out: list[dict] = []
+    skipped = 0
+
+    def _localname(tag: str) -> str:
+        # strip XML namespaces: '{ns}tag' → 'tag'
+        return tag.rsplit('}', 1)[-1].lower()
+
+    for n in names:
+        if not n.lower().endswith('.xml'):
+            continue
+        if Path(n).name.lower() == 'imsmanifest.xml':
+            continue
+        try:
+            data = zf.read(n)
+            root = ET.fromstring(data)
+        except Exception:  # noqa: BLE001
+            continue
+
+        # Walk every node and snapshot QTI items
+        for node in root.iter():
+            tag = _localname(node.tag)
+
+            # ─── QTI 2.x ────────────────────────────────────────────────
+            if tag == 'assessmentitem':
+                code = node.attrib.get('identifier') or f'QTI{len(out)+1:03d}'
+                # itemBody → text + choiceInteraction
+                body_text = ''
+                choices: list[tuple[str, str]] = []  # [(identifier, text)]
+                correct_ids: list[str] = []
+                for sub in node.iter():
+                    name = _localname(sub.tag)
+                    if name == 'itembody':
+                        body_text = _qti_strip(''.join(sub.itertext()))
+                    elif name == 'simplechoice':
+                        choices.append((
+                            sub.attrib.get('identifier', ''),
+                            _qti_strip(''.join(sub.itertext())),
+                        ))
+                    elif name == 'correctresponse':
+                        for v in sub.iter():
+                            if _localname(v.tag) == 'value':
+                                txt = (v.text or '').strip()
+                                if txt:
+                                    correct_ids.append(txt)
+                if not choices:
+                    skipped += 1
+                    continue
+                row = _qti_row_from_choices(code, body_text, choices, correct_ids)
+                if row:
+                    out.append(row)
+                else:
+                    skipped += 1
+
+            # ─── QTI 1.x ────────────────────────────────────────────────
+            elif tag == 'item':
+                code = node.attrib.get('ident') or node.attrib.get('title') or f'QTI{len(out)+1:03d}'
+                body_text = ''
+                choices: list[tuple[str, str]] = []
+                correct_ids: list[str] = []
+                for sub in node.iter():
+                    name = _localname(sub.tag)
+                    if name == 'mattext' and not body_text:
+                        body_text = _qti_strip(sub.text or '')
+                    elif name == 'response_label':
+                        cid = sub.attrib.get('ident', '')
+                        text = ''
+                        for tt in sub.iter():
+                            if _localname(tt.tag) == 'mattext':
+                                text = _qti_strip(tt.text or '')
+                                break
+                        choices.append((cid, text))
+                    elif name == 'varequal':
+                        txt = (sub.text or '').strip()
+                        if txt:
+                            correct_ids.append(txt)
+                if not choices:
+                    skipped += 1
+                    continue
+                row = _qti_row_from_choices(code, body_text, choices, correct_ids)
+                if row:
+                    out.append(row)
+                else:
+                    skipped += 1
+
+    if skipped:
+        logger.info('QTI import: skipped %d unsupported item(s)', skipped)
+    if not out:
+        raise ValueError(
+            'QTI package contained no MCQ-style items we could parse.'
+        )
+    return out
+
+
+def _qti_row_from_choices(code, body, choices, correct_ids) -> Optional[dict]:
+    """Map up to 5 QTI choices → option_a..option_e and resolve correct letters."""
+    if not choices:
+        return None
+    letters = ['A', 'B', 'C', 'D', 'E']
+    if len(choices) > 5:
+        choices = choices[:5]
+    id_to_letter = {cid: letters[i] for i, (cid, _t) in enumerate(choices)}
+    correct_letters = sorted({id_to_letter[c] for c in correct_ids if c in id_to_letter})
+    if not correct_letters:
+        return None
+    is_multi = len(correct_letters) > 1
+    row = {
+        'question_code': str(code)[:50],
+        'question_text': body or 'QTI question',
+        'question_type': 'MCQ_MULTI' if is_multi else 'MCQ_SINGLE',
+        'correct_answer': ','.join(correct_letters),
+        'positive_marks': '1',
+        'negative_marks': '0',
+        'partial_marks': '0',
+        'difficulty': 'MEDIUM',
+        'question_order': '0',
+        'tags': 'qti',
+    }
+    for i, (_cid, text) in enumerate(choices):
+        row[f'option_{letters[i].lower()}'] = text
+    for i in range(len(choices), 4):
+        row[f'option_{letters[i].lower()}'] = ''
+    return row
+
+
+# ---------------------------------------------------------------------------
+# Export — bundle a Test's questions back to a ZIP package
+# ---------------------------------------------------------------------------
+def export_test_zip(test: Test) -> bytes:
+    """Return ZIP bytes containing questions.csv + (referenced) images.
+
+    Image columns that point at /media/... are resolved to filesystem paths
+    under MEDIA_ROOT and added to images/ in the ZIP, with the column
+    rewritten to a relative path.
+    """
+    from django.conf import settings as _s
+
+    media_root = Path(getattr(_s, 'MEDIA_ROOT', 'runtime/media'))
+    media_url = (getattr(_s, 'MEDIA_URL', '/media/') or '/media/').rstrip('/')
+
+    qs = (Question.objects
+          .filter(tenant=test.tenant, test=test, is_deleted=False)
+          .order_by('question_order', 'question_code'))
+
+    sio = io.StringIO()
+    writer = csv.DictWriter(sio, fieldnames=ALL_COLS)
+    writer.writeheader()
+
+    image_map: dict[str, str] = {}  # source_fs_path → arcname
+    for q in qs:
+        row = {c: '' for c in ALL_COLS}
+        row.update({
+            'question_code': q.question_code or f'Q{q.question_order or 0}',
+            'question_text': q.question_text or '',
+            'question_type': q.question_type or 'MCQ_SINGLE',
+            'option_a': q.option_a or '', 'option_b': q.option_b or '',
+            'option_c': q.option_c or '', 'option_d': q.option_d or '',
+            'option_e': q.option_e or '',
+            'correct_answer': q.correct_answer or '',
+            'positive_marks': str(q.positive_marks or ''),
+            'negative_marks': str(q.negative_marks or ''),
+            'partial_marks': str(q.partial_marks or ''),
+            'difficulty': q.difficulty or '',
+            'answer_explanation': q.answer_explanation or '',
+            'question_order': str(q.question_order or ''),
+            'tags': ','.join(q.tags or []) if isinstance(q.tags, list) else (q.tags or ''),
+        })
+        for col in IMAGE_COLS:
+            url = getattr(q, col, '') or ''
+            if not url:
+                continue
+            arc = None
+            if url.startswith(media_url + '/'):
+                rel = url[len(media_url) + 1:]
+                src = media_root / rel
+                if src.exists():
+                    arc = f'images/{Path(rel).name}'
+                    image_map[str(src)] = arc
+                    row[col] = arc
+            else:
+                row[col] = url  # external URL — leave as-is
+        writer.writerow(row)
+
+    zbuf = io.BytesIO()
+    with zipfile.ZipFile(zbuf, 'w', zipfile.ZIP_DEFLATED) as z:
+        z.writestr('questions.csv', sio.getvalue())
+        for src, arc in image_map.items():
+            try:
+                z.write(src, arc)
+            except OSError:
+                continue
+        # Bundle a small README for the human admin
+        z.writestr('README.txt',
+                   'Enable-LMS Test export\n\n'
+                   f'Test code: {test.test_code}\nTitle: {test.title}\n'
+                   f'Questions: {qs.count()}\n\n'
+                   'Edit questions.csv and re-import via /staff/exams/import/.\n'
+                   'Image filenames must remain in the images/ folder.\n')
+    return zbuf.getvalue()
 
 
 # ---------------------------------------------------------------------------

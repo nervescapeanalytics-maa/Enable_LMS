@@ -223,6 +223,7 @@ from assessments.views.admin_exam_views import (
 )
 from assessments.views.phase4_views import (
     QuestionImportView, question_import_template,
+    ZipExportPickerView,
     TestVersionListView, TestVersionSnapshotView, TestVersionRestoreView, TestVersionDiffView,
     AIInsightsView, UnderperformerListView, ExamReportsView, export_exam_report_csv,
     ExamThresholdsView,
@@ -261,6 +262,7 @@ urlpatterns += [
     # Staff Dashboard — Exams Phase 4 (bulk import + version control)
     path('staff/exams/import/',                         QuestionImportView.as_view(),    name='staff-exam-import'),
     path('staff/exams/import/template/',                question_import_template,        name='staff-exam-import-template'),
+    path('staff/exams/export-zip/',                     ZipExportPickerView.as_view(),   name='staff-exam-export-zip-picker'),
     path('staff/exams/<uuid:test_id>/versions/',        TestVersionListView.as_view(),   name='staff-exam-versions'),
     path('staff/exams/<uuid:test_id>/versions/snapshot/', TestVersionSnapshotView.as_view(), name='staff-exam-version-snapshot'),
     path('staff/exams/<uuid:test_id>/versions/diff/',   TestVersionDiffView.as_view(),   name='staff-exam-version-diff'),

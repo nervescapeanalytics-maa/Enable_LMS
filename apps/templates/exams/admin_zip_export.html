@@ -1,0 +1,53 @@
+{% extends 'dashboards/admin_base.html' %}
+{% block admin_content %}
+<div style="max-width:780px;margin:0 auto;padding:30px 24px;">
+  <h1 style="font-size:22px;font-weight:700;margin:0 0 6px;">Export Test as ZIP</h1>
+  <p style="color:#64748b;margin:0 0 24px;font-size:14px;">
+    Bundle a test's questions, options and uploaded images into a single
+    ZIP archive. The exported ZIP can be re-imported via
+    <a href="{% url 'staff-exam-import' %}">Bulk Import</a> on this same
+    site or any other Enable-LMS instance. Compatible with the Test
+    Sections ZIP format.
+  </p>
+
+  {% if messages %}
+    {% for m in messages %}
+      <div style="padding:10px 14px;border-radius:8px;margin-bottom:10px;
+                  background:{% if m.tags == 'error' %}#fee2e2{% else %}#dbeafe{% endif %};
+                  color:#0f172a;font-size:14px;">{{ m }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <form method="post" style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:22px;">
+    {% csrf_token %}
+    <label style="display:block;font-weight:600;margin-bottom:6px;">Test to export</label>
+    <select name="test_id" required
+            style="width:100%;padding:9px 11px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;background:#fff;">
+      <option value="">— Select a test —</option>
+      {% for t in tests %}
+        <option value="{{ t.id }}">{{ t.test_code }} — {{ t.title }}</option>
+      {% endfor %}
+    </select>
+
+    <div style="margin-top:18px;display:flex;gap:10px;">
+      <button type="submit"
+              style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;
+                     padding:10px 20px;border-radius:8px;font-weight:600;font-size:14px;cursor:pointer;">
+        Download ZIP
+      </button>
+      <a href="{% url 'staff-exam-import' %}"
+         style="padding:10px 20px;border-radius:8px;border:1px solid #e5e7eb;
+                background:#f8fafc;color:#0f172a;text-decoration:none;font-weight:600;font-size:14px;">
+        Go to Import
+      </a>
+    </div>
+  </form>
+
+  <div style="margin-top:18px;padding:14px 16px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;font-size:13px;color:#166534;">
+    <strong>ZIP contents:</strong> <code>questions.csv</code> with all rows,
+    <code>images/</code> with referenced uploaded images, and a
+    <code>README.txt</code>. Image columns in the CSV will reference files
+    inside <code>images/</code>.
+  </div>
+</div>
+{% endblock %}

@@ -1,4 +1,8 @@
 from django.contrib import admin
+from django.http import HttpResponse
+from django.urls import path, reverse
+from django.shortcuts import redirect
+from django.contrib import messages
 from django.utils.html import format_html
 from assessments.models import (
     Test, TestSection, Question, TestAttempt,
@@ -8,6 +12,39 @@ from core.admin_utils import EnhancedModelAdmin, ImportExportMixin, export_as_cs
 from assessments.permissions import (
     can_manage_exams, is_admin_full, get_logged_in_admin,
 )
+from assessments import importers as _exam_importers
+
+
+def _export_zip_action(modeladmin, request, queryset):
+    """Admin action: export the parent Test(s) of selected sections as ZIP."""
+    test_ids = list(queryset.values_list('test_id', flat=True).distinct())
+    if not test_ids:
+        messages.error(request, 'No tests resolved from the selection.')
+        return None
+    if len(test_ids) > 1:
+        messages.error(request, 'Pick sections from a single Test to export. (Got {} tests.)'.format(len(test_ids)))
+        return None
+    test = Test.objects.get(id=test_ids[0])
+    blob = _exam_importers.export_test_zip(test)
+    safe = (test.test_code or 'test').replace('/', '_').replace(' ', '_')
+    resp = HttpResponse(blob, content_type='application/zip')
+    resp['Content-Disposition'] = f'attachment; filename="{safe}_questions.zip"'
+    return resp
+_export_zip_action.short_description = 'Export ZIP (questions + images) for the parent Test'
+
+
+def _export_zip_test_action(modeladmin, request, queryset):
+    """Admin action on Test: export selected Test as ZIP."""
+    if queryset.count() != 1:
+        messages.error(request, 'Pick exactly one test to export.')
+        return None
+    test = queryset.first()
+    blob = _exam_importers.export_test_zip(test)
+    safe = (test.test_code or 'test').replace('/', '_').replace(' ', '_')
+    resp = HttpResponse(blob, content_type='application/zip')
+    resp['Content-Disposition'] = f'attachment; filename="{safe}_questions.zip"'
+    return resp
+_export_zip_test_action.short_description = 'Export ZIP (questions + images)'
 
 
 class ExamRBACMixin:
@@ -74,7 +111,7 @@ class TestAdmin(ExamRBACMixin, ImportExportMixin, EnhancedModelAdmin):
     search_fields = ('test_code', 'title')
     date_hierarchy = 'start_datetime'
     inlines = [TestSectionInline]
-    actions = [export_as_csv, export_as_json, activate_selected, deactivate_selected]
+    actions = [export_as_csv, export_as_json, activate_selected, deactivate_selected, _export_zip_test_action]
     readonly_fields = ('id', 'created_at', 'updated_at', 'published_at')
     fieldsets = (
         ('Identification', {
@@ -153,9 +190,10 @@ class TestAdmin(ExamRBACMixin, ImportExportMixin, EnhancedModelAdmin):
 @admin.register(TestSection)
 class TestSectionAdmin(ExamRBACMixin, EnhancedModelAdmin):
     enf_hide_tools = True
+    change_list_template = 'admin/assessments/testsection_changelist.html'
     list_display = ('test', 'section_name', 'section_order', 'total_questions', 'max_marks')
     list_filter = ('test',)
-    actions = [export_as_csv]
+    actions = [export_as_csv, _export_zip_action]
     readonly_fields = ('id',)
     fieldsets = (
         (None, {
