@@ -100,6 +100,7 @@ HEADER_ALIASES = {
     'marks': 'positive_marks', 'positive': 'positive_marks',
     'pos_marks': 'positive_marks', 'mark': 'positive_marks',
     'negative': 'negative_marks', 'neg_marks': 'negative_marks',
+    'negative_mark': 'negative_marks', 'neg_mark': 'negative_marks',
     'partial': 'partial_marks',
     # explanation
     'explanation': 'answer_explanation', 'solution': 'answer_explanation',
@@ -108,6 +109,13 @@ HEADER_ALIASES = {
     # ordering
     'order': 'question_order', 'sequence': 'question_order',
     'sl_no': 'question_order', 'serial': 'question_order',
+    # misc legacy schemas
+    'options': 'option',           # plural → single packed-options column
+    'opts': 'option',
+    'choices': 'option',
+    'multi': 'multi_choice', 'is_multi': 'multi_choice', 'multiple': 'multi_choice',
+    'multiselect': 'multi_choice', 'is_multiple': 'multi_choice',
+    'section_name': 'section', 'section_title': 'section',
 }
 
 
@@ -142,6 +150,84 @@ def _canon_row(raw: dict) -> dict:
             continue
         out[ck] = v.strip() if isinstance(v, str) else v
     return out
+
+
+_OPT_PREFIX_RE = None  # lazily compiled
+
+
+def _split_packed_options(blob: str) -> list[str]:
+    """Split a packed `option` cell into up to 5 entries.
+
+    Many human-authored spreadsheets cram all four MCQ options into one cell,
+    separated by newlines, pipes, or semicolons, often with letter prefixes
+    like ``A)`` / ``A.`` / ``(a)`` / ``1)``.
+    """
+    import re
+    global _OPT_PREFIX_RE
+    if _OPT_PREFIX_RE is None:
+        _OPT_PREFIX_RE = re.compile(r'^\s*[\(\[]?\s*[A-Ea-e1-5]\s*[\)\]\.\:\-]\s*')
+
+    s = (blob or '').strip()
+    if not s:
+        return []
+    # Pick the separator that yields the most parts (handles mixed inputs).
+    candidates = []
+    for sep in ('\r\n', '\n', '\r', '||', '|', ';'):
+        parts = [p.strip() for p in s.split(sep) if p.strip()]
+        if len(parts) >= 2:
+            candidates.append((len(parts), parts))
+    parts = max(candidates, key=lambda x: x[0])[1] if candidates else [s]
+    cleaned = []
+    for p in parts[:5]:
+        cleaned.append(_OPT_PREFIX_RE.sub('', p).strip())
+    return cleaned
+
+
+def _expand_legacy_row(row: dict, idx: int) -> dict:
+    """Forgiving fix-ups for spreadsheet schemas that don't match canonical 1:1.
+
+    Side-effects on ``row``:
+      * Auto-assign ``question_code`` if missing  (``Q###`` from row index).
+      * Split a single packed ``option`` cell into ``option_a`` … ``option_e``.
+      * Coerce ``question_type`` to ``MCQ_MULTI`` when ``multi_choice`` is truthy.
+      * Coerce common positive/negative truthy strings to type-correct values.
+    """
+    # 1. Auto-assign question_code if absent
+    if not str(row.get('question_code') or '').strip():
+        row['question_code'] = f'Q{idx:03d}'
+
+    # 2. multi_choice flag → question_type override
+    mc_raw = str(row.get('multi_choice') or '').strip().lower()
+    if mc_raw in ('y', 'yes', 'true', '1', 't', 'multi', 'multiple'):
+        row['question_type'] = 'MCQ_MULTI'
+    elif mc_raw in ('n', 'no', 'false', '0', 'f', 'single'):
+        # only set if not already explicitly given
+        row.setdefault('question_type', 'MCQ_SINGLE')
+
+    # 2b. Coerce common type aliases
+    qt_aliases = {
+        'MCQ': 'MCQ_SINGLE', 'MCQ_S': 'MCQ_SINGLE', 'SINGLE': 'MCQ_SINGLE',
+        'MCQ_M': 'MCQ_MULTI', 'MULTI': 'MCQ_MULTI', 'MULTIPLE': 'MCQ_MULTI',
+        'MSQ': 'MCQ_MULTI',
+        'NUM': 'NUMERICAL', 'NUMERIC': 'NUMERICAL',
+        'TF': 'TRUE_FALSE', 'TRUEFALSE': 'TRUE_FALSE',
+        'FILL': 'FILL_BLANK', 'BLANK': 'FILL_BLANK', 'FIB': 'FILL_BLANK',
+        'SUB': 'SUBJECTIVE', 'ESSAY': 'SUBJECTIVE',
+    }
+    qt = str(row.get('question_type') or '').strip().upper()
+    if qt and qt not in VALID_TYPES and qt in qt_aliases:
+        row['question_type'] = qt_aliases[qt]
+    elif qt:
+        row['question_type'] = qt
+
+    # 3. Packed single 'option' column → option_a .. option_e
+    has_split = any(row.get(f'option_{c}') for c in 'abcde')
+    if not has_split and row.get('option'):
+        opts = _split_packed_options(row['option'])
+        for letter, txt in zip('abcde', opts):
+            row[f'option_{letter}'] = txt
+
+    return row
 
 
 # ---------------------------------------------------------------------------
@@ -565,6 +651,7 @@ def validate_rows(rows: list[dict], *, test: Test, tenant) -> tuple[list[dict], 
 
     for i, raw in enumerate(rows, start=1):
         row = _canon_row(raw)
+        row = _expand_legacy_row(row, i)
 
         # default question_type to MCQ_SINGLE if absent — the most common case
         if not row.get('question_type'):
