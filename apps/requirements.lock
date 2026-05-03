@@ -142,3 +142,5 @@ wcwidth==0.6.0
 websockets==16.0
 whitenoise==6.8.2
 zope.interface==8.2
+openpyxl==3.1.5
+et-xmlfile==2.0.0

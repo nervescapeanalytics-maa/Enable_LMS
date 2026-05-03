@@ -73,6 +73,77 @@ VALID_TYPES = {
 VALID_DIFFICULTY = {'EASY', 'MEDIUM', 'HARD'}
 
 
+# Aliases — map common header variants to canonical column names so that
+# spreadsheets created by humans (Title Case, spaces, dashes, abbreviations)
+# import without manual editing.
+HEADER_ALIASES = {
+    # question_code
+    'code': 'question_code', 'qcode': 'question_code', 'q_code': 'question_code',
+    'q_no': 'question_code', 'qno': 'question_code', 'qid': 'question_code',
+    'question_id': 'question_code', 'id': 'question_code',
+    # question_text
+    'question': 'question_text', 'text': 'question_text', 'stem': 'question_text',
+    'q_text': 'question_text', 'body': 'question_text',
+    # question_type
+    'type': 'question_type', 'qtype': 'question_type', 'q_type': 'question_type',
+    # options
+    'a': 'option_a', 'b': 'option_b', 'c': 'option_c', 'd': 'option_d', 'e': 'option_e',
+    'opt_a': 'option_a', 'opt_b': 'option_b', 'opt_c': 'option_c',
+    'opt_d': 'option_d', 'opt_e': 'option_e',
+    'choice_a': 'option_a', 'choice_b': 'option_b', 'choice_c': 'option_c',
+    'choice_d': 'option_d', 'choice_e': 'option_e',
+    # correct_answer
+    'answer': 'correct_answer', 'correct': 'correct_answer',
+    'correct_option': 'correct_answer', 'right_answer': 'correct_answer',
+    'key': 'correct_answer',
+    # marks
+    'marks': 'positive_marks', 'positive': 'positive_marks',
+    'pos_marks': 'positive_marks', 'mark': 'positive_marks',
+    'negative': 'negative_marks', 'neg_marks': 'negative_marks',
+    'partial': 'partial_marks',
+    # explanation
+    'explanation': 'answer_explanation', 'solution': 'answer_explanation',
+    # difficulty/level
+    'level': 'difficulty',
+    # ordering
+    'order': 'question_order', 'sequence': 'question_order',
+    'sl_no': 'question_order', 'serial': 'question_order',
+}
+
+
+def _canon_header(name: str) -> str:
+    """Lowercase, strip, and convert spaces / dashes / dots to underscores;
+    then resolve through HEADER_ALIASES to a canonical column name."""
+    if not name:
+        return ''
+    s = str(name).strip().lower()
+    # collapse any whitespace, dashes, dots, slashes to '_'
+    out = []
+    for ch in s:
+        if ch.isalnum():
+            out.append(ch)
+        else:
+            out.append('_')
+    s = ''.join(out)
+    while '__' in s:
+        s = s.replace('__', '_')
+    s = s.strip('_')
+    return HEADER_ALIASES.get(s, s)
+
+
+def _canon_row(raw: dict) -> dict:
+    """Return a row with canonicalised header keys (last-wins on collision)."""
+    out = {}
+    for k, v in (raw or {}).items():
+        if not k:
+            continue
+        ck = _canon_header(k)
+        if not ck:
+            continue
+        out[ck] = v.strip() if isinstance(v, str) else v
+    return out
+
+
 # ---------------------------------------------------------------------------
 # Parse
 # ---------------------------------------------------------------------------
@@ -493,14 +564,21 @@ def validate_rows(rows: list[dict], *, test: Test, tenant) -> tuple[list[dict], 
     seen: set[str] = set()
 
     for i, raw in enumerate(rows, start=1):
-        row = {k.strip().lower(): (v.strip() if isinstance(v, str) else v)
-               for k, v in raw.items() if k}
+        row = _canon_row(raw)
+
+        # default question_type to MCQ_SINGLE if absent — the most common case
+        if not row.get('question_type'):
+            row['question_type'] = 'MCQ_SINGLE'
 
         # required columns present
         missing = [c for c in REQUIRED_COLS if not row.get(c)]
         if missing:
+            present = sorted(k for k in row.keys() if not k.startswith('_'))
             errors.append({'row': i, 'code': 'MISSING',
-                           'message': f'missing: {", ".join(missing)}'})
+                           'message': (
+                               f'missing: {", ".join(missing)}. '
+                               f'found columns: {", ".join(present) or "(none)"}'
+                           )})
             continue
 
         qcode = row['question_code'].strip()
