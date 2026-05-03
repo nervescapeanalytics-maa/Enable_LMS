@@ -1,15 +1,77 @@
 {% extends "admin/change_list.html" %}
 {% load i18n admin_urls %}
 
+{% block content %}
+  {{ block.super }}
+
+  {% if zip_import_history %}
+  <div style="margin:24px 0 12px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;">
+    <div style="padding:14px 18px;background:linear-gradient(135deg,#6d28d9,#7c3aed);color:#fff;display:flex;align-items:center;justify-content:space-between;">
+      <div style="font-weight:700;font-size:14px;letter-spacing:.2px;">
+        📦 {% trans 'ZIP Import History' %}
+      </div>
+      <div style="font-size:11.5px;opacity:.85;">{% trans 'Last 15 uploads' %}</div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead style="background:#f9fafb;">
+          <tr style="text-align:left;color:#374151;">
+            <th style="padding:10px 14px;font-weight:600;">{% trans 'File' %}</th>
+            <th style="padding:10px 14px;font-weight:600;">{% trans 'Test' %}</th>
+            <th style="padding:10px 14px;font-weight:600;">{% trans 'Status' %}</th>
+            <th style="padding:10px 14px;font-weight:600;">{% trans 'Rows' %}</th>
+            <th style="padding:10px 14px;font-weight:600;">{% trans 'Uploaded by' %}</th>
+            <th style="padding:10px 14px;font-weight:600;">{% trans 'When' %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for h in zip_import_history %}
+          <tr style="border-top:1px solid #f1f5f9;">
+            <td style="padding:9px 14px;">
+              <span style="font-weight:600;color:#1f2937;">{{ h.file_name }}</span>
+              <div style="font-size:11px;color:#6b7280;">{% if h.file_size_bytes %}{{ h.file_size_bytes|filesizeformat }}{% endif %}</div>
+            </td>
+            <td style="padding:9px 14px;color:#1f2937;">
+              {% if h.test %}{{ h.test.test_code }} — {{ h.test.title|truncatechars:40 }}{% else %}—{% endif %}
+            </td>
+            <td style="padding:9px 14px;">
+              {% if h.status == 'SUCCESS' %}
+                <span style="background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;padding:2px 9px;border-radius:99px;font-size:11.5px;font-weight:600;">✓ {% trans 'Success' %}</span>
+              {% elif h.status == 'REJECTED' %}
+                <span style="background:#fffbeb;color:#92400e;border:1px solid #fde68a;padding:2px 9px;border-radius:99px;font-size:11.5px;font-weight:600;">⚠ {% trans 'Rejected' %}</span>
+              {% else %}
+                <span style="background:#fef2f2;color:#991b1b;border:1px solid #fecaca;padding:2px 9px;border-radius:99px;font-size:11.5px;font-weight:600;">✗ {% trans 'Failed' %}</span>
+              {% endif %}
+              {% if h.error_message %}<div style="font-size:11px;color:#6b7280;margin-top:4px;max-width:320px;">{{ h.error_message|truncatechars:100 }}</div>{% endif %}
+            </td>
+            <td style="padding:9px 14px;color:#1f2937;font-variant-numeric:tabular-nums;">
+              {% if h.status == 'SUCCESS' %}
+                {{ h.rows_total }}
+                <div style="font-size:11px;color:#6b7280;">+{{ h.rows_created }} / ↻{{ h.rows_updated }}</div>
+              {% else %}—{% endif %}
+            </td>
+            <td style="padding:9px 14px;color:#1f2937;">{{ h.uploaded_by_label|default:"—" }}</td>
+            <td style="padding:9px 14px;color:#6b7280;white-space:nowrap;">{{ h.uploaded_at|date:"M d, Y H:i" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+{% endblock %}
+
 {% block extrastyle %}
   {{ block.super }}
   <style>
-    /* Match the existing admin "+ Add" / "+ Columns" pill style. */
-    .object-tools .enf-tool-btn {
+    /* Match the existing admin "+ Add Test Section" pill exactly. */
+    .object-tools li .enf-tool-btn {
       cursor: pointer;
       border: none;
       font: inherit;
+      /* fall through to .addlink for color/padding/radius */
     }
+    .object-tools li .enf-tool-btn::before { content: "+ "; }
 
     /* Modal overlay (shared by Export + Import) */
     .enf-modal-backdrop {
@@ -24,7 +86,7 @@
     .enf-modal {
       background: #fff;
       border-radius: 14px;
-      width: min(480px, 92vw);
+      width: min(520px, 92vw);
       box-shadow: 0 20px 60px rgba(0,0,0,.25);
       overflow: hidden;
       animation: enfPop .18s ease-out;
@@ -47,14 +109,41 @@
     .enf-modal-bd { padding: 18px 20px 8px; }
     .enf-modal-bd label { display:block; font-size:12px; font-weight:600; color:#374151; margin: 12px 0 6px; }
     .enf-modal-bd label:first-child { margin-top: 0; }
-    .enf-modal-bd select,
-    .enf-modal-bd input[type=file] {
+    .enf-modal-bd select {
       width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:8px;
       font-size:13.5px; background:#fff; box-sizing: border-box;
     }
-    .enf-modal-bd input[type=file] { padding:8px 10px; background:#f9fafb; cursor:pointer; }
-    .enf-modal-bd select:focus,
-    .enf-modal-bd input[type=file]:focus { outline:2px solid #7c3aed; border-color:#7c3aed; }
+    .enf-modal-bd select:focus { outline:2px solid #7c3aed; border-color:#7c3aed; }
+
+    /* Drag-and-drop file zone */
+    .enf-dropzone {
+      border: 2px dashed #c4b5fd;
+      background: #faf5ff;
+      border-radius: 10px;
+      padding: 22px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: background .15s, border-color .15s;
+    }
+    .enf-dropzone:hover,
+    .enf-dropzone.is-drag { background: #f3e8ff; border-color: #7c3aed; }
+    .enf-dropzone.is-error { background: #fef2f2; border-color: #ef4444; }
+    .enf-dropzone .dz-icon { font-size: 28px; color: #7c3aed; }
+    .enf-dropzone .dz-title { font-size: 14px; font-weight: 600; color: #4c1d95; margin-top: 6px; }
+    .enf-dropzone .dz-sub { font-size: 11.5px; color: #6b7280; margin-top: 4px; }
+    .enf-dropzone input[type=file] { display: none; }
+    .enf-dz-file {
+      display: none; margin-top: 10px; padding: 8px 12px;
+      background: #fff; border: 1px solid #e5e7eb; border-radius: 8px;
+      font-size: 13px; color: #1f2937; text-align: left;
+    }
+    .enf-dz-file.is-shown { display: block; }
+    .enf-dz-file .name { font-weight: 600; }
+    .enf-dz-file .size { color: #6b7280; font-size: 11.5px; margin-left: 6px; }
+    .enf-dz-file .clear { float: right; color: #ef4444; cursor: pointer; font-weight: 700; border:none; background:none; font-size: 14px; }
+    .enf-dz-error { display:none; color: #dc2626; font-size: 12px; margin-top: 8px; }
+    .enf-dz-error.is-shown { display: block; }
+
     .enf-modal-hint { font-size:11.5px; color:#6b7280; margin: 10px 0 4px; }
     .enf-modal-hint code { background:#f3f4f6; padding:1px 5px; border-radius:4px; font-size:11px; }
 
@@ -75,22 +164,19 @@
       background: linear-gradient(135deg, #6d28d9, #7c3aed);
       color:#fff;
     }
-    .enf-btn-go:hover { filter: brightness(1.05); }
+    .enf-btn-go:disabled { opacity: .55; cursor: not-allowed; }
+    .enf-btn-go:hover:not(:disabled) { filter: brightness(1.05); }
   </style>
 {% endblock %}
 
 {% block object-tools-items %}
   <li>
     <button type="button" class="addlink enf-tool-btn"
-            data-enf-open="enf-export-modal">
-      {% trans 'Export ZIP' %}
-    </button>
+            data-enf-open="enf-export-modal">{% trans 'Export ZIP' %}</button>
   </li>
   <li>
     <button type="button" class="addlink enf-tool-btn"
-            data-enf-open="enf-import-modal">
-      {% trans 'Import ZIP' %}
-    </button>
+            data-enf-open="enf-import-modal">{% trans 'Import ZIP' %}</button>
   </li>
   {{ block.super }}
 
@@ -117,10 +203,11 @@
     </form>
   </div>
 
-  {# ────────── Import ZIP modal ────────── #}
+  {# ────────── Import ZIP modal (drag-and-drop) ────────── #}
   <div class="enf-modal-backdrop" id="enf-import-modal" role="dialog" aria-modal="true" aria-labelledby="enf-import-title">
     <form class="enf-modal" method="post" enctype="multipart/form-data"
-          action="{% url 'admin:assessments_testsection_import_zip' %}">
+          action="{% url 'admin:assessments_testsection_import_zip' %}"
+          id="enf-import-form">
       {% csrf_token %}
       <div class="enf-modal-hd">
         <h3 id="enf-import-title">{% trans 'Import ZIP into Test' %}</h3>
@@ -132,8 +219,21 @@
           <option value="">— {% trans 'Pick a test' %} —</option>
           {% for t in available_tests %}<option value="{{ t.id }}">{{ t.test_code }} — {{ t.title }}</option>{% endfor %}
         </select>
-        <label for="enf-import-file">{% trans 'ZIP archive' %}</label>
-        <input id="enf-import-file" type="file" name="file" accept=".zip,application/zip" required>
+
+        <label>{% trans 'ZIP archive' %}</label>
+        <div class="enf-dropzone" id="enf-dropzone" tabindex="0" role="button" aria-label="Choose or drop a ZIP file">
+          <div class="dz-icon">⬆</div>
+          <div class="dz-title">{% trans 'Drag &amp; drop your ZIP here' %}</div>
+          <div class="dz-sub">{% trans 'or click to browse' %} · {% trans 'max 50 MB' %}</div>
+          <input type="file" name="file" id="enf-import-file" accept=".zip,application/zip,application/x-zip-compressed" required>
+        </div>
+        <div class="enf-dz-file" id="enf-dz-file">
+          <button type="button" class="clear" id="enf-dz-clear" aria-label="Remove file">×</button>
+          <span class="name" id="enf-dz-name">—</span>
+          <span class="size" id="enf-dz-size"></span>
+        </div>
+        <div class="enf-dz-error" id="enf-dz-error"></div>
+
         <p class="enf-modal-hint">
           {% trans 'ZIP must contain' %} <code>questions.csv</code> {% trans 'or' %} <code>questions.xlsx</code>
           {% trans 'and an' %} <code>images/</code> {% trans 'folder.' %}
@@ -141,7 +241,7 @@
       </div>
       <div class="enf-modal-ft">
         <button type="button" class="enf-btn enf-btn-cancel" data-enf-close>{% trans 'Cancel' %}</button>
-        <button type="submit" class="enf-btn enf-btn-go">↑ {% trans 'Upload &amp; Import' %}</button>
+        <button type="submit" class="enf-btn enf-btn-go" id="enf-import-submit" disabled>↑ {% trans 'Upload &amp; Import' %}</button>
       </div>
     </form>
   </div>
@@ -160,18 +260,91 @@
         btn.addEventListener('click', function (e) { e.preventDefault(); open(btn.getAttribute('data-enf-open')); });
       });
       document.querySelectorAll('.enf-modal-backdrop').forEach(function (m) {
-        // close on backdrop click
         m.addEventListener('click', function (e) { if (e.target === m) close(m); });
-        // close on [data-enf-close]
         m.querySelectorAll('[data-enf-close]').forEach(function (c) {
           c.addEventListener('click', function () { close(m); });
         });
       });
-      // close on Escape
       document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {
           document.querySelectorAll('.enf-modal-backdrop.is-open').forEach(close);
         }
+      });
+
+      // ── Drag-and-drop import zone ──
+      var dz = document.getElementById('enf-dropzone');
+      var input = document.getElementById('enf-import-file');
+      var fileBox = document.getElementById('enf-dz-file');
+      var nameEl = document.getElementById('enf-dz-name');
+      var sizeEl = document.getElementById('enf-dz-size');
+      var clearBtn = document.getElementById('enf-dz-clear');
+      var errEl = document.getElementById('enf-dz-error');
+      var submit = document.getElementById('enf-import-submit');
+      var MAX_BYTES = 50 * 1024 * 1024;
+
+      function setError(msg) {
+        if (msg) { errEl.textContent = msg; errEl.classList.add('is-shown'); dz.classList.add('is-error'); }
+        else { errEl.textContent = ''; errEl.classList.remove('is-shown'); dz.classList.remove('is-error'); }
+      }
+      function fmtSize(b) {
+        if (b < 1024) return b + ' B';
+        if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
+        return (b / (1024 * 1024)).toFixed(2) + ' MB';
+      }
+      function validate(f) {
+        if (!f) return 'No file selected.';
+        var name = (f.name || '').toLowerCase();
+        if (!name.endsWith('.zip')) return 'File must be a .zip archive.';
+        if (f.size > MAX_BYTES) return 'File exceeds 50 MB limit.';
+        if (f.size === 0) return 'File is empty.';
+        return null;
+      }
+      function showFile(f) {
+        var err = validate(f);
+        if (err) { setError(err); fileBox.classList.remove('is-shown'); submit.disabled = true; input.value = ''; return; }
+        setError(null);
+        nameEl.textContent = f.name;
+        sizeEl.textContent = '· ' + fmtSize(f.size);
+        fileBox.classList.add('is-shown');
+        submit.disabled = false;
+      }
+      dz && dz.addEventListener('click', function () { input.click(); });
+      dz && dz.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); }
+      });
+      ['dragenter', 'dragover'].forEach(function (ev) {
+        dz && dz.addEventListener(ev, function (e) { e.preventDefault(); e.stopPropagation(); dz.classList.add('is-drag'); });
+      });
+      ['dragleave', 'drop'].forEach(function (ev) {
+        dz && dz.addEventListener(ev, function (e) { e.preventDefault(); e.stopPropagation(); dz.classList.remove('is-drag'); });
+      });
+      dz && dz.addEventListener('drop', function (e) {
+        var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+        if (!f) return;
+        // Assign to the input so the form submits with it
+        try {
+          var dt = new DataTransfer();
+          dt.items.add(f);
+          input.files = dt.files;
+        } catch (err) { /* older browsers */ }
+        showFile(f);
+      });
+      input && input.addEventListener('change', function () {
+        if (input.files && input.files[0]) showFile(input.files[0]);
+      });
+      clearBtn && clearBtn.addEventListener('click', function () {
+        input.value = '';
+        fileBox.classList.remove('is-shown');
+        setError(null);
+        submit.disabled = true;
+      });
+
+      // Final guard on form submit
+      var form = document.getElementById('enf-import-form');
+      form && form.addEventListener('submit', function (e) {
+        var f = input.files && input.files[0];
+        var err = validate(f);
+        if (err) { e.preventDefault(); setError(err); }
       });
     })();
   </script>

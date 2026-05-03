@@ -148,9 +148,16 @@ def insights_for_attempts(attempt_percents, *, tenant=None) -> dict:
 
 def llm_narrative(percents: list[float], predicted: float) -> str:
     """
-    Privacy-safe deterministic placeholder. Swap the body for a real
-    LLM call (OpenAI, on-prem) when ready — the rest of the system
-    only consumes this string.
+    Generate a narrative for the student's performance trajectory.
+
+    Resolution order:
+      1. If an ``AIFeatureConfig`` row exists with ``feature_key='exam.ai_prediction_llm'``,
+         is enabled, has a non-empty ``provider`` and an ``api_key_reference`` that
+         resolves (via ``SystemSetting``) to a real key, call that provider.
+         Currently supports ``provider='openai'`` (chat.completions). Any failure
+         falls back to the deterministic template below — never raises.
+      2. Otherwise (no config, no key, or any error) return a deterministic,
+         privacy-safe template string.
     """
     n = len(percents)
     avg = mean(percents)
@@ -160,8 +167,66 @@ def llm_narrative(percents: list[float], predicted: float) -> str:
         else 'slipping' if predicted < last - 1
         else 'steady'
     )
-    return (
+    fallback = (
         f'Across {n} attempts the student averaged {avg:.1f}% and most '
         f'recently scored {last:.1f}%. The trend is {direction}; the '
         f'rule-based projection for the next attempt is {predicted:.1f}%.'
     )
+
+    # Try real LLM via AIFeatureConfig
+    try:
+        from system_config.models import AIFeatureConfig, SystemSetting
+        cfg = (AIFeatureConfig.objects
+               .filter(feature_key='exam.ai_prediction_llm', is_enabled=True)
+               .order_by('tenant_id').first())
+        if not cfg or not cfg.provider:
+            return fallback
+
+        api_key = ''
+        if cfg.api_key_reference:
+            row = SystemSetting.objects.filter(
+                setting_key=cfg.api_key_reference
+            ).order_by('tenant_id').first()
+            if row:
+                api_key = (row.setting_value or '').strip()
+        if not api_key:
+            return fallback
+
+        provider = (cfg.provider or '').strip().lower()
+        prompt = (
+            f"Give a 2-3 sentence empathetic, study-coach narrative to a student. "
+            f"They have {n} attempts averaging {avg:.1f}%, most recent {last:.1f}%, "
+            f"trend {direction}, projected next score {predicted:.1f}%. "
+            f"Be encouraging and concrete. Do not mention you are an AI."
+        )
+
+        if provider == 'openai':
+            import json
+            import urllib.request
+            endpoint = (cfg.api_endpoint or 'https://api.openai.com/v1/chat/completions')
+            model = (cfg.config_json or {}).get('model', 'gpt-4o-mini')
+            payload = json.dumps({
+                'model': model,
+                'messages': [
+                    {'role': 'system', 'content': 'You are a supportive study coach.'},
+                    {'role': 'user', 'content': prompt},
+                ],
+                'temperature': 0.4,
+                'max_tokens': 160,
+            }).encode('utf-8')
+            req = urllib.request.Request(
+                endpoint, data=payload,
+                headers={'Authorization': f'Bearer {api_key}',
+                         'Content-Type': 'application/json'},
+            )
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                body = json.loads(resp.read().decode('utf-8'))
+            text = body.get('choices', [{}])[0].get('message', {}).get('content', '').strip()
+            return text or fallback
+
+        # Unknown provider — return fallback
+        return fallback
+    except Exception:
+        import logging
+        logging.getLogger(__name__).exception('llm_narrative provider call failed; using fallback')
+        return fallback

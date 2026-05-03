@@ -360,6 +360,15 @@ class TestSectionAdmin(ExamRBACMixin, EnhancedModelAdmin):
             .order_by('-created_at')
             .values('id', 'test_code', 'title')[:300]
         )
+        # Recent ZIP import history (latest 15) for the inline panel
+        try:
+            from .models import ZipImportLog
+            extra_context['zip_import_history'] = list(
+                ZipImportLog.objects.select_related('test')
+                .order_by('-uploaded_at')[:15]
+            )
+        except Exception:
+            extra_context['zip_import_history'] = []
         return super().changelist_view(request, extra_context=extra_context)
 
     def export_zip_view(self, request):
@@ -402,9 +411,24 @@ class TestSectionAdmin(ExamRBACMixin, EnhancedModelAdmin):
         except Test.DoesNotExist:
             messages.error(request, 'Test not found.')
             return redirect('admin:assessments_testsection_changelist')
+
+        from .models import ZipImportLog
+        actor = get_logged_in_admin(request) or request.user
+        actor_label = getattr(actor, 'email', None) or getattr(actor, 'username', None) or str(actor)
+        actor_id = getattr(actor, 'id', None)
+        log_kwargs = dict(
+            tenant=test.tenant, test=test,
+            file_name=getattr(f, 'name', 'upload.zip')[:255],
+            file_size_bytes=getattr(f, 'size', 0) or 0,
+            uploaded_by=actor_id if isinstance(actor_id, (int, str)) and len(str(actor_id)) <= 36 else None,
+            uploaded_by_label=str(actor_label)[:200],
+        )
         try:
             ext = (f.name.rsplit('.', 1)[-1] if '.' in f.name else '').lower()
             if ext != 'zip':
+                ZipImportLog.objects.create(
+                    status=ZipImportLog.Status.REJECTED,
+                    error_message='File must be a .zip archive.', **log_kwargs)
                 messages.error(request, 'File must be a .zip archive.')
                 return redirect('admin:assessments_testsection_changelist')
             rows = _exam_importers.parse_zip_with_assets(f)
@@ -412,23 +436,39 @@ class TestSectionAdmin(ExamRBACMixin, EnhancedModelAdmin):
                 rows, test=test, tenant=test.tenant,
             )
             if errors:
+                ZipImportLog.objects.create(
+                    status=ZipImportLog.Status.REJECTED,
+                    rows_total=len(rows),
+                    error_message=f'{len(errors)} validation error(s). First: {errors[0].get("message", "?")[:500]}',
+                    **log_kwargs)
                 messages.error(
                     request,
                     f'Import rejected — {len(errors)} validation error(s). '
                     f'First: {errors[0].get("message", "?")}',
                 )
                 return redirect('admin:assessments_testsection_changelist')
-            actor = get_logged_in_admin(request) or request.user
             result = _exam_importers.apply_rows(
                 cleaned, test=test, tenant=test.tenant,
                 actor=actor, request=request,
             )
+            ZipImportLog.objects.create(
+                status=ZipImportLog.Status.SUCCESS,
+                rows_total=result.get('total', 0),
+                rows_created=result.get('created', 0),
+                rows_updated=result.get('updated', 0),
+                **log_kwargs)
             messages.success(
                 request,
                 f'Imported {result["total"]} questions into "{test.title}" '
                 f'({result["created"]} new, {result["updated"]} updated).',
             )
         except Exception as e:  # noqa: BLE001
+            try:
+                ZipImportLog.objects.create(
+                    status=ZipImportLog.Status.FAILED,
+                    error_message=str(e)[:1000], **log_kwargs)
+            except Exception:
+                pass
             messages.error(request, f'Import failed: {e}')
         return redirect('admin:assessments_testsection_changelist')
 
@@ -649,3 +689,42 @@ class OfflineTestMarksAdmin(ExamRBACMixin, ImportExportMixin, EnhancedModelAdmin
             return format_html('<span style="font-weight:700;color:{};">{}%</span>', color, pct)
         return '-'
     percentage_display.short_description = '%'
+
+
+# ---------------------------------------------------------------------------
+# ZIP Import History — read-only admin (visible under Exams & Assessments)
+# ---------------------------------------------------------------------------
+from .models import ZipImportLog
+
+
+@admin.register(ZipImportLog)
+class ZipImportLogAdmin(admin.ModelAdmin):
+    list_display = ('file_name', 'test', 'status_badge', 'rows_total',
+                    'rows_created', 'rows_updated', 'uploaded_by_label',
+                    'uploaded_at')
+    list_filter = ('status', 'uploaded_at')
+    search_fields = ('file_name', 'uploaded_by_label', 'test__test_code', 'test__title')
+    readonly_fields = tuple(
+        f.name for f in ZipImportLog._meta.fields
+    )
+    list_per_page = 30
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def status_badge(self, obj):
+        colors = {
+            'SUCCESS': ('#ecfdf5', '#065f46', '#a7f3d0', '✓'),
+            'REJECTED': ('#fffbeb', '#92400e', '#fde68a', '⚠'),
+            'FAILED': ('#fef2f2', '#991b1b', '#fecaca', '✗'),
+        }
+        bg, fg, br, ic = colors.get(obj.status, ('#f3f4f6', '#374151', '#e5e7eb', '·'))
+        return format_html(
+            '<span style="background:{};color:{};border:1px solid {};padding:2px 9px;'
+            'border-radius:99px;font-size:11.5px;font-weight:600;">{} {}</span>',
+            bg, fg, br, ic, obj.get_status_display(),
+        )
+    status_badge.short_description = 'Status'

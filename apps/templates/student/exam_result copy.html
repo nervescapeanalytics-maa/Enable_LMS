@@ -1,0 +1,471 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Result – {{ test.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root{
+    --bg:#f8fafc; --card:#ffffff; --border:#e2e8f0;
+    --text:#0f172a; --muted:#64748b;
+    --primary:#4f46e5; --primary-soft:#eef2ff;
+    --green:#10b981; --green-soft:#d1fae5;
+    --rose:#ef4444; --rose-soft:#fee2e2;
+    --amber:#f59e0b; --amber-soft:#fef3c7;
+    --purple:#8b5cf6;
+  }
+  *{box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;margin:0;}
+
+  .wrap{max-width:1100px;margin:0 auto;padding:28px 24px 60px;}
+
+  /* Header */
+  .crumbs{font-size:13px;color:var(--muted);margin-bottom:14px;}
+  .crumbs a{color:var(--primary);text-decoration:none;font-weight:500;}
+  .crumbs a:hover{text-decoration:underline;}
+
+  .head{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:24px;flex-wrap:wrap;}
+  .head h1{font-size:24px;font-weight:700;margin:0 0 4px;}
+  .head .sub{color:var(--muted);font-size:14px;}
+  .head .actions{display:flex;gap:10px;}
+
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:9px;font-size:14px;font-weight:600;border:none;cursor:pointer;text-decoration:none;transition:all .15s;}
+  .btn-primary{background:linear-gradient(135deg,var(--primary),var(--purple));color:#fff;box-shadow:0 4px 12px rgba(79,70,229,.25);}
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(79,70,229,.35);}
+  .btn-light{background:#fff;color:var(--text);border:1px solid var(--border);}
+  .btn-light:hover{background:#f1f5f9;}
+
+  /* Hero result panel */
+  .hero{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:24px;display:grid;grid-template-columns:auto 1fr;}
+  .hero-left{padding:36px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+             {% if attempt.result == 'PASS' %}background:linear-gradient(135deg,#10b981,#059669);{% else %}background:linear-gradient(135deg,#ef4444,#dc2626);{% endif %}
+             color:#fff;min-width:280px;}
+  .ring{position:relative;width:170px;height:170px;}
+  .ring svg{transform:rotate(-90deg);}
+  .ring .track{stroke:rgba(255,255,255,.25);}
+  .ring .fill{stroke:#fff;stroke-linecap:round;transition:stroke-dashoffset .8s ease;}
+  .ring .pct{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .ring .pct .v{font-size:38px;font-weight:800;line-height:1;}
+  .ring .pct .l{font-size:11px;letter-spacing:1px;text-transform:uppercase;opacity:.85;margin-top:4px;}
+  .verdict{margin-top:18px;font-size:24px;font-weight:800;letter-spacing:.5px;display:flex;align-items:center;gap:10px;}
+  .verdict-sub{font-size:13px;opacity:.85;margin-top:4px;}
+
+  .hero-right{padding:32px 36px;}
+  .hero-right h2{margin:0 0 4px;font-size:20px;font-weight:700;}
+  .hero-right .meta{color:var(--muted);font-size:13px;margin-bottom:24px;}
+  .hero-right .meta span{margin-right:14px;}
+
+  .stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+  .stat{background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:14px;}
+  .stat .v{font-size:22px;font-weight:700;line-height:1;}
+  .stat .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:6px;font-weight:600;}
+  .stat.correct .v{color:var(--green);}
+  .stat.incorrect .v{color:var(--rose);}
+  .stat.skipped .v{color:var(--amber);}
+  .stat.score .v{color:var(--primary);}
+
+  .breakdown{margin-top:22px;padding-top:18px;border-top:1px solid var(--border);}
+  .breakdown .row{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;color:var(--muted);}
+  .breakdown .row strong{color:var(--text);}
+
+  /* Q review */
+  .section-title{font-size:16px;font-weight:700;margin:32px 0 14px;display:flex;align-items:center;gap:10px;}
+  .section-title .ico{width:28px;height:28px;background:var(--primary-soft);color:var(--primary);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;}
+
+  .q-row{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px 22px;margin-bottom:12px;}
+  .q-row.correct{border-left:4px solid var(--green);}
+  .q-row.incorrect{border-left:4px solid var(--rose);}
+  .q-row.skipped{border-left:4px solid var(--amber);}
+
+  .q-row .qh{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:10px;}
+  .q-row .qn{display:flex;align-items:center;gap:10px;}
+  .q-row .qn-badge{width:30px;height:30px;border-radius:8px;background:var(--primary-soft);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;}
+  .q-row .qn-text{font-size:13px;color:var(--muted);}
+  .q-row .qn-text strong{color:var(--text);font-size:14px;display:block;}
+
+  .badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600;}
+  .b-yes{background:var(--green-soft);color:var(--green);}
+  .b-no{background:var(--rose-soft);color:var(--rose);}
+  .b-skip{background:var(--amber-soft);color:var(--amber);}
+
+  .q-text{font-size:15px;line-height:1.6;color:var(--text);margin:8px 0 14px;white-space:pre-wrap;}
+
+  .ans-grid{display:grid;grid-template-columns:1fr 1fr auto;gap:14px;align-items:center;background:#f8fafc;border-radius:8px;padding:12px 14px;font-size:13px;}
+  .ans-grid .lbl{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:3px;}
+  .ans-grid .val{font-weight:600;font-size:14px;}
+  .ans-grid .val.right{color:var(--green);}
+  .ans-grid .val.wrong{color:var(--rose);}
+  .ans-grid .val.skip{color:var(--amber);}
+  .ans-grid .marks{font-weight:700;font-size:15px;color:var(--text);text-align:right;}
+
+  .empty{text-align:center;padding:40px;color:var(--muted);background:var(--card);border:1px solid var(--border);border-radius:12px;}
+
+  @media (max-width:780px){
+    .hero{grid-template-columns:1fr;}
+    .hero-left{min-width:0;}
+    .stat-row{grid-template-columns:repeat(2,1fr);}
+    .ans-grid{grid-template-columns:1fr;}
+  }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="wrap">
+  <div class="crumbs"><a href="{% url 'student-exam-list' %}">My Exams</a> &nbsp;›&nbsp; {{ test.title }} &nbsp;›&nbsp; Result</div>
+
+  <div class="head">
+    <div>
+      <h1>Test Result</h1>
+      <div class="sub">{{ test.title }} · Attempt #{{ attempt.attempt_number }}</div>
+    </div>
+    <div class="actions">
+      <a class="btn btn-light" href="{% url 'student-exam-list' %}"><i class="fas fa-arrow-left"></i> Back to My Exams</a>
+      <button type="button" class="btn btn-primary" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
+    </div>
+  </div>
+
+  <!-- Hero -->
+  {% with pct=attempt.percentage|default:0 %}
+  <div class="hero">
+    <div class="hero-left">
+      <div class="ring">
+        <svg width="170" height="170">
+          <circle class="track" cx="85" cy="85" r="72" fill="none" stroke-width="12"></circle>
+          <circle class="fill" id="ringFill" cx="85" cy="85" r="72" fill="none" stroke-width="12"
+                  stroke-dasharray="452.39" stroke-dashoffset="452.39"></circle>
+        </svg>
+        <div class="pct">
+          <div class="v">{{ pct }}%</div>
+          <div class="l">Score</div>
+        </div>
+      </div>
+      <div class="verdict">
+        {% if attempt.result == 'PASS' %}
+          <i class="fas fa-trophy"></i> PASSED
+        {% else %}
+          <i class="fas fa-times-circle"></i> NOT PASSED
+        {% endif %}
+      </div>
+      <div class="verdict-sub">
+        {% if attempt.result == 'PASS' %}Great job! You scored above {{ test.passing_percent|default:33 }}%.
+        {% else %}Passing mark: {{ test.passing_percent|default:33 }}%. Keep practicing!{% endif %}
+      </div>
+    </div>
+
+    <div class="hero-right">
+      <h2>{{ test.title }}</h2>
+      <div class="meta">
+        <span><i class="fas fa-book"></i> {{ test.subject.name|default:'—' }}</span>
+        <span><i class="far fa-clock"></i> {{ attempt.time_taken_seconds|default:0|floatformat:0 }}s taken</span>
+        <span><i class="far fa-calendar"></i> {{ attempt.submitted_at|date:'d M Y, H:i' }}</span>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat correct">
+          <div class="v">{{ attempt.correct|default:0 }}</div>
+          <div class="l">Correct</div>
+        </div>
+        <div class="stat incorrect">
+          <div class="v">{{ attempt.incorrect|default:0 }}</div>
+          <div class="l">Incorrect</div>
+        </div>
+        <div class="stat skipped">
+          <div class="v">{{ attempt.skipped|default:0 }}</div>
+          <div class="l">Skipped</div>
+        </div>
+        <div class="stat score">
+          <div class="v">{{ attempt.raw_score|default:0 }}</div>
+          <div class="l">/ {{ attempt.total_marks|default:0 }}</div>
+        </div>
+      </div>
+
+      <div class="breakdown">
+        <div class="row"><span>Total Questions</span><strong>{{ attempt.total_questions|default:0 }}</strong></div>
+        <div class="row"><span>Attempted</span><strong>{{ attempt.attempted|default:0 }}</strong></div>
+        <div class="row"><span>Accuracy</span><strong>{% if attempt.attempted %}{% widthratio attempt.correct attempt.attempted 100 %}%{% else %}—{% endif %}</strong></div>
+        <div class="row"><span>Status</span><strong>{{ attempt.status }}</strong></div>
+        {% if percentile is not None %}<div class="row"><span>Percentile</span><strong>{{ percentile }}%</strong></div>{% endif %}
+        {% if rank %}<div class="row"><span>Rank</span><strong>#{{ rank }}{% if cohort_size %} of {{ cohort_size }}{% endif %}</strong></div>{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── AI Performance Insights ─── -->
+  {% if ai_insights %}
+  <div style="margin-top:24px;background:#fff;border:1px solid var(--border);border-radius:14px;padding:24px 26px;
+              border-left:4px solid {% if ai_insights.tone == 'celebrate' %}#10b981{% elif ai_insights.tone == 'positive' %}#3b82f6{% elif ai_insights.tone == 'supportive' %}#f59e0b{% else %}#8b5cf6{% endif %};">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+      <span style="background:linear-gradient(135deg,#4f46e5,#8b5cf6);color:#fff;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;letter-spacing:.5px;">
+        <i class="fas fa-brain"></i> AI INSIGHTS
+      </span>
+      <span style="font-size:11px;color:var(--muted);">Personalised analysis of your performance</span>
+    </div>
+    <h2 style="margin:0 0 6px;font-size:20px;font-weight:800;">{{ ai_insights.headline }}</h2>
+    <p style="margin:0 0 18px;font-size:14px;color:var(--muted);line-height:1.55;">{{ ai_insights.message }}</p>
+
+    {% if ai_insights.subject_breakdown %}
+    <div style="margin-bottom:18px;">
+      <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">Subject-wise accuracy</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;">
+        {% for s in ai_insights.subject_breakdown %}
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:10px 12px;">
+          <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:6px;">
+            <span>{{ s.name }}</span><span>{{ s.pct }}%</span>
+          </div>
+          <div style="height:6px;background:#e5e7eb;border-radius:99px;overflow:hidden;">
+            <div style="height:100%;width:{{ s.pct }}%;background:{% if s.pct >= 75 %}#10b981{% elif s.pct >= 50 %}#3b82f6{% elif s.pct >= 25 %}#f59e0b{% else %}#ef4444{% endif %};"></div>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">{{ s.correct }}/{{ s.total }} correct</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if ai_insights.weak_topics or ai_insights.strong_topics %}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;">
+      {% if ai_insights.weak_topics %}
+      <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px;">
+        <div style="font-size:12px;font-weight:700;color:#991b1b;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">
+          <i class="fas fa-exclamation-triangle"></i> Areas to focus
+        </div>
+        {% for t in ai_insights.weak_topics %}
+        <div style="font-size:13px;display:flex;justify-content:space-between;padding:4px 0;border-top:1px dashed #fecaca;">
+          <span>{{ t.name }}</span><strong style="color:#dc2626;">{{ t.pct }}%</strong>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% if ai_insights.strong_topics %}
+      <div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:10px;padding:14px;">
+        <div style="font-size:12px;font-weight:700;color:#065f46;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">
+          <i class="fas fa-trophy"></i> Strengths
+        </div>
+        {% for t in ai_insights.strong_topics %}
+        <div style="font-size:13px;display:flex;justify-content:space-between;padding:4px 0;border-top:1px dashed #a7f3d0;">
+          <span>{{ t.name }}</span><strong style="color:#059669;">{{ t.pct }}%</strong>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% if ai_insights.roadmap %}
+    <div>
+      <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;">
+        <i class="fas fa-route"></i> Your study roadmap
+      </div>
+      {% for step in ai_insights.roadmap %}
+      <div style="display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--border);">
+        <div style="width:34px;height:34px;border-radius:8px;background:var(--primary-soft);color:var(--primary);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i class="fas {{ step.icon }}"></i>
+        </div>
+        <div>
+          <div style="font-size:14px;font-weight:600;">{{ step.title }}</div>
+          <div style="font-size:12.5px;color:var(--muted);margin-top:2px;">{{ step.detail }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if ai_insights.time_pressure %}
+    <div style="margin-top:14px;padding:10px 14px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;font-size:13px;color:#92400e;">
+      <i class="fas fa-clock"></i> {{ ai_insights.time_pressure }}
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <script>
+    // Animate the ring
+    (function(){
+      const circumference = 2 * Math.PI * 72;
+      const pct = {{ pct|default:0 }};
+      const offset = circumference - (Math.min(Math.max(pct,0),100) / 100 * circumference);
+      const ring = document.getElementById('ringFill');
+      if (ring){ requestAnimationFrame(() => { ring.style.strokeDashoffset = offset; }); }
+    })();
+  </script>
+  {% endwith %}
+
+  <!-- Question-by-question review -->
+  {% if show_solutions %}
+    <div class="section-title"><span class="ico"><i class="fas fa-list-check"></i></span> Question-by-Question Review</div>
+
+    {% if rows %}
+      {% for r in rows %}
+      <div class="q-row {% if r.is_correct %}correct{% elif r.status == 'SKIPPED' %}skipped{% else %}incorrect{% endif %}">
+        <div class="qh">
+          <div class="qn">
+            <div class="qn-badge">{{ forloop.counter }}</div>
+            <div class="qn-text">
+              <strong>Question {{ forloop.counter }}</strong>
+              <span>{{ r.question.question_type|default:'MCQ' }} · {{ r.question.positive_marks }} mark{{ r.question.positive_marks|pluralize }}</span>
+            </div>
+          </div>
+          <div>
+            {% if r.status == 'SKIPPED' %}
+              <span class="badge b-skip"><i class="fas fa-minus-circle"></i> Skipped</span>
+            {% elif r.is_correct %}
+              <span class="badge b-yes"><i class="fas fa-check"></i> Correct</span>
+            {% else %}
+              <span class="badge b-no"><i class="fas fa-times"></i> Incorrect</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <p class="q-text">{{ r.question.question_text }}</p>
+
+        <div class="ans-grid">
+          <div>
+            <div class="lbl">Your Answer</div>
+            <div class="val {% if r.status == 'SKIPPED' %}skip{% elif r.is_correct %}right{% else %}wrong{% endif %}">{{ r.student_answer }}</div>
+          </div>
+          <div>
+            <div class="lbl">Correct Answer</div>
+            <div class="val right">{{ r.correct_answer }}</div>
+          </div>
+          <div class="marks">
+            {% if r.marks_awarded > 0 %}+{% endif %}{{ r.marks_awarded }}
+          </div>
+        </div>
+
+        {% if r.question.explanation %}
+        <div style="margin-top:12px;padding:12px 14px;background:var(--primary-soft);border-radius:8px;font-size:13px;line-height:1.6;">
+          <strong style="color:var(--primary);"><i class="fas fa-lightbulb"></i> Explanation:</strong>
+          <span>{{ r.question.explanation }}</span>
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty">No answer details available.</div>
+    {% endif %}
+  {% else %}
+    <div class="empty">
+      <i class="fas fa-lock" style="font-size:24px;color:var(--muted);"></i>
+      <div style="margin-top:10px;font-size:14px;">Detailed solutions are not available for this test.</div>
+    </div>
+  {% endif %}
+
+  <!-- Test Feedback (post-submission) -->
+  <div class="section-title"><span class="ico"><i class="fas fa-comment-dots"></i></span> Your Feedback</div>
+  {% if feedback_just_saved %}
+    <div style="background:var(--green-soft);color:var(--green);border:1px solid var(--green);padding:10px 14px;border-radius:8px;margin-bottom:12px;font-size:13px;font-weight:600;">
+      <i class="fas fa-check-circle"></i> Thank you — your feedback has been recorded.
+    </div>
+  {% endif %}
+  <form method="post"
+        action="{% url 'student-exam-api-feedback' test_id=test.id %}"
+        class="q-row"
+        style="display:block;">
+    {% csrf_token %}
+    <input type="hidden" name="attempt_id" value="{{ attempt.id }}">
+    <input type="hidden" name="next" value="{% url 'student-exam-result' test_id=test.id attempt_id=attempt.id %}">
+
+    <p style="margin:0 0 14px;font-size:13px;color:var(--muted);">
+      Help us improve future tests. Rate this assessment (1 = poor, 5 = excellent) and add any comment.
+    </p>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:14px;">
+      {% for field, label in feedback_fields %}{% endfor %}
+      <div>
+        <div class="lbl" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px;">Overall</div>
+        <select name="overall_rating" class="fb-rate" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:14px;">
+          {% with cur=existing_feedback.overall_rating|default:0 %}
+          <option value="0" {% if cur == 0 %}selected{% endif %}>—</option>
+          {% for n in "12345" %}
+          <option value="{{ n }}" {% if cur|stringformat:"s" == n %}selected{% endif %}>{{ n }}</option>
+          {% endfor %}
+          {% endwith %}
+        </select>
+      </div>
+      <div>
+        <div class="lbl" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px;">Difficulty</div>
+        <select name="difficulty_rating" class="fb-rate" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:14px;">
+          {% with cur=existing_feedback.difficulty_rating|default:0 %}
+          <option value="0" {% if cur == 0 %}selected{% endif %}>—</option>
+          {% for n in "12345" %}
+          <option value="{{ n }}" {% if cur|stringformat:"s" == n %}selected{% endif %}>{{ n }}</option>
+          {% endfor %}
+          {% endwith %}
+        </select>
+      </div>
+      <div>
+        <div class="lbl" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px;">Clarity</div>
+        <select name="clarity_rating" class="fb-rate" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:14px;">
+          {% with cur=existing_feedback.clarity_rating|default:0 %}
+          <option value="0" {% if cur == 0 %}selected{% endif %}>—</option>
+          {% for n in "12345" %}
+          <option value="{{ n }}" {% if cur|stringformat:"s" == n %}selected{% endif %}>{{ n }}</option>
+          {% endfor %}
+          {% endwith %}
+        </select>
+      </div>
+    </div>
+
+    <div style="margin-bottom:14px;">
+      <div class="lbl" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px;">Comments (optional)</div>
+      <textarea name="comments" rows="3" maxlength="5000"
+                style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;resize:vertical;"
+                placeholder="What worked? What could be better?">{{ existing_feedback.comments|default:'' }}</textarea>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;">
+      <button type="submit" class="btn btn-primary">
+        <i class="fas fa-paper-plane"></i> {% if existing_feedback %}Update{% else %}Submit{% endif %} Feedback
+      </button>
+    </div>
+  </form>
+
+</div>
+
+{% if show_feedback_popup %}
+<!-- Auto-shown post-submission feedback modal -->
+<div id="fbModal" style="position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;">
+  <div style="background:#fff;border-radius:14px;max-width:520px;width:100%;padding:28px 30px;box-shadow:0 18px 50px rgba(0,0,0,.25);">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+      <h2 style="margin:0;font-size:20px;font-weight:800;">📝 How was the test?</h2>
+      <button type="button" onclick="document.getElementById('fbModal').remove()" style="border:none;background:transparent;font-size:22px;color:#64748b;cursor:pointer;line-height:1;">&times;</button>
+    </div>
+    <p style="margin:0 0 18px;font-size:13.5px;color:#64748b;">Quick rating helps us improve future tests for you. Takes 10 seconds.</p>
+    <form method="post" action="{% url 'student-exam-api-feedback' test_id=test.id %}">
+      {% csrf_token %}
+      <input type="hidden" name="attempt_id" value="{{ attempt.id }}">
+      <input type="hidden" name="next" value="{% url 'student-exam-result' test_id=test.id attempt_id=attempt.id %}">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px;">
+        <div>
+          <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:4px;">Overall</div>
+          <select name="overall_rating" required style="width:100%;padding:9px 10px;border:1px solid #e2e8f0;border-radius:8px;">
+            {% for n in "12345" %}<option value="{{ n }}" {% if forloop.counter == 4 %}selected{% endif %}>{{ n }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:4px;">Difficulty</div>
+          <select name="difficulty_rating" required style="width:100%;padding:9px 10px;border:1px solid #e2e8f0;border-radius:8px;">
+            {% for n in "12345" %}<option value="{{ n }}" {% if forloop.counter == 3 %}selected{% endif %}>{{ n }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:4px;">Clarity</div>
+          <select name="clarity_rating" required style="width:100%;padding:9px 10px;border:1px solid #e2e8f0;border-radius:8px;">
+            {% for n in "12345" %}<option value="{{ n }}" {% if forloop.counter == 4 %}selected{% endif %}>{{ n }}</option>{% endfor %}
+          </select>
+        </div>
+      </div>
+      <div style="margin-bottom:16px;">
+        <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:4px;">Comments (optional)</div>
+        <textarea name="comments" rows="2" maxlength="5000"
+                  style="width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:14px;resize:vertical;"
+                  placeholder="Anything we should improve?"></textarea>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;">
+        <button type="button" onclick="document.getElementById('fbModal').remove()" style="background:#f1f5f9;color:#0f172a;border:none;padding:9px 18px;border-radius:8px;font-weight:600;cursor:pointer;">Maybe later</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Submit feedback</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

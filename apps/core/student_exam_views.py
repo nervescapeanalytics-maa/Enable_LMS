@@ -524,6 +524,22 @@ class ExamResultView(View):
             ).order_by('started_at', 'submitted_at')
         ]
 
+        # ── Predictive insights (linear trend + risk band + LLM narrative) ──
+        try:
+            from assessments.insights import insights_for_attempts
+            tenant = getattr(student, 'tenant', None) or getattr(test, 'tenant', None)
+            history_pcts = [a['percentage'] for a in attempt_history if a.get('percentage') is not None]
+            predictive = insights_for_attempts(history_pcts, tenant=tenant)
+            if predictive.get('ok'):
+                ai_insights['predicted_next_pct'] = predictive.get('predicted_next_pct')
+                ai_insights['risk_band'] = predictive.get('risk_band')
+                ai_insights['predicted_rank_band'] = predictive.get('predicted_rank_band')
+                ai_insights['slope_per_attempt'] = predictive.get('slope_per_attempt')
+                if predictive.get('narrative'):
+                    ai_insights['narrative'] = predictive['narrative']
+        except Exception:
+            logger.exception('Predictive insights failed; continuing with heuristics only')
+
         # ── Topic stats for the heat-map (use the same buckets as insights) ──
         topic_stats = []
         for t in (ai_insights.get('weak_topics') or []) + (ai_insights.get('strong_topics') or []):

@@ -163,6 +163,119 @@ body{background:var(--bg);font-family:system-ui;margin:0;}
     <canvas id="scoreChart"></canvas>
   </div>
 
+  <!-- ─── AI Performance Insights ─── -->
+  {% if ai_insights %}
+  <div class="card" style="margin-top:14px;
+              border-left:4px solid {% if ai_insights.tone == 'celebrate' %}#10b981{% elif ai_insights.tone == 'positive' %}#3b82f6{% elif ai_insights.tone == 'supportive' %}#f59e0b{% else %}#8b5cf6{% endif %};">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+      <span style="background:linear-gradient(135deg,#4f46e5,#8b5cf6);color:#fff;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;letter-spacing:.5px;">
+        🧠 AI INSIGHTS
+      </span>
+      <span style="font-size:11px;color:var(--muted);">Personalised analysis of your performance</span>
+    </div>
+    {% if ai_insights.headline %}<h2 style="margin:0 0 6px;font-size:20px;font-weight:800;">{{ ai_insights.headline }}</h2>{% endif %}
+    {% if ai_insights.message %}<p style="margin:0 0 16px;font-size:14px;color:var(--muted);line-height:1.55;">{{ ai_insights.message }}</p>{% endif %}
+
+    {# Predictive tiles — predicted next score, risk band, rank band #}
+    {% if ai_insights.predicted_next_pct is not None %}
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px;">
+      <div style="background:#f5f3ff;border:1px solid #ddd6fe;border-radius:10px;padding:10px 12px;">
+        <div style="font-size:11px;color:#6d28d9;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">Predicted next score</div>
+        <div style="font-size:22px;font-weight:800;color:#4c1d95;margin-top:2px;">{{ ai_insights.predicted_next_pct|floatformat:1 }}%</div>
+      </div>
+      {% if ai_insights.risk_band %}
+      <div style="background:{% if ai_insights.risk_band == 'RED' %}#fef2f2{% elif ai_insights.risk_band == 'AMBER' %}#fffbeb{% else %}#ecfdf5{% endif %};
+                  border:1px solid {% if ai_insights.risk_band == 'RED' %}#fecaca{% elif ai_insights.risk_band == 'AMBER' %}#fde68a{% else %}#a7f3d0{% endif %};
+                  border-radius:10px;padding:10px 12px;">
+        <div style="font-size:11px;color:{% if ai_insights.risk_band == 'RED' %}#991b1b{% elif ai_insights.risk_band == 'AMBER' %}#92400e{% else %}#065f46{% endif %};font-weight:700;text-transform:uppercase;letter-spacing:.5px;">Risk band</div>
+        <div style="font-size:22px;font-weight:800;color:{% if ai_insights.risk_band == 'RED' %}#dc2626{% elif ai_insights.risk_band == 'AMBER' %}#d97706{% else %}#059669{% endif %};margin-top:2px;">{{ ai_insights.risk_band }}</div>
+      </div>
+      {% endif %}
+      {% if ai_insights.predicted_rank_band %}
+      <div style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px;">
+        <div style="font-size:11px;color:#475569;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">Rank projection</div>
+        <div style="font-size:14px;font-weight:700;color:#0f172a;margin-top:4px;">{{ ai_insights.predicted_rank_band }}</div>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {# Narrative (LLM or rule-based fallback) #}
+    {% if ai_insights.narrative %}
+    <div style="background:#fafafa;border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:13.5px;line-height:1.6;color:#1f2937;">
+      <i class="fas fa-comment-dots" style="color:#7c3aed;margin-right:6px;"></i>{{ ai_insights.narrative }}
+    </div>
+    {% endif %}
+
+    {% if ai_insights.subject_breakdown %}
+    <div style="margin-bottom:16px;">
+      <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">Subject-wise accuracy</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;">
+        {% for s in ai_insights.subject_breakdown %}
+        <div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:10px 12px;">
+          <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:6px;">
+            <span>{{ s.name }}</span><span>{{ s.pct }}%</span>
+          </div>
+          <div style="height:6px;background:#e5e7eb;border-radius:99px;overflow:hidden;">
+            <div style="height:100%;width:{{ s.pct }}%;background:{% if s.pct >= 75 %}#10b981{% elif s.pct >= 50 %}#3b82f6{% elif s.pct >= 25 %}#f59e0b{% else %}#ef4444{% endif %};"></div>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">{{ s.correct }}/{{ s.total }} correct</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if ai_insights.weak_topics or ai_insights.strong_topics %}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+      {% if ai_insights.weak_topics %}
+      <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px;">
+        <div style="font-size:12px;font-weight:700;color:#991b1b;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">⚠ Areas to focus</div>
+        {% for t in ai_insights.weak_topics %}
+        <div style="font-size:13px;display:flex;justify-content:space-between;padding:4px 0;border-top:1px dashed #fecaca;">
+          <span>{{ t.name }}</span><strong style="color:#dc2626;">{{ t.pct }}%</strong>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% if ai_insights.strong_topics %}
+      <div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:10px;padding:12px;">
+        <div style="font-size:12px;font-weight:700;color:#065f46;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">🏆 Strengths</div>
+        {% for t in ai_insights.strong_topics %}
+        <div style="font-size:13px;display:flex;justify-content:space-between;padding:4px 0;border-top:1px dashed #a7f3d0;">
+          <span>{{ t.name }}</span><strong style="color:#059669;">{{ t.pct }}%</strong>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% if ai_insights.roadmap %}
+    <div>
+      <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;">🗺 Your study roadmap</div>
+      {% for step in ai_insights.roadmap %}
+      <div style="display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--border);">
+        <div style="width:34px;height:34px;border-radius:8px;background:#eef2ff;color:#4f46e5;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i class="fas {{ step.icon }}"></i>
+        </div>
+        <div>
+          <div style="font-size:14px;font-weight:600;">{{ step.title }}</div>
+          <div style="font-size:12.5px;color:var(--muted);margin-top:2px;">{{ step.detail }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if ai_insights.time_pressure %}
+    <div style="margin-top:14px;padding:10px 14px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;font-size:13px;color:#92400e;">
+      ⏱ {{ ai_insights.time_pressure }}
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
   <!-- Filters -->
   <div class="filter-bar">
     <div class="filter-btn active" onclick="filterQ('ALL',this)">All</div>

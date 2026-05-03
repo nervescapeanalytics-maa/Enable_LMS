@@ -522,3 +522,50 @@ class OfflineTestMarks(models.Model):
             models.Index(fields=['tenant', 'test'], name='idx_offline_test'),
             models.Index(fields=['tenant', 'batch'], name='idx_offline_batch'),
         ]
+
+
+# ---------------------------------------------------------------------------
+# ZIP Import History — visible audit trail on the Test Sections changelist
+# ---------------------------------------------------------------------------
+class ZipImportLog(models.Model):
+    """One row per ZIP upload attempt to the admin Import-ZIP endpoint."""
+
+    class Status(models.TextChoices):
+        SUCCESS = 'SUCCESS', 'Success'
+        FAILED = 'FAILED', 'Failed'
+        REJECTED = 'REJECTED', 'Rejected (validation)'
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    tenant = models.ForeignKey(
+        'tenants.Tenant', on_delete=models.CASCADE,
+        related_name='zip_import_logs', null=True, blank=True,
+    )
+    test = models.ForeignKey(
+        Test, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='zip_import_logs',
+    )
+    file_name = models.CharField(max_length=255)
+    file_size_bytes = models.BigIntegerField(default=0)
+    status = models.CharField(
+        max_length=12, choices=Status.choices, default=Status.SUCCESS,
+        db_index=True,
+    )
+    rows_total = models.IntegerField(default=0)
+    rows_created = models.IntegerField(default=0)
+    rows_updated = models.IntegerField(default=0)
+    error_message = models.TextField(null=True, blank=True)
+    uploaded_by = models.UUIDField(null=True, blank=True)
+    uploaded_by_label = models.CharField(max_length=200, null=True, blank=True)
+    uploaded_at = models.DateTimeField(default=timezone.now, db_index=True)
+
+    class Meta:
+        db_table = 'zip_import_logs'
+        ordering = ['-uploaded_at']
+        verbose_name = 'ZIP import log'
+        verbose_name_plural = 'ZIP import history'
+        indexes = [
+            models.Index(fields=['tenant', '-uploaded_at'], name='idx_zip_log_tenant_time'),
+        ]
+
+    def __str__(self):
+        return f'{self.file_name} → {self.status} @ {self.uploaded_at:%Y-%m-%d %H:%M}'
