@@ -64,14 +64,37 @@
 {% block extrastyle %}
   {{ block.super }}
   <style>
-    /* Match the existing admin "+ Add Test Section" pill exactly. */
-    .object-tools li .enf-tool-btn {
+    /* Force Export/Import to render exactly like the native
+       "+ Add Test Section" anchor pill. We mimic Django admin's
+       .addlink rules so theme-overrides can't break alignment. */
+    .object-tools > li > a.enf-tool-btn,
+    .object-tools > li > a.enf-tool-btn:link,
+    .object-tools > li > a.enf-tool-btn:visited {
       cursor: pointer;
-      border: none;
-      font: inherit;
-      /* fall through to .addlink for color/padding/radius */
+      display: inline-block;
+      padding: 6px 14px 6px 14px;
+      margin: 0 0 0 5px;
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.2;
+      color: #fff;
+      background: #7c3aed;
+      border: 1px solid #6d28d9;
+      border-radius: 6px;
+      text-decoration: none;
+      vertical-align: middle;
+      box-shadow: 0 1px 0 rgba(0,0,0,.04);
     }
-    .object-tools li .enf-tool-btn::before { content: "+ "; }
+    .object-tools > li > a.enf-tool-btn:hover {
+      background: #6d28d9;
+      color: #fff;
+      text-decoration: none;
+    }
+    .object-tools > li > a.enf-tool-btn::before {
+      content: "+ ";
+      font-weight: 700;
+      margin-right: 2px;
+    }
 
     /* Modal overlay (shared by Export + Import) */
     .enf-modal-backdrop {
@@ -171,12 +194,12 @@
 
 {% block object-tools-items %}
   <li>
-    <button type="button" class="addlink enf-tool-btn"
-            data-enf-open="enf-export-modal">{% trans 'Export ZIP' %}</button>
+    <a href="#" class="enf-tool-btn"
+       data-enf-open="enf-export-modal">{% trans 'Export ZIP' %}</a>
   </li>
   <li>
-    <button type="button" class="addlink enf-tool-btn"
-            data-enf-open="enf-import-modal">{% trans 'Import ZIP' %}</button>
+    <a href="#" class="enf-tool-btn"
+       data-enf-open="enf-import-modal">{% trans 'Import ZIP' %}</a>
   </li>
   {{ block.super }}
 

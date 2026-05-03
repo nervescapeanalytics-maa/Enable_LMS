@@ -698,7 +698,7 @@ from .models import ZipImportLog
 
 
 @admin.register(ZipImportLog)
-class ZipImportLogAdmin(admin.ModelAdmin):
+class ZipImportLogAdmin(EnhancedModelAdmin):
     list_display = ('file_name', 'test', 'status_badge', 'rows_total',
                     'rows_created', 'rows_updated', 'uploaded_by_label',
                     'uploaded_at')
