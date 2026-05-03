@@ -99,16 +99,20 @@
     /* Modal overlay (shared by Export + Import) */
     .enf-modal-backdrop {
       display: none;
-      position: fixed; inset: 0;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      width: 100vw; height: 100vh;
       background: rgba(15, 23, 42, 0.55);
-      z-index: 100000;
+      z-index: 2147483000;          /* near max int — beats any sticky thead/header */
       align-items: flex-start; justify-content: center;
       padding-top: 8vh;
+      isolation: isolate;            /* new stacking context, can't be punctured */
     }
     .enf-modal-backdrop.is-open { display: flex !important; }
     .enf-modal {
       position: relative; z-index: 1;
       background: #fff;
+      background-color: #fff !important;  /* defensive against theme overrides */
       border-radius: 14px;
       width: min(520px, 92vw);
       box-shadow: 0 20px 60px rgba(0,0,0,.25);
