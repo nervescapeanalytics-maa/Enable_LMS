@@ -1,59 +1,177 @@
 {% extends "admin/change_list.html" %}
 {% load i18n admin_urls %}
 
-{% block object-tools-items %}
-  {# Inline Export ZIP - picks a test then streams the ZIP directly (no /staff/ redirect). #}
-  <li>
-    <details class="enf-export-zip-details" style="display:inline-block;position:relative;">
-      <summary class="addlink" style="background:#10b981;border-color:#10b981;cursor:pointer;list-style:none;display:inline-flex;align-items:center;">
-        + {% trans 'Export ZIP' %}
-      </summary>
-      <form method="post" action="{% url 'admin:assessments_testsection_export_zip' %}" style="position:absolute;right:0;top:100%;z-index:50;background:#fff;border:1px solid #d1d5db;border-radius:8px;padding:12px;box-shadow:0 8px 24px rgba(0,0,0,0.12);min-width:340px;margin-top:6px;">
-        {% csrf_token %}
-        <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px;">{% trans 'Select test to export' %}</label>
-        <select name="test_id" required style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;margin-bottom:10px;">
-          <option value="">- {% trans 'Pick a test' %} -</option>
-          {% for t in available_tests %}<option value="{{ t.id }}">{{ t.test_code }} - {{ t.title }}</option>{% endfor %}
-        </select>
-        <button type="submit" style="background:#10b981;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-weight:600;cursor:pointer;width:100%;">↓ {% trans 'Download ZIP' %}</button>
-      </form>
-    </details>
-  </li>
-
-  {# Inline Import ZIP - modal-style file picker; submits to admin endpoint, no /staff/ redirect. #}
-  <li>
-    <details class="enf-import-zip-details" style="display:inline-block;position:relative;">
-      <summary class="addlink" style="background:#0ea5e9;border-color:#0ea5e9;cursor:pointer;list-style:none;display:inline-flex;align-items:center;">
-        + {% trans 'Import ZIP' %}
-      </summary>
-      <form method="post" enctype="multipart/form-data" action="{% url 'admin:assessments_testsection_import_zip' %}" style="position:absolute;right:0;top:100%;z-index:50;background:#fff;border:1px solid #d1d5db;border-radius:8px;padding:12px;box-shadow:0 8px 24px rgba(0,0,0,0.12);min-width:360px;margin-top:6px;">
-        {% csrf_token %}
-        <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px;">{% trans 'Target test' %}</label>
-        <select name="test_id" required style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;margin-bottom:10px;">
-          <option value="">- {% trans 'Pick a test' %} -</option>
-          {% for t in available_tests %}<option value="{{ t.id }}">{{ t.test_code }} - {{ t.title }}</option>{% endfor %}
-        </select>
-        <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px;">{% trans 'ZIP archive' %}</label>
-        <input type="file" name="file" accept=".zip,application/zip" required style="width:100%;padding:6px;border:1px dashed #9ca3af;border-radius:6px;font-size:13px;margin-bottom:10px;background:#f9fafb;">
-        <button type="submit" style="background:#0ea5e9;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-weight:600;cursor:pointer;width:100%;">↑ {% trans 'Upload &amp; Import' %}</button>
-        <p style="font-size:11px;color:#6b7280;margin:8px 0 0;">ZIP must contain <code>questions.csv</code> (or .xlsx) and an <code>images/</code> folder.</p>
-      </form>
-    </details>
-  </li>
-
+{% block extrastyle %}
   {{ block.super }}
+  <style>
+    /* Match the existing admin "+ Add" / "+ Columns" pill style. */
+    .object-tools .enf-tool-btn {
+      cursor: pointer;
+      border: none;
+      font: inherit;
+    }
+
+    /* Modal overlay (shared by Export + Import) */
+    .enf-modal-backdrop {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      z-index: 9998;
+      align-items: flex-start; justify-content: center;
+      padding-top: 8vh;
+    }
+    .enf-modal-backdrop.is-open { display: flex; }
+    .enf-modal {
+      background: #fff;
+      border-radius: 14px;
+      width: min(480px, 92vw);
+      box-shadow: 0 20px 60px rgba(0,0,0,.25);
+      overflow: hidden;
+      animation: enfPop .18s ease-out;
+    }
+    @keyframes enfPop { from { transform: translateY(-8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .enf-modal-hd {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px;
+      background: linear-gradient(135deg, #6d28d9, #7c3aed);
+      color: #fff;
+    }
+    .enf-modal-hd h3 { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: .2px; }
+    .enf-modal-hd .x {
+      background: rgba(255,255,255,.18); border: none; color: #fff;
+      width: 30px; height: 30px; border-radius: 8px; cursor: pointer;
+      font-size: 18px; line-height: 1; display: inline-flex; align-items: center; justify-content: center;
+    }
+    .enf-modal-hd .x:hover { background: rgba(255,255,255,.28); }
+
+    .enf-modal-bd { padding: 18px 20px 8px; }
+    .enf-modal-bd label { display:block; font-size:12px; font-weight:600; color:#374151; margin: 12px 0 6px; }
+    .enf-modal-bd label:first-child { margin-top: 0; }
+    .enf-modal-bd select,
+    .enf-modal-bd input[type=file] {
+      width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:8px;
+      font-size:13.5px; background:#fff; box-sizing: border-box;
+    }
+    .enf-modal-bd input[type=file] { padding:8px 10px; background:#f9fafb; cursor:pointer; }
+    .enf-modal-bd select:focus,
+    .enf-modal-bd input[type=file]:focus { outline:2px solid #7c3aed; border-color:#7c3aed; }
+    .enf-modal-hint { font-size:11.5px; color:#6b7280; margin: 10px 0 4px; }
+    .enf-modal-hint code { background:#f3f4f6; padding:1px 5px; border-radius:4px; font-size:11px; }
+
+    .enf-modal-ft {
+      display:flex; justify-content:flex-end; gap:10px;
+      padding: 14px 20px 18px;
+      border-top: 1px solid #f1f5f9;
+      background: #fafbfc;
+    }
+    .enf-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 16px; font-size:13px; font-weight:600;
+      border-radius:8px; cursor:pointer; border:1px solid transparent;
+    }
+    .enf-btn-cancel { background:#fff; color:#374151; border-color:#d1d5db; }
+    .enf-btn-cancel:hover { background:#f9fafb; }
+    .enf-btn-go {
+      background: linear-gradient(135deg, #6d28d9, #7c3aed);
+      color:#fff;
+    }
+    .enf-btn-go:hover { filter: brightness(1.05); }
+  </style>
+{% endblock %}
+
+{% block object-tools-items %}
+  <li>
+    <button type="button" class="addlink enf-tool-btn"
+            data-enf-open="enf-export-modal">
+      {% trans 'Export ZIP' %}
+    </button>
+  </li>
+  <li>
+    <button type="button" class="addlink enf-tool-btn"
+            data-enf-open="enf-import-modal">
+      {% trans 'Import ZIP' %}
+    </button>
+  </li>
+  {{ block.super }}
+
+  {# ────────── Export ZIP modal ────────── #}
+  <div class="enf-modal-backdrop" id="enf-export-modal" role="dialog" aria-modal="true" aria-labelledby="enf-export-title">
+    <form class="enf-modal" method="post" action="{% url 'admin:assessments_testsection_export_zip' %}">
+      {% csrf_token %}
+      <div class="enf-modal-hd">
+        <h3 id="enf-export-title">{% trans 'Export Test as ZIP' %}</h3>
+        <button type="button" class="x" data-enf-close aria-label="Close">×</button>
+      </div>
+      <div class="enf-modal-bd">
+        <label for="enf-export-test">{% trans 'Select test to export' %}</label>
+        <select id="enf-export-test" name="test_id" required>
+          <option value="">— {% trans 'Pick a test' %} —</option>
+          {% for t in available_tests %}<option value="{{ t.id }}">{{ t.test_code }} — {{ t.title }}</option>{% endfor %}
+        </select>
+        <p class="enf-modal-hint">{% trans 'The download bundles questions.csv (UTF-8 with BOM) and any referenced images/.' %}</p>
+      </div>
+      <div class="enf-modal-ft">
+        <button type="button" class="enf-btn enf-btn-cancel" data-enf-close>{% trans 'Cancel' %}</button>
+        <button type="submit" class="enf-btn enf-btn-go">↓ {% trans 'Download ZIP' %}</button>
+      </div>
+    </form>
+  </div>
+
+  {# ────────── Import ZIP modal ────────── #}
+  <div class="enf-modal-backdrop" id="enf-import-modal" role="dialog" aria-modal="true" aria-labelledby="enf-import-title">
+    <form class="enf-modal" method="post" enctype="multipart/form-data"
+          action="{% url 'admin:assessments_testsection_import_zip' %}">
+      {% csrf_token %}
+      <div class="enf-modal-hd">
+        <h3 id="enf-import-title">{% trans 'Import ZIP into Test' %}</h3>
+        <button type="button" class="x" data-enf-close aria-label="Close">×</button>
+      </div>
+      <div class="enf-modal-bd">
+        <label for="enf-import-test">{% trans 'Target test' %}</label>
+        <select id="enf-import-test" name="test_id" required>
+          <option value="">— {% trans 'Pick a test' %} —</option>
+          {% for t in available_tests %}<option value="{{ t.id }}">{{ t.test_code }} — {{ t.title }}</option>{% endfor %}
+        </select>
+        <label for="enf-import-file">{% trans 'ZIP archive' %}</label>
+        <input id="enf-import-file" type="file" name="file" accept=".zip,application/zip" required>
+        <p class="enf-modal-hint">
+          {% trans 'ZIP must contain' %} <code>questions.csv</code> {% trans 'or' %} <code>questions.xlsx</code>
+          {% trans 'and an' %} <code>images/</code> {% trans 'folder.' %}
+        </p>
+      </div>
+      <div class="enf-modal-ft">
+        <button type="button" class="enf-btn enf-btn-cancel" data-enf-close>{% trans 'Cancel' %}</button>
+        <button type="submit" class="enf-btn enf-btn-go">↑ {% trans 'Upload &amp; Import' %}</button>
+      </div>
+    </form>
+  </div>
 
   <script>
     (function () {
-      function closeOthers(except) {
-        document.querySelectorAll('details.enf-export-zip-details, details.enf-import-zip-details').forEach(function (d) { if (d !== except) d.removeAttribute('open'); });
+      function open(id) {
+        var m = document.getElementById(id);
+        if (m) { m.classList.add('is-open'); document.body.style.overflow = 'hidden'; }
       }
-      document.addEventListener('click', function (e) {
-        var inside = e.target.closest('details.enf-export-zip-details, details.enf-import-zip-details');
-        if (!inside) closeOthers(null);
+      function close(m) {
+        m.classList.remove('is-open');
+        document.body.style.overflow = '';
+      }
+      document.querySelectorAll('[data-enf-open]').forEach(function (btn) {
+        btn.addEventListener('click', function (e) { e.preventDefault(); open(btn.getAttribute('data-enf-open')); });
       });
-      document.querySelectorAll('details.enf-export-zip-details, details.enf-import-zip-details').forEach(function (d) {
-        d.addEventListener('toggle', function () { if (d.open) closeOthers(d); });
+      document.querySelectorAll('.enf-modal-backdrop').forEach(function (m) {
+        // close on backdrop click
+        m.addEventListener('click', function (e) { if (e.target === m) close(m); });
+        // close on [data-enf-close]
+        m.querySelectorAll('[data-enf-close]').forEach(function (c) {
+          c.addEventListener('click', function () { close(m); });
+        });
+      });
+      // close on Escape
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+          document.querySelectorAll('.enf-modal-backdrop.is-open').forEach(close);
+        }
       });
     })();
   </script>
