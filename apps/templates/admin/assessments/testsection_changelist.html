@@ -100,13 +100,14 @@
     .enf-modal-backdrop {
       display: none;
       position: fixed; inset: 0;
-      background: rgba(15, 23, 42, 0.45);
-      z-index: 9998;
+      background: rgba(15, 23, 42, 0.55);
+      z-index: 100000;
       align-items: flex-start; justify-content: center;
       padding-top: 8vh;
     }
-    .enf-modal-backdrop.is-open { display: flex; }
+    .enf-modal-backdrop.is-open { display: flex !important; }
     .enf-modal {
+      position: relative; z-index: 1;
       background: #fff;
       border-radius: 14px;
       width: min(520px, 92vw);
@@ -201,6 +202,10 @@
     <a href="#" class="enf-tool-btn"
        data-enf-open="enf-import-modal">{% trans 'Import ZIP' %}</a>
   </li>
+  {{ block.super }}
+{% endblock %}
+
+{% block extrabody %}
   {{ block.super }}
 
   {# ────────── Export ZIP modal ────────── #}
