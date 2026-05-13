@@ -5,6 +5,13 @@
 # =============================================================================
 set -o pipefail
 
+# ── Load environment (for domain variables) ──────────────────────────────────
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+if [[ -f "$SCRIPT_DIR/.env" ]]; then
+    set -a; source "$SCRIPT_DIR/.env"; set +a
+fi
+LMS_HOST="${PRIMARY_DOMAIN:-lms.automatebot.shop}"
+
 BASE_URL="${BASE_URL:-http://localhost:8080}"
 API_URL="$BASE_URL/api/v1"
 RESULTS_FILE=$(mktemp)
@@ -133,8 +140,8 @@ assert_json "Health status" "$BASE_URL/health/" "status" "healthy"
 assert_json "Health DB" "$BASE_URL/health/" "database" "connected"
 assert_contains "Nginx health" "$BASE_URL/nginx-health" "ok"
 assert_status "Admin redirect" "$BASE_URL/admin/" "302"
-assert_status "Admin login" "$BASE_URL/admin/login/" "200" -H "Host: lms.automatebot.shop"
-assert_contains "Admin CSRF" "$BASE_URL/admin/login/" "csrfmiddlewaretoken" -H "Host: lms.automatebot.shop"
+assert_status "Admin login" "$BASE_URL/admin/login/" "200" -H "Host: ${LMS_HOST}"
+assert_contains "Admin CSRF" "$BASE_URL/admin/login/" "csrfmiddlewaretoken" -H "Host: ${LMS_HOST}"
 assert_status "API needs auth" "$API_URL/" "401"
 assert_status "Static files" "$BASE_URL/static/admin/css/base.css" "200"
 
@@ -205,7 +212,7 @@ v=$(curl -s -o /dev/null -w "%{http_code}" "$API_URL/student/dashboard" 2>/dev/n
 
 # CSRF
 v=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/admin/login/" \
-    -H "Host: lms.automatebot.shop" -d "username=x&password=x" 2>/dev/null)
+    -H "Host: ${LMS_HOST}" -d "username=x&password=x" 2>/dev/null)
 [[ "$v" == "403" ]] && pass "CSRF protection (HTTP 403)" || warn_ "Admin POST returned $v"
 
 # WebSocket
@@ -265,7 +272,7 @@ sleep 2
 
 assert_header "X-Content-Type-Options" "$BASE_URL/health/" "X-Content-Type-Options"
 assert_header "Referrer-Policy" "$BASE_URL/health/" "Referrer-Policy"
-assert_header "X-Frame-Options" "$BASE_URL/admin/login/" "X-Frame-Options" -H "Host: lms.automatebot.shop"
+assert_header "X-Frame-Options" "$BASE_URL/admin/login/" "X-Frame-Options" -H "Host: ${LMS_HOST}"
 
 # Server version
 SRV=$(curl -sI "$BASE_URL/health/" 2>/dev/null | grep -i "^Server:" | head -1)

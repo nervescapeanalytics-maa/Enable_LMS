@@ -81,7 +81,7 @@ cmd_start() {
     echo "  Local URL : http://localhost:${HTTP_PORT}/"
     echo "  Admin     : http://localhost:${HTTP_PORT}/admin/"
     echo "  Health    : http://localhost:${HTTP_PORT}/health/"
-    echo "  Public    : https://lms.automatebot.shop/"
+    echo "  Public    : https://${PRIMARY_DOMAIN}/"
     echo ""
 }
 

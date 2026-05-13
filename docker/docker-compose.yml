@@ -4,7 +4,7 @@
 # Architecture:
 #   ┌────────────────────────────────────────────────────────────────────────┐
 #   │  Cloudflare Tunnel (cloudflared container)                            │
-#   │  Connects lms.automatebot.shop → nginx:80 inside the stack           │
+#   │  Routes ${PRIMARY_DOMAIN} → nginx:80 inside the stack               │
 #   └──────┬─────────────────────────────────────────────────────────────────┘
 #          │
 #   ┌──────┴─────────────────────────────────────────────────────────────────┐
@@ -35,6 +35,13 @@
 # No container_name set — allows `docker compose up --scale api=3`.
 # Secrets kept out of docker-compose.yml — injected via .env only.
 # =============================================================================
+
+# ── Shared Django environment (built from .env identity vars) ───────────────────────
+x-django-env: &django-env
+  DB_HOST: "${HOST_IP}"
+  ALLOWED_HOSTS: "${PRIMARY_DOMAIN},${LEGACY_DOMAIN},${DOMAIN_WILDCARD},localhost,127.0.0.1,${HOST_IP}"
+  CORS_ORIGINS: "https://${PRIMARY_DOMAIN},https://${LEGACY_DOMAIN},http://localhost:3000,http://localhost:8080,http://localhost"
+  CSRF_TRUSTED_ORIGINS: "https://${PRIMARY_DOMAIN},https://${LEGACY_DOMAIN},http://localhost:8080,http://localhost:8000,http://localhost,http://${HOST_IP}"
 
 services:
 
@@ -77,7 +84,8 @@ services:
     env_file:
       - .env
     environment:
-      - RUN_MIGRATIONS=false
+      <<: *django-env
+      RUN_MIGRATIONS: "false"
     volumes:
       - ../runtime/media:/app/media:Z
       - ../runtime/static:/app/staticfiles:Z
@@ -102,6 +110,8 @@ services:
     command: ["daphne"]
     env_file:
       - .env
+    environment:
+      <<: *django-env
     depends_on:
       redis:
         condition: service_healthy
@@ -129,6 +139,8 @@ services:
     command: ["celery-worker"]
     env_file:
       - .env
+    environment:
+      <<: *django-env
     depends_on:
       redis:
         condition: service_healthy
@@ -156,6 +168,8 @@ services:
     command: ["celery-beat"]
     env_file:
       - .env
+    environment:
+      <<: *django-env
     depends_on:
       redis:
         condition: service_healthy
@@ -184,6 +198,8 @@ services:
     command: ["migrate"]
     env_file:
       - .env
+    environment:
+      <<: *django-env
     volumes:
       - ../runtime/static:/app/staticfiles:Z
     depends_on:
@@ -203,10 +219,12 @@ services:
     restart: unless-stopped
     ports:
       - "${HTTP_PORT:-80}:80"
+      - "443:443"
       - "8000:80"
     volumes:
       - ../runtime/static:/app/staticfiles:ro,Z
       - ../runtime/media:/app/media:ro,Z
+      - ../runtime/certs:/etc/nginx/certs:ro,Z
     depends_on:
       - api
       - websocket
@@ -221,10 +239,25 @@ services:
           cpus: "0.1"
           memory: "64M"
 
-  # ── Cloudflare Tunnel — REMOVED ─────────────────────────────────────────
-  # Traffic is now served via Cloudflare DNS proxy (orange cloud) pointing
-  # to the server's public IP on port 80. No tunnel container needed.
-  # Cloudflare setup: DNS → A record → <PUBLIC_IP> (Proxied ON).
+  # ── Cloudflare Tunnel — routes ${PRIMARY_DOMAIN} (from .env) → nginx:80 ────
+  # cloudflared makes an outbound connection to CF's network; no inbound
+  # port 443/80 exposure required on the host.
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --protocol http2 --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - nginx
+    networks:
+      - lms-network
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: "128M"
+        reservations:
+          cpus: "0.05"
+          memory: "32M"
 
 # ── Networks ─────────────────────────────────────────────────────────────────
 # Note: Named volumes removed. All runtime data now under ../runtime/ (bind mounts):

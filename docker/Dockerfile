@@ -21,7 +21,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /build
 
 # System deps needed to compile psycopg, Pillow, cryptography
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN set -eux; \
+    sed -i \
+        -e 's|^URIs: http://deb.debian.org/debian$|URIs: http://mirrors.kernel.org/debian|' \
+        /etc/apt/sources.list.d/debian.sources; \
+    apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout=60 update; \
+    apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout=60 install -y --no-install-recommends \
         build-essential \
         libpq-dev \
         libjpeg62-turbo-dev \
@@ -65,7 +70,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     APP_HOME=/app
 
 # Runtime-only system libraries (no compilers)
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN set -eux; \
+    sed -i \
+        -e 's|^URIs: http://deb.debian.org/debian$|URIs: http://mirrors.kernel.org/debian|' \
+        /etc/apt/sources.list.d/debian.sources; \
+    apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout=60 update; \
+    apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout=60 install -y --no-install-recommends \
         libpq5 \
         libjpeg62-turbo \
         curl \

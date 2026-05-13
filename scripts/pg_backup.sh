@@ -32,7 +32,7 @@ if [[ -f "$ENV_FILE" ]]; then
 fi
 
 # ── Configuration (override via environment or .env) ─────────────────────────
-DB_HOST="${DB_HOST:-192.168.1.113}"
+DB_HOST="${DB_HOST:-127.0.0.1}"
 DB_PORT="${DB_PORT:-5432}"
 DB_NAME="${DB_NAME:-LMS_PROD_DB}"
 DB_USER="${DB_USER:-lms_app_user}"
