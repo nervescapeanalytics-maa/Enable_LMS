@@ -60,6 +60,13 @@
   <a href="/staff/exams/{{ test.id }}/sections/new/" class="btn btn-light"><i class="fas fa-th-list"></i> Add Section</a>
   <a href="/staff/exams/{{ test.id }}/versions/" class="btn btn-light"><i class="fas fa-history"></i> Versions</a>
 
+  {% if can_preview %}
+  <form method="post" action="/staff/exams/{{ test.id }}/preview/" style="display:inline;" onsubmit="return confirm('Launch dry-run preview? You will take this exam as the Preview Student. The attempt will NOT count toward grades or statistics.');">
+    {% csrf_token %}
+    <button class="btn btn-info" type="submit" title="Take this exam as a dry-run \u2014 excluded from grading"><i class="fas fa-flask"></i> Dry-Run Preview</button>
+  </form>
+  {% endif %}
+
   {% if can_publish %}
   <form method="post" action="/staff/exams/{{ test.id }}/publish/" style="display:inline;" onsubmit="return confirm('Publish this exam? Students in the assigned batch will gain access.');">
     {% csrf_token %}

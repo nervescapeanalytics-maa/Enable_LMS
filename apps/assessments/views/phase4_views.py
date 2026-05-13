@@ -284,6 +284,7 @@ class AIInsightsView(View):
         # All evaluated attempts grouped by student → list of percents
         qs = (TestAttempt.objects
               .filter(status__in=('EVALUATED', 'SUBMITTED', 'AUTO_SUBMITTED'))
+              .exclude(is_preview=True)
               .select_related('student')
               .order_by('student_id', 'submitted_at'))
         if tenant is not None:
@@ -387,6 +388,7 @@ class ExamReportsView(View):
 
         qs = (TestAttempt.objects
               .filter(status__in=('EVALUATED', 'SUBMITTED', 'AUTO_SUBMITTED'))
+              .exclude(is_preview=True)
               .select_related('student', 'test'))
         if tenant is not None:
             qs = qs.filter(tenant=tenant)
@@ -428,6 +430,7 @@ def export_exam_report_csv(request):
     tenant = getattr(admin_user, 'tenant', None)
     qs = (TestAttempt.objects
           .filter(status__in=('EVALUATED', 'SUBMITTED', 'AUTO_SUBMITTED'))
+          .exclude(is_preview=True)
           .select_related('student', 'test')
           .order_by('-submitted_at'))
     if tenant is not None:

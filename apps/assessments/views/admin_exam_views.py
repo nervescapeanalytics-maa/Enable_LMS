@@ -170,9 +170,10 @@ class ExamListView(View):
 
         tests = list(qs.select_related('subject', 'batch').order_by('-created_at')[:500])
 
-        # attempts per test (single query)
+        # attempts per test (single query) — exclude dry-run / preview attempts
         attempt_counts = dict(
             TestAttempt.objects.filter(test_id__in=[t.id for t in tests])
+            .exclude(is_preview=True)
             .values_list('test_id').annotate(c=Count('id'))
             .values_list('test_id', 'c')
         )
@@ -305,21 +306,26 @@ class ExamDetailView(View):
             .select_related('subject', 'chapter', 'section')
             .order_by('question_order')
         )
-        attempts = TestAttempt.objects.filter(test=test)
+        attempts = TestAttempt.objects.filter(test=test).exclude(is_preview=True)
         attempt_stats = {
             'total': attempts.count(),
             'avg_score': float(attempts.aggregate(a=Avg('percentage'))['a'] or 0),
             'passed': attempts.filter(result='PASS').count(),
         }
+        preview_attempts_count = TestAttempt.objects.filter(test=test, is_preview=True).count()
         ctx = _exam_ctx(request, admin_user, active_page='exams', page_title=test.title)
         ctx.update({
             'test': test,
             'sections': sections,
             'questions': questions,
             'attempt_stats': attempt_stats,
+            'preview_attempts_count': preview_attempts_count,
             'can_publish': test.status == Test.TestStatus.DRAFT and questions and is_admin_full(admin_user),
             'can_unpublish': test.status == Test.TestStatus.PUBLISHED and is_admin_full(admin_user),
             'can_delete': is_admin_full(admin_user),
+            'can_preview': bool(questions) and test.status in (
+                Test.TestStatus.DRAFT, Test.TestStatus.PUBLISHED, Test.TestStatus.ACTIVE,
+            ),
         })
         return render(request, self.template_name, ctx)
 
@@ -676,3 +682,172 @@ class ExamFeatureFlagsView(View):
             is_security_event=True,
         )
         return JsonResponse({'ok': True, 'is_enabled': flag.is_enabled})
+
+
+# ---------------------------------------------------------------------------
+# Dry-run / Preview
+# ---------------------------------------------------------------------------
+# A "preview" lets an admin (any) or the teacher who owns a test launch the
+# real student exam UI in a non-grading mode. The attempt is created with
+# is_preview=True so it is excluded from aggregates, dashboards, percentile
+# rank, and underperformer reports. Each previewer gets isolated attempts
+# (filtered by preview_actor_id), so multiple staff can dry-run the same
+# exam concurrently without colliding.
+#
+# Mechanism: we get-or-create one synthetic "Preview Student" per tenant and
+# temporarily swap the previewer's session (preserving the original
+# user_type/user_id under _preview_prev_* keys). When preview ends, the
+# original session is restored.
+# ---------------------------------------------------------------------------
+
+def _get_or_create_preview_student(tenant):
+    """Return a synthetic Student record dedicated to dry-run attempts.
+
+    Shared per tenant. All preview TestAttempts are anchored to this student
+    so the unique (test, student, attempt_number) constraint still works
+    while keeping preview data separate from real student data.
+    """
+    from accounts.models import Student
+    code = '__PREVIEW__'
+    s = Student.objects.filter(tenant=tenant, student_code=code).first()
+    if s:
+        return s
+    s = Student.objects.create(
+        tenant=tenant,
+        first_name='Preview',
+        last_name='Student',
+        email=f'preview+{tenant.id}@local.invalid',
+        phone='',
+        student_code=code,
+        status='ACTIVE',
+    )
+    return s
+
+
+def _is_test_owned_by_teacher(test, teacher):
+    """True if `teacher` created the test or is its assigned teacher."""
+    if test.teacher_id and str(test.teacher_id) == str(teacher.id):
+        return True
+    created_by = getattr(test, 'created_by', None)
+    if created_by and str(created_by) == str(teacher.id):
+        return True
+    return False
+
+
+def _preview_gate(request, test):
+    """Return (actor_type, actor_id) if the caller may preview `test`, else (None, None).
+
+    Admins (full or with exam-management permissions) can preview any test.
+    Teachers can preview only tests they own (creator or assigned teacher).
+    """
+    # Admin path (reuses _gate's logic but does not redirect on TEACHER session)
+    dj_user = getattr(request, 'user', None)
+    if dj_user is not None and dj_user.is_authenticated and (
+        dj_user.is_superuser or dj_user.is_staff
+    ):
+        from accounts.models import Admin
+        email = getattr(dj_user, 'email', '') or ''
+        admin = (Admin.objects.filter(email__iexact=email).first()
+                 if email else Admin.objects.order_by('created_at').first())
+        if admin is not None:
+            return 'ADMIN', str(admin.id)
+
+    if request.session.get('user_type') == 'ADMIN':
+        admin = get_logged_in_admin(request)
+        if admin and can_manage_exams(admin):
+            return 'ADMIN', str(admin.id)
+
+    if request.session.get('user_type') == 'TEACHER':
+        from accounts.models import Teacher
+        uid = request.session.get('user_id')
+        try:
+            teacher = Teacher.objects.get(id=uid)
+        except (Teacher.DoesNotExist, ValueError):
+            return None, None
+        if _is_test_owned_by_teacher(test, teacher):
+            return 'TEACHER', str(teacher.id)
+
+    return None, None
+
+
+class ExamPreviewStartView(View):
+    """POST /staff/exams/<test_id>/preview/  → enter preview mode and redirect to student UI."""
+
+    @method_decorator(csrf_protect)
+    def post(self, request, test_id):
+        test = get_object_or_404(Test, id=test_id, is_deleted=False)
+        actor_type, actor_id = _preview_gate(request, test)
+        if not actor_type:
+            return _forbidden(request, 'You are not permitted to preview this exam.')
+
+        if not Question.objects.filter(test=test, is_deleted=False).exists():
+            messages.error(request, 'Cannot preview: exam has no questions.')
+            back = '/staff/exams/' if actor_type == 'ADMIN' else '/teacher/published-tests/'
+            return redirect(f'{back}{test.id}/' if actor_type == 'ADMIN' else back)
+
+        preview_student = _get_or_create_preview_student(test.tenant)
+
+        # Save previous session identity so we can restore on exit
+        sess = request.session
+        if not sess.get('_preview_prev_user_type'):
+            sess['_preview_prev_user_type'] = sess.get('user_type')
+            sess['_preview_prev_user_id'] = sess.get('user_id')
+            sess['_preview_prev_user_name'] = sess.get('user_name')
+
+        # Swap to preview-student identity
+        sess['user_type'] = 'STUDENT'
+        sess['user_id'] = str(preview_student.id)
+        sess['user_name'] = f'Preview ({actor_type.title()})'
+        sess['preview_mode'] = True
+        sess['preview_test_id'] = str(test.id)
+        sess['preview_actor_type'] = actor_type
+        sess['preview_actor_id'] = actor_id
+        sess.modified = True
+
+        log_exam_event(
+            request=request, actor=None,
+            action='PREVIEW_START', resource_type='Test',
+            resource_id=test.id, resource_name=test.test_code or test.title,
+            description=f'{actor_type} {actor_id} started dry-run preview',
+            extra_meta={'actor_type': actor_type, 'actor_id': actor_id},
+        )
+        return redirect(f'/student/exams/{test.id}/take/')
+
+    def get(self, request, test_id):
+        # Allow GET to call POST so a simple link can launch preview
+        return self.post(request, test_id)
+
+
+class ExamPreviewExitView(View):
+    """GET/POST /preview/exit/ → restore original session and redirect home."""
+
+    def get(self, request):
+        return self._exit(request)
+
+    @method_decorator(csrf_protect)
+    def post(self, request):
+        return self._exit(request)
+
+    def _exit(self, request):
+        sess = request.session
+        test_id = sess.get('preview_test_id')
+        actor_type = sess.get('preview_actor_type')
+        prev_type = sess.pop('_preview_prev_user_type', None)
+        prev_id = sess.pop('_preview_prev_user_id', None)
+        prev_name = sess.pop('_preview_prev_user_name', None)
+        for k in ('preview_mode', 'preview_test_id',
+                  'preview_actor_type', 'preview_actor_id'):
+            sess.pop(k, None)
+        if prev_type:
+            sess['user_type'] = prev_type
+        if prev_id:
+            sess['user_id'] = prev_id
+        if prev_name:
+            sess['user_name'] = prev_name
+        sess.modified = True
+
+        if test_id and actor_type == 'ADMIN':
+            return redirect(f'/staff/exams/{test_id}/')
+        if actor_type == 'TEACHER':
+            return redirect('/teacher/published-tests/')
+        return redirect('/')

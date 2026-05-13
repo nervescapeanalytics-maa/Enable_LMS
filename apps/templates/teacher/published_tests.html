@@ -92,7 +92,7 @@
         <table class="list">
           <thead><tr>
             <th>Test</th><th>Type</th><th>Subject</th><th>Batch</th><th>Window</th>
-            <th>Marks</th><th>Q</th><th>Attempts</th><th>Status</th>
+            <th>Marks</th><th>Q</th><th>Attempts</th><th>Status</th><th>Actions</th>
           </tr></thead>
           <tbody>
           {% for t in tests %}
@@ -109,7 +109,16 @@
               {% if t.status == 'PUBLISHED' %}<span class="bdg pub">Published</span>
               {% elif t.status == 'ACTIVE' %}<span class="bdg act">Active</span>
               {% elif t.status == 'COMPLETED' %}<span class="bdg com">Completed</span>
+              {% elif t.status == 'DRAFT' %}<span class="bdg" style="background:#f3f4f6;color:#374151;">Draft</span>
               {% else %}{{ t.status }}{% endif %}
+            </td>
+            <td>
+              {% if t.is_owner %}
+              <form method="post" action="/staff/exams/{{ t.id }}/preview/" style="display:inline;" onsubmit="return confirm('Launch dry-run preview? This attempt will NOT count toward grades.');">
+                {% csrf_token %}
+                <button type="submit" class="btn" style="padding:4px 10px;font-size:12px;background:#0ea5e9;color:#fff;border:none;border-radius:4px;cursor:pointer;"><i class="fas fa-flask"></i> Preview</button>
+              </form>
+              {% else %}—{% endif %}
             </td>
           </tr>
           {% endfor %}

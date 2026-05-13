@@ -54,6 +54,7 @@ def find_underperformers(*, tenant=None) -> list[dict]:
     qs = (
         TestAttempt.objects
         .filter(status__in=EVALUATED_STATUSES)
+        .exclude(is_preview=True)
         .select_related('student', 'test')
         .order_by('student_id', '-submitted_at')
     )

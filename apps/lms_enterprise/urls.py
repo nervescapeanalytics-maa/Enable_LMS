@@ -221,6 +221,7 @@ from assessments.views.admin_exam_views import (
     ExamPublishView, ExamUnpublishView, ExamArchiveView, ExamDeleteView,
     ExamSectionCreateView, ExamFeatureFlagsView,
     QuestionListView, QuestionCreateView, QuestionEditView, QuestionDeleteView,
+    ExamPreviewStartView, ExamPreviewExitView,
 )
 from assessments.views.phase4_views import (
     QuestionImportView, question_import_template,
@@ -259,6 +260,10 @@ urlpatterns += [
     path('staff/exams/<uuid:test_id>/archive/',         ExamArchiveView.as_view(),       name='staff-exam-archive'),
     path('staff/exams/<uuid:test_id>/delete/',          ExamDeleteView.as_view(),        name='staff-exam-delete'),
     path('staff/exams/<uuid:test_id>/sections/new/',    ExamSectionCreateView.as_view(), name='staff-exam-section-create'),
+
+    # Dry-run / Preview (admin OR teacher-owner)
+    path('staff/exams/<uuid:test_id>/preview/',         ExamPreviewStartView.as_view(),  name='staff-exam-preview'),
+    path('preview/exit/',                                ExamPreviewExitView.as_view(),   name='exam-preview-exit'),
 
     # Staff Dashboard — Exams Phase 4 (bulk import + version control)
     path('staff/exams/import/',                         QuestionImportView.as_view(),    name='staff-exam-import'),

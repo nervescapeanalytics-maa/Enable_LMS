@@ -399,6 +399,24 @@ class TestAttempt(models.Model):
     ext_attempt_1 = models.CharField(max_length=500, null=True, blank=True)
     ext_attempt_2 = models.JSONField(null=True, blank=True)
 
+    # ── Dry-run / Preview mode ──────────────────────────────────────────────
+    # When True, this attempt was created by an admin/teacher previewing the
+    # exam. Preview attempts are EXCLUDED from grading aggregates, rank/
+    # percentile, dashboards, and underperformer reports.
+    is_preview = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text='Admin/teacher dry-run attempt — excluded from grading stats.',
+    )
+    preview_actor_type = models.CharField(
+        max_length=20, null=True, blank=True,
+        help_text='ADMIN or TEACHER — who launched this preview attempt.',
+    )
+    preview_actor_id = models.UUIDField(
+        null=True, blank=True,
+        help_text='UUID of the Admin/Teacher who launched this preview attempt.',
+    )
+
     class Meta:
         db_table = 'test_attempts'
         constraints = [

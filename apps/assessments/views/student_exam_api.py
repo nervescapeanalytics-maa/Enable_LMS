@@ -77,18 +77,22 @@ def _require_student(request):
         return None
 
 
-def _get_test_and_attempt(student, test_id):
-    """Return (test, in_progress_attempt) or (None, None)."""
+def _get_test_and_attempt(student, test_id, *, preview_actor_id=None):
+    """Return (test, in_progress_attempt) or (None, None).
+
+    When ``preview_actor_id`` is supplied, restrict to the matching preview
+    attempt so each previewer's dry-run is isolated.
+    """
     try:
         test = Test.objects.get(id=test_id, tenant=student.tenant, is_deleted=False)
     except (Test.DoesNotExist, ValueError):
         return None, None
-    attempt = (
-        TestAttempt.objects
-        .filter(test=test, student=student, status='IN_PROGRESS')
-        .order_by('-started_at')
-        .first()
-    )
+    qs = TestAttempt.objects.filter(test=test, student=student, status='IN_PROGRESS')
+    if preview_actor_id:
+        qs = qs.filter(is_preview=True, preview_actor_id=preview_actor_id)
+    else:
+        qs = qs.filter(is_preview=False)
+    attempt = qs.order_by('-started_at').first()
     return test, attempt
 
 
@@ -132,7 +136,7 @@ class AnswerAutoSaveView(View):
         if not student:
             return _err('Not authenticated', 401)
 
-        test, attempt = _get_test_and_attempt(student, test_id)
+        test, attempt = _get_test_and_attempt(student, test_id, preview_actor_id=request.session.get("preview_actor_id") if request.session.get("preview_mode") else None)
         if not attempt:
             return _err('No active attempt', 404)
 
@@ -216,7 +220,7 @@ class ProctorEventView(View):
         if not student:
             return _err('Not authenticated', 401)
 
-        test, attempt = _get_test_and_attempt(student, test_id)
+        test, attempt = _get_test_and_attempt(student, test_id, preview_actor_id=request.session.get("preview_actor_id") if request.session.get("preview_mode") else None)
         if not attempt:
             return _err('No active attempt', 404)
 
@@ -323,7 +327,7 @@ class ProctorSnapshotView(View):
         ):
             return JsonResponse({'ok': True, 'ignored': True})
 
-        test, attempt = _get_test_and_attempt(student, test_id)
+        test, attempt = _get_test_and_attempt(student, test_id, preview_actor_id=request.session.get("preview_actor_id") if request.session.get("preview_mode") else None)
         if not attempt:
             return _err('No active attempt', 404)
 
@@ -379,7 +383,7 @@ class ExamSubmitView(View):
         if not student:
             return _err('Not authenticated', 401)
 
-        test, attempt = _get_test_and_attempt(student, test_id)
+        test, attempt = _get_test_and_attempt(student, test_id, preview_actor_id=request.session.get("preview_actor_id") if request.session.get("preview_mode") else None)
         if not attempt:
             return _err('No active attempt', 404)
 

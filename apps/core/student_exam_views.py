@@ -60,7 +60,11 @@ logger = logging.getLogger(__name__)
 # Auth helper
 # ---------------------------------------------------------------------------
 def _require_student(request) -> Optional[Student]:
-    """Return the logged-in Student or None."""
+    """Return the logged-in Student or None.
+
+    Also returns a synthetic preview-student when the caller is in PREVIEW
+    mode (admin/teacher dry-run launched via /staff/exams/<id>/preview/).
+    """
     if request.session.get('user_type') != 'STUDENT':
         return None
     user_id = request.session.get('user_id')
@@ -70,6 +74,20 @@ def _require_student(request) -> Optional[Student]:
         return Student.objects.select_related('tenant', 'batch').get(id=user_id)
     except (Student.DoesNotExist, ValueError):
         return None
+
+
+def _is_preview_session(request) -> bool:
+    return bool(request.session.get('preview_mode'))
+
+
+def _preview_actor(request):
+    """Return (actor_type, actor_uuid_str) if in preview mode, else (None, None)."""
+    if not _is_preview_session(request):
+        return None, None
+    return (
+        request.session.get('preview_actor_type'),
+        request.session.get('preview_actor_id'),
+    )
 
 
 def _student_batch_ids(student: Student) -> list:
@@ -188,6 +206,7 @@ class ExamListView(View):
         past_qs = (
             TestAttempt.objects
             .filter(student=student, status__in=['EVALUATED', 'SUBMITTED', 'AUTO_SUBMITTED'])
+            .exclude(is_preview=True)
             .select_related('test', 'test__subject')
             .order_by('-submitted_at')
         )
@@ -252,22 +271,32 @@ class ExamTakeView(View):
             id=test_id, tenant=student.tenant, is_deleted=False,
         )
 
-        # Eligibility check
-        if test not in _visible_tests_qs(student):
+        in_preview = _is_preview_session(request)
+
+        # Eligibility check (bypassed in preview mode — dry-run can run on
+        # DRAFT/PUBLISHED tests outside the scheduled window)
+        if not in_preview and test not in _visible_tests_qs(student):
             return render(request, 'student/exam_blocked.html', {
                 'student': student,
                 'test': test,
                 'reason': 'This test is not currently available for you.',
             }, status=403)
 
-        # Resume any IN_PROGRESS attempt, else start a fresh one
-        attempt = TestAttempt.objects.filter(
-            test=test, student=student, status='IN_PROGRESS',
-        ).order_by('-started_at').first()
+        # Resume any IN_PROGRESS attempt, else start a fresh one.
+        # In preview mode we always resume the matching preview attempt for
+        # this previewer (filtered by preview_actor_id) so multiple admins/
+        # teachers can preview the same exam independently.
+        actor_type, actor_id = _preview_actor(request)
+        base_qs = TestAttempt.objects.filter(test=test, student=student, status='IN_PROGRESS')
+        if in_preview:
+            base_qs = base_qs.filter(is_preview=True, preview_actor_id=actor_id)
+        else:
+            base_qs = base_qs.filter(is_preview=False)
+        attempt = base_qs.order_by('-started_at').first()
 
         if not attempt:
             used = TestAttempt.objects.filter(test=test, student=student).count()
-            if used >= test.max_attempts:
+            if not in_preview and used >= test.max_attempts:
                 return render(request, 'student/exam_blocked.html', {
                     'student': student,
                     'test': test,
@@ -285,6 +314,9 @@ class ExamTakeView(View):
                     status='IN_PROGRESS',
                     ip_address=_client_ip(request),
                     user_agent=request.META.get('HTTP_USER_AGENT', '')[:500],
+                    is_preview=in_preview,
+                    preview_actor_type=actor_type if in_preview else None,
+                    preview_actor_id=actor_id if in_preview else None,
                 )
 
         questions = list(
@@ -347,6 +379,7 @@ class ExamTakeView(View):
             'q_rows': q_rows,
             'remaining_seconds': remaining,
             'feature_flags': feature_flags,
+            'is_preview': bool(attempt.is_preview),
         })
 
     def post(self, request, test_id):

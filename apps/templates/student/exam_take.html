@@ -109,6 +109,12 @@
 {% endblock %}
 
 {% block body %}
+{% if is_preview %}
+<div style="background:#fff8db;border-bottom:2px solid #f0c419;color:#7a5a00;padding:10px 16px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:12px;justify-content:space-between;">
+  <span><i class="fas fa-flask"></i> DRY-RUN PREVIEW MODE &mdash; this attempt is NOT counted toward grades or statistics.</span>
+  <a href="/preview/exit/" style="background:#f0c419;color:#3c2e00;padding:6px 12px;border-radius:4px;text-decoration:none;font-weight:600;"><i class="fas fa-sign-out-alt"></i> Exit Preview</a>
+</div>
+{% endif %}
 <div class="topbar">
   <div class="title">
     <span class="ico"><i class="fas fa-edit"></i></span>
