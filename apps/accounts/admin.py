@@ -1,3 +1,4 @@
+from django import forms
 from django.contrib import admin
 from django.contrib.auth.models import User, Group
 from django.utils.html import format_html
@@ -367,8 +368,111 @@ class AdminRoleInline(admin.TabularInline):
         return UserRoleAssignment.objects.none()
 
 
+class AdminUserAdminForm(forms.ModelForm):
+    """
+    Custom form for the Admin user model that:
+      * Replaces the JSON `permissions_override` textarea with a multi-select
+        populated from active Permission rows (stored as a list of codes).
+      * Replaces the JSON `managed_branches` textarea with a multi-select
+        whose options come from existing Tenant rows + any previously-saved
+        branch values (so legacy data is preserved and selectable).
+      * Adds a write-only `raw_password` field so operators can set / reset
+        the admin's login password from the admin panel without having to
+        paste a pre-hashed value into `password_hash`.
+    """
+
+    raw_password = forms.CharField(
+        label='Set password',
+        required=False,
+        widget=forms.PasswordInput(render_value=False, attrs={'autocomplete': 'new-password'}),
+        help_text=(
+            'Enter a plain password to set / reset the login password. '
+            'Leave blank on edit to keep the existing password. Required on creation.'
+        ),
+    )
+
+    permissions_override = forms.MultipleChoiceField(
+        required=False,
+        widget=forms.SelectMultiple(attrs={'size': '10', 'style': 'min-width:420px'}),
+        help_text='Direct permission overrides (in addition to those granted by the assigned Role).',
+    )
+
+    managed_branches = forms.MultipleChoiceField(
+        required=False,
+        widget=forms.SelectMultiple(attrs={'size': '8', 'style': 'min-width:420px'}),
+        help_text='Restrict this admin to a specific list of branches / campuses. Empty = all branches in tenant.',
+    )
+
+    class Meta:
+        model = AdminUser
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # ---- permissions_override choices: every active Permission ----
+        perm_choices = list(
+            Permission.objects.filter(is_active=True)
+            .order_by('module', 'category', 'code')
+            .values_list('code', 'name')
+        )
+        # Preserve any previously-saved code that is no longer active so the
+        # operator can see and clear it instead of silently dropping it.
+        existing = list(self.initial.get('permissions_override') or [])
+        if self.instance and self.instance.pk:
+            existing = list(self.instance.permissions_override or [])
+        known = {c for c, _ in perm_choices}
+        for code in existing:
+            if code and code not in known:
+                perm_choices.append((code, f'{code} (inactive)'))
+        self.fields['permissions_override'].choices = perm_choices
+        self.fields['permissions_override'].initial = existing
+
+        # ---- managed_branches choices: tenants + previously-saved values ----
+        from tenants.models import Tenant
+        branch_choices = []
+        seen = set()
+        for code, name in Tenant.objects.order_by('name').values_list('code', 'name'):
+            if code and code not in seen:
+                branch_choices.append((code, f'{name} ({code})'))
+                seen.add(code)
+        existing_branches = list(self.initial.get('managed_branches') or [])
+        if self.instance and self.instance.pk:
+            existing_branches = list(self.instance.managed_branches or [])
+        for b in existing_branches:
+            if b and b not in seen:
+                branch_choices.append((b, b))
+                seen.add(b)
+        self.fields['managed_branches'].choices = branch_choices
+        self.fields['managed_branches'].initial = existing_branches
+
+        # ---- raw_password required only on creation ----
+        if self.instance and self.instance.pk:
+            self.fields['raw_password'].help_text = (
+                'Leave blank to keep the existing password. '
+                'Enter a new value to reset it (will be hashed before save).'
+            )
+        else:
+            self.fields['raw_password'].required = True
+
+        # password_hash should never be edited by hand
+        if 'password_hash' in self.fields:
+            self.fields['password_hash'].required = False
+            self.fields['password_hash'].widget.attrs['readonly'] = True
+            self.fields['password_hash'].help_text = (
+                'Stored hash (read-only). Use "Set password" above to change it.'
+            )
+
+    def clean_permissions_override(self):
+        return list(self.cleaned_data.get('permissions_override') or [])
+
+    def clean_managed_branches(self):
+        return list(self.cleaned_data.get('managed_branches') or [])
+
+
 @admin.register(AdminUser)
 class AdminUserAdmin(ImportExportMixin, EnhancedModelAdmin):
+    form = AdminUserAdminForm
     list_display = (
         'admin_code', 'full_name_display', 'email', 'admin_type_badge',
         'role_display', 'staff_role_display', 'lockout_display',
@@ -383,6 +487,18 @@ class AdminUserAdmin(ImportExportMixin, EnhancedModelAdmin):
     )
     list_per_page = 25
     actions = [export_as_csv, export_as_json, activate_selected, deactivate_selected]
+
+    def save_model(self, request, obj, form, change):
+        """Hash any plain password supplied via the `raw_password` field."""
+        raw = form.cleaned_data.get('raw_password') if form else None
+        if raw:
+            obj.set_password(raw)
+            obj.force_password_change = False
+        elif not change and not obj.password_hash:
+            # Defensive: never persist an admin with an empty password hash.
+            from django.core.exceptions import ValidationError
+            raise ValidationError('A password is required when creating a new Admin.')
+        super().save_model(request, obj, form, change)
 
     fieldsets = (
         ('Identity', {
@@ -400,7 +516,7 @@ class AdminUserAdmin(ImportExportMixin, EnhancedModelAdmin):
             ),
         }),
         ('Security & Authentication', {
-            'fields': ('password_hash', 'password_changed_at', 'mfa_enabled', 'mfa_method', 'mfa_enforced_by_admin',
+            'fields': ('raw_password', 'password_hash', 'password_changed_at', 'mfa_enabled', 'mfa_method', 'mfa_enforced_by_admin',
                        'force_password_change',
                        'require_ip_whitelist', 'allowed_ips', 'session_timeout_minutes'),
             'classes': ('collapse',),
