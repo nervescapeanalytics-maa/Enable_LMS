@@ -357,139 +357,219 @@
     </a>
 
     <nav class="sb-nav">
+      {% if nav_sections.overview %}
       <div class="sb-section">
         <div class="sb-label">Overview</div>
+        {% if 'nav.overview.dashboard' in nav_perms %}
         <a href="/staff/dashboard/" class="sb-link {% if active_page == 'dashboard' %}active{% endif %}">
           <i class="fas fa-th-large"></i> Dashboard
         </a>
+        {% endif %}
+        {% if 'nav.overview.monitoring' in nav_perms %}
         <a href="/staff/monitoring/" class="sb-link {% if active_page == 'monitoring' %}active{% endif %}">
           <i class="fas fa-desktop"></i> Monitoring Center
         </a>
+        {% endif %}
       </div>
+      {% endif %}
 
+      {% if nav_sections.master %}
       <div class="sb-section">
         <div class="sb-label">Master</div>
+        {% if 'nav.master.subjects' in nav_perms %}
         <a href="/staff/subjects/" class="sb-link {% if active_page == 'subjects' %}active{% endif %}">
           <i class="fas fa-book"></i> Subject Section
         </a>
+        {% endif %}
+        {% if 'nav.master.batches' in nav_perms %}
         <a href="/staff/batches/" class="sb-link {% if active_page == 'batches' %}active{% endif %}">
           <i class="fas fa-layer-group"></i> Batches
         </a>
+        {% endif %}
+        {% if 'nav.master.programs' in nav_perms %}
         <a href="/staff/programs/" class="sb-link {% if active_page == 'programs' %}active{% endif %}">
           <i class="fas fa-graduation-cap"></i> Programs
         </a>
+        {% endif %}
+        {% if 'nav.master.sessions' in nav_perms %}
         <a href="/staff/sessions/" class="sb-link {% if active_page == 'sessions' %}active{% endif %}">
           <i class="fas fa-calendar-alt"></i> Academic Sessions
         </a>
+        {% endif %}
       </div>
+      {% endif %}
 
+      {% if nav_sections.exams %}
       <div class="sb-section">
         <div class="sb-label">Exams & Assessments</div>
+        {% if 'nav.exams.list' in nav_perms %}
         <a href="/staff/exams/" class="sb-link {% if active_page == 'exams' %}active{% endif %}">
           <i class="fas fa-clipboard-list"></i> Exams
           {% if sidebar_counts.tests %}<span class="sb-badge">{{ sidebar_counts.tests }}</span>{% endif %}
         </a>
+        {% endif %}
+        {% if 'nav.exams.questions' in nav_perms %}
         <a href="/staff/exams/questions/" class="sb-link {% if active_page == 'questions' %}active{% endif %}">
           <i class="fas fa-question-circle"></i> Question Bank
         </a>
+        {% endif %}
+        {% if 'nav.exams.import' in nav_perms %}
         <a href="/staff/exams/import/" class="sb-link {% if active_page == 'exam-import' %}active{% endif %}">
           <i class="fas fa-file-upload"></i> Bulk Import
         </a>
+        {% endif %}
+        {% if 'nav.exams.flags' in nav_perms %}
         <a href="/staff/exams/flags/" class="sb-link {% if active_page == 'exam-flags' %}active{% endif %}">
           <i class="fas fa-toggle-on"></i> Feature Flags
         </a>
+        {% endif %}
       </div>
+      {% endif %}
 
+      {% if nav_sections.analytics %}
       <div class="sb-section">
         <div class="sb-label">Analytics & Alerting</div>
+        {% if 'nav.analytics.exam_reports' in nav_perms %}
         <a href="/staff/analytics/exam-reports/" class="sb-link {% if active_page == 'exam-reports' %}active{% endif %}">
           <i class="fas fa-chart-bar"></i> Exam Reports
         </a>
+        {% endif %}
+        {% if 'nav.analytics.ai_insights' in nav_perms %}
         <a href="/staff/analytics/ai-insights/" class="sb-link {% if active_page == 'ai-insights' %}active{% endif %}">
           <i class="fas fa-brain"></i> AI Insights
         </a>
+        {% endif %}
+        {% if 'nav.analytics.underperformers' in nav_perms %}
         <a href="/staff/analytics/underperformers/" class="sb-link {% if active_page == 'underperformers' %}active{% endif %}">
           <i class="fas fa-bell"></i> Underperformer Alerts
         </a>
+        {% endif %}
+        {% if 'nav.analytics.thresholds' in nav_perms %}
         <a href="/staff/analytics/thresholds/" class="sb-link {% if active_page == 'exam-thresholds' %}active{% endif %}">
           <i class="fas fa-sliders-h"></i> Thresholds
         </a>
+        {% endif %}
       </div>
+      {% endif %}
 
+      {% if nav_sections.school %}
       <div class="sb-section">
         <div class="sb-label">School / Centers</div>
+        {% if 'nav.school.schools' in nav_perms %}
         <a href="/staff/schools/" class="sb-link {% if active_page == 'schools' %}active{% endif %}">
           <i class="fas fa-school"></i> Schools
         </a>
+        {% endif %}
+        {% if 'nav.school.teachers' in nav_perms %}
         <a href="/staff/teachers/" class="sb-link {% if active_page == 'teachers' %}active{% endif %}">
           <i class="fas fa-chalkboard-teacher"></i> Teachers
           {% if sidebar_counts.teachers %}<span class="sb-badge">{{ sidebar_counts.teachers }}</span>{% endif %}
         </a>
+        {% endif %}
+        {% if 'nav.school.teacher_attendance' in nav_perms %}
         <a href="/staff/teacher-attendance/" class="sb-link {% if active_page == 'teacher-attendance' %}active{% endif %}">
           <i class="fas fa-user-check"></i> Teacher Attendance
         </a>
+        {% endif %}
       </div>
+      {% endif %}
 
+      {% if nav_sections.students %}
       <div class="sb-section">
         <div class="sb-label">Students</div>
+        {% if 'nav.students.list' in nav_perms %}
         <a href="/staff/students/" class="sb-link {% if active_page == 'students' %}active{% endif %}">
           <i class="fas fa-users"></i> All Students
           {% if sidebar_counts.students %}<span class="sb-badge">{{ sidebar_counts.students }}</span>{% endif %}
         </a>
+        {% endif %}
+        {% if 'nav.students.attendance' in nav_perms %}
         <a href="/staff/student-attendance/" class="sb-link {% if active_page == 'student-attendance' %}active{% endif %}">
           <i class="fas fa-clipboard-check"></i> Student Attendance
         </a>
+        {% endif %}
       </div>
+      {% endif %}
 
+      {% if nav_sections.study %}
       <div class="sb-section">
         <div class="sb-label">Study Material</div>
+        {% if 'nav.study.live_classes' in nav_perms %}
         <a href="/staff/live-classes/" class="sb-link {% if active_page == 'live-classes' %}active{% endif %}">
           <i class="fas fa-broadcast-tower"></i> Live Classes
           {% if sidebar_counts.live_classes %}<span class="sb-badge">{{ sidebar_counts.live_classes }}</span>{% endif %}
         </a>
+        {% endif %}
+        {% if 'nav.study.materials' in nav_perms %}
         <a href="/staff/study-materials/" class="sb-link {% if active_page == 'study-materials' %}active{% endif %}">
           <i class="fas fa-book-open"></i> Study Materials
         </a>
+        {% endif %}
       </div>
+      {% endif %}
 
+      {% if nav_sections.comm %}
       <div class="sb-section">
         <div class="sb-label">Communication</div>
+        {% if 'nav.comm.announcements' in nav_perms %}
         <a href="/staff/announcements/" class="sb-link {% if active_page == 'announcements' %}active{% endif %}">
           <i class="fas fa-bullhorn"></i> Announcements
         </a>
+        {% endif %}
+        {% if 'nav.comm.tickets' in nav_perms %}
         <a href="/staff/tickets/" class="sb-link {% if active_page == 'tickets' %}active{% endif %}">
           <i class="fas fa-ticket-alt"></i> Support Tickets
           {% if sidebar_counts.open_tickets %}<span class="sb-badge">{{ sidebar_counts.open_tickets }}</span>{% endif %}
         </a>
+        {% endif %}
       </div>
+      {% endif %}
 
+      {% if nav_sections.system %}
       <div class="sb-section">
         <div class="sb-label">System</div>
+        {% if 'nav.system.staff_roles' in nav_perms %}
         <a href="/staff/staff-roles/" class="sb-link {% if active_page == 'staff_roles' %}active{% endif %}">
           <i class="fas fa-user-shield"></i> Staff Roles
         </a>
+        {% endif %}
+        {% if 'nav.system.integrations' in nav_perms %}
         <a href="/staff/integrations/" class="sb-link {% if active_page == 'integrations' %}active{% endif %}">
           <i class="fas fa-plug"></i> Integrations
         </a>
+        {% endif %}
+        {% if 'nav.system.reports' in nav_perms %}
         <a href="/staff/reports/" class="sb-link {% if active_page == 'reports' %}active{% endif %}">
           <i class="fas fa-chart-bar"></i> Reports Center
         </a>
+        {% endif %}
+        {% if 'nav.system.website_settings' in nav_perms %}
         <a href="/staff/website-settings/" class="sb-link {% if active_page == 'website_settings' %}active{% endif %}">
           <i class="fas fa-globe"></i> Website Settings
         </a>
+        {% endif %}
+        {% if 'nav.system.ai_features' in nav_perms %}
         <a href="/staff/ai-features/" class="sb-link {% if active_page == 'ai_features' %}active{% endif %}">
           <i class="fas fa-brain"></i> AI Features
         </a>
+        {% endif %}
+        {% if 'nav.system.compliance' in nav_perms %}
         <a href="/staff/compliance/" class="sb-link {% if active_page == 'compliance' %}active{% endif %}">
           <i class="fas fa-shield-alt"></i> Audit & Compliance
         </a>
+        {% endif %}
+        {% if 'nav.system.dashboards' in nav_perms %}
         <a href="/staff/dashboard-integration/" class="sb-link {% if active_page == 'dashboard_integration' %}active{% endif %}">
           <i class="fas fa-columns"></i> Dashboards
         </a>
+        {% endif %}
+        {% if 'nav.system.tenants' in nav_perms %}
         <a href="/staff/tenants/" class="sb-link {% if active_page == 'tenants' %}active{% endif %}">
           <i class="fas fa-building"></i> Tenants / Centers
         </a>
+        {% endif %}
       </div>
+      {% endif %}
     </nav>
 
     <div class="sb-bottom">

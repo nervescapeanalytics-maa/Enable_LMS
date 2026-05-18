@@ -824,6 +824,14 @@ class StaffRole(models.Model):
     can_manage_students = models.BooleanField(default=True)
     can_manage_teachers = models.BooleanField(default=True)
     can_manage_exams = models.BooleanField(default=False)
+    # Fine-grained exam permissions (Phase 5). Default = inherit from
+    # can_manage_exams at the helper layer (apps/assessments/permissions.py),
+    # so existing roles keep working without a data migration.
+    can_publish_exams = models.BooleanField(default=False)
+    can_archive_exams = models.BooleanField(default=False)
+    can_dry_run_exams = models.BooleanField(default=False)
+    can_clone_exams = models.BooleanField(default=False)
+    can_delete_exam_results = models.BooleanField(default=False)
     can_manage_attendance = models.BooleanField(default=True)
     can_manage_content = models.BooleanField(default=False)
     can_manage_finance = models.BooleanField(default=False)
@@ -1859,3 +1867,48 @@ class UserStaffRole(models.Model):
 
     def __str__(self):
         return f"{self.user.username} → {self.role.name}"
+
+
+# ═══════════════════════════════════════════════════════════════════
+# NAV MENU PERMISSIONS  (UI-only — controls which sidebar items
+# render on the staff console at /staff/)
+# ═══════════════════════════════════════════════════════════════════
+class NavMenuPermission(models.Model):
+    """
+    Per-StaffRole UI navigation permission.
+
+    Deliberately separate from:
+      * Permission / RolePermission        → action / API authorisation
+      * StaffRolePermission                → /admin/ panel per-model CRUD
+      * StaffRole.can_manage_*             → coarse legacy feature flags
+
+    Presence of a row = the role's holders may SEE the nav entry.
+    Absence = the entry is hidden from the rendered sidebar.
+
+    Codes are namespaced as ``nav.<section>.<item>`` so they are easy to
+    query, audit, and group by section. The authoritative catalog is
+    maintained in ``accounts.management.commands.seed_staff_nav_permissions``.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    staff_role = models.ForeignKey(
+        StaffRole, on_delete=models.CASCADE,
+        related_name='nav_permissions',
+    )
+    code = models.CharField(
+        max_length=80, db_index=True,
+        help_text='Namespaced nav code, e.g. "nav.exams.list".'
+    )
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = 'nav_menu_permissions'
+        ordering = ['code']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['staff_role', 'code'],
+                name='uq_nav_menu_perm',
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.staff_role.name} → {self.code}"

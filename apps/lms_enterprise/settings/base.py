@@ -64,6 +64,7 @@ LOCAL_APPS = [
     'scheduling.apps.SchedulingConfig',
     'promotions.apps.PromotionsConfig',
     'alerts.apps.AlertsConfig',
+    'ai_core.apps.AiCoreConfig',
     'core',
 ]
 
@@ -110,6 +111,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'tenants.context_processors.tenant_context',
+                'accounts.context_processors.nav_permissions',
             ],
         },
     },
@@ -458,13 +460,3 @@ SPECTACULAR_SETTINGS = {
     'COMPONENT_SPLIT_REQUEST': True,
     'SCHEMA_PATH_PREFIX': r'/api/',
 }
-
-# ---------------------------------------------------------------------------
-# EduAssist AI Chat Configuration
-# ---------------------------------------------------------------------------
-EDUASSIST_AI_PROVIDER = os.environ.get('EDUASSIST_AI_PROVIDER', 'none')  # 'openai', 'anthropic', or 'none' (FAQ-only)
-OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
-ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
-EDUASSIST_MODEL = os.environ.get('EDUASSIST_MODEL', 'gpt-4o-mini')  # or 'claude-sonnet-4-20250514'
-EDUASSIST_MAX_TOKENS = int(os.environ.get('EDUASSIST_MAX_TOKENS', 512))
-EDUASSIST_TEMPERATURE = float(os.environ.get('EDUASSIST_TEMPERATURE', '0.3'))
