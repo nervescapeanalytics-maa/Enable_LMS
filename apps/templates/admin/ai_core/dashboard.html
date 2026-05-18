@@ -1,0 +1,140 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}AI Governance Dashboard — ENABLE PROGRAM{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+  .ai-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:14px; margin:18px 0; }
+  .ai-card { background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:14px 16px; box-shadow:0 1px 2px rgba(0,0,0,.04); }
+  .ai-card h3 { margin:0 0 4px 0; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:#64748b; font-weight:600; }
+  .ai-card .v { font-size:24px; font-weight:700; color:#0f172a; }
+  .ai-card .sub { font-size:11px; color:#94a3b8; margin-top:2px; }
+  .ai-tabs { display:flex; gap:8px; margin:18px 0 8px; }
+  .ai-tabs a { padding:6px 12px; border:1px solid #cbd5e1; background:#f1f5f9; border-radius:6px; color:#334155; text-decoration:none; font-size:13px; }
+  .ai-tabs a.active { background:#7c3aed; color:#fff; border-color:#7c3aed; }
+  .ai-section { background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:14px 16px; margin:14px 0; }
+  .ai-section h2 { font-size:14px; text-transform:uppercase; letter-spacing:.06em; color:#475569; margin:0 0 10px; }
+  table.ai-tbl { width:100%; border-collapse:collapse; font-size:13px; }
+  table.ai-tbl th, table.ai-tbl td { padding:6px 8px; border-bottom:1px solid #f1f5f9; text-align:left; }
+  table.ai-tbl th { color:#64748b; font-weight:600; font-size:11px; text-transform:uppercase; }
+  .pill { display:inline-block; padding:2px 8px; border-radius:99px; font-size:11px; font-weight:600; }
+  .pill-ok { background:#dcfce7; color:#15803d; }
+  .pill-warn { background:#fef3c7; color:#a16207; }
+  .pill-bad { background:#fee2e2; color:#b91c1c; }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 style="margin-top:0;">{{ title }}</h1>
+{% if viewing_tenant %}<p style="color:#64748b;">Viewing tenant: <b>{{ viewing_tenant }}</b></p>{% endif %}
+<p style="color:#64748b; margin-top:-4px;">{{ subtitle }}</p>
+
+<div class="ai-tabs">
+  <a class="active" href="{% url 'admin:ai_dashboard' %}">Overview</a>
+  <a href="{% url 'admin:ai_cost_report' %}">Cost Report</a>
+  <a href="{% url 'admin:ai_health' %}">Provider Health</a>
+  <a href="{% url 'admin:ai_core_aifeature_changelist' %}">Features</a>
+  <a href="{% url 'admin:ai_core_aiusagelog_changelist' %}">Usage Log</a>
+</div>
+
+<div class="ai-grid">
+  <div class="ai-card"><h3>Requests Today</h3><div class="v">{{ today_agg.n|default:0 }}</div><div class="sub">{{ today_agg.success|default:0 }} ok · {{ today_agg.failed|default:0 }} fail</div></div>
+  <div class="ai-card"><h3>Tokens Today</h3><div class="v">{{ today_agg.tokens|default:0 }}</div></div>
+  <div class="ai-card"><h3>Cost Today (USD)</h3><div class="v">${{ today_agg.cost|default:"0.00"|floatformat:4 }}</div></div>
+  <div class="ai-card"><h3>Avg Latency</h3><div class="v">{{ today_agg.avg_lat|default:0|floatformat:0 }}<span style="font-size:14px;color:#64748b;"> ms</span></div></div>
+  <div class="ai-card"><h3>Enabled Features</h3><div class="v">{{ feature_count }}</div></div>
+  <div class="ai-card"><h3>Enabled Providers</h3><div class="v">{{ provider_count }}</div><div class="sub">{{ model_count }} models</div></div>
+</div>
+
+<div class="ai-section">
+  <h2>Last 7 days</h2>
+  <table class="ai-tbl">
+    <thead><tr><th>Day</th><th>Requests</th><th>Tokens</th><th>Cost (USD)</th></tr></thead>
+    <tbody>
+    {% for d in week_per_day %}
+      <tr><td>{{ d.day }}</td><td>{{ d.n }}</td><td>{{ d.tokens|default:0 }}</td><td>${{ d.cost|default:"0.00"|floatformat:4 }}</td></tr>
+    {% empty %}
+      <tr><td colspan="4" style="color:#94a3b8;">No usage in last 7 days.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="ai-section">
+  <h2>Top features this week</h2>
+  <table class="ai-tbl">
+    <thead><tr><th>Feature</th><th>Requests</th><th>Tokens</th><th>Cost</th></tr></thead>
+    <tbody>
+    {% for f in top_features %}
+      <tr>
+        <td><b>{{ f.feature__name|default:f.feature__code }}</b><br><span style="font-size:11px;color:#94a3b8;">{{ f.feature__code }}</span></td>
+        <td>{{ f.n }}</td>
+        <td>{{ f.tokens|default:0 }}</td>
+        <td>${{ f.cost|default:"0.00"|floatformat:4 }}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="4" style="color:#94a3b8;">No data.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="ai-section">
+  <h2>Recent errors (today)</h2>
+  <table class="ai-tbl">
+    <thead><tr><th>Time</th><th>Feature</th><th>Provider/Model</th><th>Status</th><th>Error</th></tr></thead>
+    <tbody>
+    {% for e in recent_errors %}
+      <tr>
+        <td>{{ e.created_at|date:"H:i:s" }}</td>
+        <td>{{ e.feature.code|default:"—" }}</td>
+        <td>{{ e.provider.name|default:"—" }} / {{ e.model.name|default:"—" }}</td>
+        <td><span class="pill pill-bad">{{ e.status }}</span></td>
+        <td style="font-family:monospace;font-size:11px;">{{ e.error_message|truncatechars:80 }}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="5" style="color:#94a3b8;">No errors today. 🎉</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="ai-section">
+  <h2>Provider health snapshot</h2>
+  <table class="ai-tbl">
+    <thead><tr><th>Provider</th><th>Kind</th><th>Status</th><th>Avg Latency</th><th>Success</th><th>Fails</th></tr></thead>
+    <tbody>
+    {% for p in provider_health %}
+      <tr>
+        <td><b>{{ p.name }}</b></td>
+        <td>{{ p.get_kind_display }}</td>
+        <td>
+          {% if p.status == "ACTIVE" %}<span class="pill pill-ok">{{ p.status }}</span>
+          {% elif p.status == "DEGRADED" %}<span class="pill pill-warn">{{ p.status }}</span>
+          {% else %}<span class="pill pill-bad">{{ p.status }}</span>{% endif %}
+        </td>
+        <td>{{ p.avg_latency_ms|floatformat:0 }} ms</td>
+        <td>{{ p.success_rate|floatformat:3 }}</td>
+        <td>{{ p.consecutive_failures }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if flagged_audit %}
+<div class="ai-section">
+  <h2>Recent flagged audit rows</h2>
+  <table class="ai-tbl">
+    <thead><tr><th>When</th><th>Feature</th><th>Reason</th></tr></thead>
+    <tbody>
+    {% for a in flagged_audit %}
+      <tr><td>{{ a.created_at|date:"Y-m-d H:i" }}</td><td>{{ a.feature_code }}</td><td>{{ a.flag_reason }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}

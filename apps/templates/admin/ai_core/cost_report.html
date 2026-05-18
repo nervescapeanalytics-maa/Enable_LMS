@@ -1,0 +1,86 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}AI Cost Report — ENABLE PROGRAM{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+  .ai-tabs { display:flex; gap:8px; margin:18px 0 8px; }
+  .ai-tabs a { padding:6px 12px; border:1px solid #cbd5e1; background:#f1f5f9; border-radius:6px; color:#334155; text-decoration:none; font-size:13px; }
+  .ai-tabs a.active { background:#7c3aed; color:#fff; border-color:#7c3aed; }
+  .ai-section { background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:14px 16px; margin:14px 0; }
+  .ai-section h2 { font-size:14px; text-transform:uppercase; letter-spacing:.06em; color:#475569; margin:0 0 10px; }
+  table.ai-tbl { width:100%; border-collapse:collapse; font-size:13px; }
+  table.ai-tbl th, table.ai-tbl td { padding:6px 8px; border-bottom:1px solid #f1f5f9; text-align:left; }
+  table.ai-tbl th { color:#64748b; font-weight:600; font-size:11px; text-transform:uppercase; }
+  .totals { display:flex; gap:24px; flex-wrap:wrap; margin:12px 0 6px; }
+  .totals div { background:#7c3aed; color:#fff; padding:10px 16px; border-radius:8px; }
+  .totals .lbl { font-size:11px; opacity:.8; text-transform:uppercase; letter-spacing:.06em; }
+  .totals .v { font-size:22px; font-weight:700; }
+  .bar { display:inline-block; height:8px; background:#a78bfa; border-radius:4px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 style="margin-top:0;">{{ title }}</h1>
+<p style="color:#64748b;">{{ subtitle }}</p>
+
+<div class="ai-tabs">
+  <a href="{% url 'admin:ai_dashboard' %}">Overview</a>
+  <a class="active" href="{% url 'admin:ai_cost_report' %}">Cost Report</a>
+  <a href="{% url 'admin:ai_health' %}">Provider Health</a>
+</div>
+
+<div class="totals">
+  <div><div class="lbl">Requests</div><div class="v">{{ totals.requests }}</div></div>
+  <div><div class="lbl">Tokens</div><div class="v">{{ totals.tokens }}</div></div>
+  <div><div class="lbl">Cost (USD)</div><div class="v">${{ totals.cost|floatformat:4 }}</div></div>
+</div>
+
+<div class="ai-section">
+  <h2>Daily breakdown</h2>
+  <table class="ai-tbl">
+    <thead><tr><th>Date</th><th>Requests</th><th>Tokens</th><th>Cost</th><th style="width:35%;">Spend bar</th></tr></thead>
+    <tbody>
+    {% for d in by_day %}
+      <tr>
+        <td>{{ d.date }}</td>
+        <td>{{ d.requests }}</td>
+        <td>{{ d.tokens }}</td>
+        <td>${{ d.cost|floatformat:4 }}</td>
+        <td>{% if totals.cost %}<span class="bar" style="width:{% widthratio d.cost totals.cost 100 %}%"></span>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="ai-section">
+  <h2>By feature</h2>
+  <table class="ai-tbl">
+    <thead><tr><th>Feature</th><th>Requests</th><th>Tokens</th><th>Cost</th></tr></thead>
+    <tbody>
+    {% for r in by_feature %}
+      <tr><td><b>{{ r.name }}</b><br><span style="font-size:11px;color:#94a3b8;">{{ r.feature }}</span></td>
+          <td>{{ r.requests }}</td><td>{{ r.tokens }}</td><td>${{ r.cost|floatformat:4 }}</td></tr>
+    {% empty %}
+      <tr><td colspan="4" style="color:#94a3b8;">No data.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="ai-section">
+  <h2>By provider</h2>
+  <table class="ai-tbl">
+    <thead><tr><th>Provider</th><th>Requests</th><th>Tokens</th><th>Cost</th></tr></thead>
+    <tbody>
+    {% for r in by_provider %}
+      <tr><td><b>{{ r.provider }}</b></td><td>{{ r.requests }}</td><td>{{ r.tokens }}</td><td>${{ r.cost|floatformat:4 }}</td></tr>
+    {% empty %}
+      <tr><td colspan="4" style="color:#94a3b8;">No data.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

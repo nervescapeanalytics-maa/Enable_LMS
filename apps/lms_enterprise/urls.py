@@ -12,6 +12,7 @@ from django.contrib import admin
 from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
+from django.views.generic import RedirectView
 
 # Load custom admin site configuration (dashboard stats, branding)
 import core.enf_admin_site as enf_admin_site  # noqa: F401
@@ -44,6 +45,7 @@ class APIRootView(APIView):
                 'audit': '/api/v1/audit/',
                 'system': '/api/v1/system/',
                 'scheduling': '/api/v1/scheduling/',
+                'ai': '/api/v1/ai/',
             }
         })
 
@@ -103,6 +105,7 @@ urlpatterns = [
     path('api/v1/audit/', include('audit.urls')),
     path('api/v1/system/', include('system_config.urls')),
     path('api/v1/scheduling/', include('scheduling.urls')),
+    path('api/v1/ai/', include('ai_core.api.urls')),
 ]
 
 
@@ -175,6 +178,13 @@ urlpatterns += [
     path('student/resources/<uuid:material_id>/download/', StudentResourceDownloadAction.as_view(), name='student-resource-download'),
 
     # React SPA dashboard
+    # Canonical URL: /student/dashboard/  (no duplicated 'dashboard' segment).
+    # The SPA's index route internally navigates to '/dashboard' which produces
+    # /student/dashboard/dashboard — we 301 that back to the canonical URL so
+    # shared/bookmarked links stay clean. The in-template interceptor strips
+    # the duplicate from pushState/replaceState during SPA navigation.
+    path('student/dashboard/dashboard/', RedirectView.as_view(url='/student/dashboard/', permanent=True), name='student-dashboard-canonical'),
+    path('student/dashboard/dashboard',  RedirectView.as_view(url='/student/dashboard/', permanent=True)),
     path('student/dashboard/', StudentDashboardView.as_view(), name='student-dashboard'),
     re_path(r'^student/dashboard/(?P<path>.*)$', StudentDashboardView.as_view(), name='student-dashboard-spa'),
 ]
@@ -195,6 +205,9 @@ urlpatterns += [
     path('teacher/api/tests/',       TeacherTestApiView.as_view(),      name='teacher-api-tests'),
     path('teacher/published-tests/', TeacherPublishedTestsView.as_view(), name='teacher-published-tests'),
 
+    # Canonical URL: /teacher/dashboard/  (no duplicated 'dashboard' segment).
+    path('teacher/dashboard/dashboard/', RedirectView.as_view(url='/teacher/dashboard/', permanent=True), name='teacher-dashboard-canonical'),
+    path('teacher/dashboard/dashboard',  RedirectView.as_view(url='/teacher/dashboard/', permanent=True)),
     path('teacher/dashboard/', TeacherDashboardView.as_view(), name='teacher-dashboard'),
     re_path(r'^teacher/dashboard/(?P<path>.*)$', TeacherDashboardView.as_view(), name='teacher-dashboard-spa'),
 ]
@@ -207,7 +220,8 @@ urlpatterns += [
 # ============================================================================
 from core.admin_page_views import (
     AnalyticsView, MonitoringView, SubjectsView, BatchesView,
-    ProgramsAdminView, AcademicSessionsView, TestsView, QuestionsView,
+    ProgramsAdminView, AcademicSessionsView, AcademicSessionPreviewView,
+    TestsView, QuestionsView,
     TestReportsView, SchoolsView, TeachersView, TeacherAttendanceView,
     StudentsView, StudentAttendanceView, LiveClassesView, StudyMaterialsView,
     AnnouncementsView, TicketsView, TenantsView, SettingsView,
@@ -244,6 +258,8 @@ urlpatterns += [
     path('staff/batches/', BatchesView.as_view(), name='staff-batches'),
     path('staff/programs/', ProgramsAdminView.as_view(), name='staff-programs'),
     path('staff/sessions/', AcademicSessionsView.as_view(), name='staff-sessions'),
+    path('staff/sessions/<uuid:session_id>/preview/',
+         AcademicSessionPreviewView.as_view(), name='staff-session-preview'),
 
     # Staff Dashboard — Exams & Assessments (Phase 2)
     path('staff/exams/',                                ExamListView.as_view(),          name='staff-exams'),

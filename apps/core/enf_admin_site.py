@@ -388,6 +388,9 @@ def custom_get_app_list(self, request, app_label=None):
     app_list = original_get_app_list(self, request, app_label)
 
     ai_features_models = []
+    ai_governance_models = []   # ai_core: Features, Providers, Models, Prompts, PromptVersions
+    ai_operations_models = []   # ai_core: UsageLogs, AuditLogs, CostTracking, Feedback
+    ai_personalization_models = []  # ai_core: StudentProfiles, LearningPaths
     attendance_rule_models = []
     security_gov_models = []
     website_setting_extra_models = []  # models moved FROM other apps TO Website Setting
@@ -395,7 +398,21 @@ def custom_get_app_list(self, request, app_label=None):
 
     # ── Pass 1: Collect models to move between sections ──
     for app in app_list:
-        if app['app_label'] == 'materials':
+        if app['app_label'] == 'ai_core':
+            # Split the AI Governance & Operations app into three sidebar sub-sections.
+            GOVERNANCE = {'AIFeature', 'AIProvider', 'AIModel', 'AIPrompt', 'AIPromptVersion'}
+            OPERATIONS = {'AIUsageLog', 'AIAuditLog', 'AICostTracking', 'AIFeedback'}
+            PERSONAL   = {'AIStudentProfile', 'AILearningPath'}
+            for m in app['models']:
+                name = m['object_name']
+                if name in GOVERNANCE:
+                    ai_governance_models.append(m)
+                elif name in OPERATIONS:
+                    ai_operations_models.append(m)
+                elif name in PERSONAL:
+                    ai_personalization_models.append(m)
+            app['models'] = []  # emptied so the synthetic ai_core entry disappears
+        elif app['app_label'] == 'materials':
             remaining = []
             for m in app['models']:
                 if m['object_name'] in ('PhotoGallery', 'Scholarship', 'TopperStudent'):
@@ -502,6 +519,94 @@ def custom_get_app_list(self, request, app_label=None):
             'models': ai_features_models,
         })
 
+    # ── AI Governance & Operations — single section with sub-group dividers ─────
+    # Renders as ONE collapsible parent section in the admin sidebar, with three
+    # visual sub-groups (Governance / Operations / Personalization) injected as
+    # divider rows. Divider rows have no `admin_url` / `add_url`, so Django's
+    # default `admin/app_list.html` renders them as plain (non-link) `<th>` cells
+    # — styled via `css/admin_theme.css` (tr.ai-subheader).
+    AI_GOVERNANCE_ORDER = [
+        'AIFeature', 'AIProvider', 'AIModel', 'AIPrompt', 'AIPromptVersion',
+    ]
+    AI_OPERATIONS_ORDER = [
+        'AIUsageLog', 'AIAuditLog', 'AICostTracking', 'AIFeedback',
+    ]
+    AI_PERSONAL_ORDER = ['AIStudentProfile', 'AILearningPath']
+
+    def _ordered(models, order):
+        d = {m['object_name']: m for m in models}
+        out = [d.pop(n) for n in order if n in d]
+        out.extend(d.values())
+        return out
+
+    def _subheader(label, key):
+        # Pseudo-model row used as a visual sub-section divider.
+        # `object_name` becomes the row CSS class `model-ai_subheader_<key>`,
+        # which our admin_theme.css targets to render as a header.
+        return {
+            'name': label,
+            'object_name': f'ai_subheader_{key}',
+            'perms': {'add': False, 'change': False, 'delete': False, 'view': False},
+            'admin_url': None,
+            'add_url': None,
+            'view_only': False,
+        }
+
+    ai_unified_models = []
+    if ai_governance_models or ai_operations_models or ai_personalization_models:
+        # Quick-link rows that point at the custom AI dashboards.
+        ai_unified_models.append(_subheader('Dashboards', 'dashboards'))
+        ai_unified_models.append({
+            'name': 'AI Governance Dashboard',
+            'object_name': 'ai_dashboard_link',
+            'perms': {'add': False, 'change': True, 'delete': False, 'view': True},
+            'admin_url': '/admin/ai-dashboard/',
+            'add_url': None,
+            'view_only': True,
+        })
+        ai_unified_models.append({
+            'name': 'Cost Report (30 days)',
+            'object_name': 'ai_cost_report_link',
+            'perms': {'add': False, 'change': True, 'delete': False, 'view': True},
+            'admin_url': '/admin/ai-cost-report/',
+            'add_url': None,
+            'view_only': True,
+        })
+        ai_unified_models.append({
+            'name': 'Provider Health',
+            'object_name': 'ai_health_link',
+            'perms': {'add': False, 'change': True, 'delete': False, 'view': True},
+            'admin_url': '/admin/ai-health/',
+            'add_url': None,
+            'view_only': True,
+        })
+        ai_unified_models.append({
+            'name': 'Prometheus Metrics',
+            'object_name': 'ai_metrics_link',
+            'perms': {'add': False, 'change': True, 'delete': False, 'view': True},
+            'admin_url': '/admin/ai-metrics/',
+            'add_url': None,
+            'view_only': True,
+        })
+    if ai_governance_models:
+        ai_unified_models.append(_subheader('Governance', 'governance'))
+        ai_unified_models.extend(_ordered(ai_governance_models, AI_GOVERNANCE_ORDER))
+    if ai_operations_models:
+        ai_unified_models.append(_subheader('Operations', 'operations'))
+        ai_unified_models.extend(_ordered(ai_operations_models, AI_OPERATIONS_ORDER))
+    if ai_personalization_models:
+        ai_unified_models.append(_subheader('Personalization', 'personalization'))
+        ai_unified_models.extend(_ordered(ai_personalization_models, AI_PERSONAL_ORDER))
+
+    if ai_unified_models:
+        app_list.append({
+            'name': 'AI Governance & Operations',
+            'app_label': 'ai_governance_ops',
+            'app_url': '/admin/ai_core/',
+            'has_module_perms': True,
+            'models': ai_unified_models,
+        })
+
     # Create a standalone "Security & Operational Governance" sidebar section
     if security_gov_models:
         app_list.append({
@@ -517,6 +622,9 @@ def custom_get_app_list(self, request, app_label=None):
     app_list = [a for a in app_list if not (
         a['app_label'] in HIDDEN_APPS
         or (a['app_label'] == 'audit' and len(a.get('models', [])) == 0)
+        # Drop the empty native 'ai_core' app — its models were moved into the
+        # synthetic 'ai_governance_ops' section.
+        or (a['app_label'] == 'ai_core' and len(a.get('models', [])) == 0)
     )]
 
     # ── Enforce sidebar section ordering ──
@@ -530,7 +638,8 @@ def custom_get_app_list(self, request, app_label=None):
         'sessions_tracking',  # Session & Activity Tracking
         'materials',          # Study Materials
         'system_config',      # Website Setting
-        'ai_features',        # AI Features
+        'ai_features',         # AI Features (legacy system_config.AIFeatureConfig)
+        'ai_governance_ops',   # AI Governance & Operations (unified, 3 sub-groups)
         'security_governance', # Security & Operational Governance
     ]
     order_map = {label: idx for idx, label in enumerate(SECTION_ORDER)}
@@ -612,6 +721,40 @@ STAFF_ROLE_MODEL_MATRIX = {
     ('system_config', 'MFAPolicy'):          'can_manage_settings',
     # AI / tenants
     ('ai_features', 'AIFeature'):     'can_manage_ai',
+    # All ai_core models live under the synthetic "ai_governance_ops" section.
+    ('ai_governance_ops', 'AIFeature'):         'can_manage_ai',
+    ('ai_governance_ops', 'AIProvider'):        'can_manage_ai',
+    ('ai_governance_ops', 'AIModel'):           'can_manage_ai',
+    ('ai_governance_ops', 'AIPrompt'):          'can_manage_ai',
+    ('ai_governance_ops', 'AIPromptVersion'):   'can_manage_ai',
+    ('ai_governance_ops', 'AIUsageLog'):        'can_manage_ai',
+    ('ai_governance_ops', 'AIAuditLog'):        'can_view_audit',
+    ('ai_governance_ops', 'AICostTracking'):    'can_manage_ai',
+    ('ai_governance_ops', 'AIFeedback'):        'can_manage_ai',
+    ('ai_governance_ops', 'AIStudentProfile'):  'can_manage_ai',
+    ('ai_governance_ops', 'AILearningPath'):    'can_manage_ai',
+    # Sub-header divider rows — always visible (they're not real models).
+    ('ai_governance_ops', 'ai_subheader_governance'):      None,
+    ('ai_governance_ops', 'ai_subheader_operations'):      None,
+    ('ai_governance_ops', 'ai_subheader_personalization'): None,
+    ('ai_governance_ops', 'ai_subheader_dashboards'):      None,
+    # Custom dashboard quick-links — visible to anyone with can_manage_ai.
+    ('ai_governance_ops', 'ai_dashboard_link'):       'can_manage_ai',
+    ('ai_governance_ops', 'ai_cost_report_link'):     'can_manage_ai',
+    ('ai_governance_ops', 'ai_health_link'):          'can_manage_ai',
+    ('ai_governance_ops', 'ai_metrics_link'):         'can_manage_ai',
+    # Keep ai_core/* keys for direct-URL navigation; harmless duplicates.
+    ('ai_core', 'AIFeature'):         'can_manage_ai',
+    ('ai_core', 'AIProvider'):        'can_manage_ai',
+    ('ai_core', 'AIModel'):           'can_manage_ai',
+    ('ai_core', 'AIPrompt'):          'can_manage_ai',
+    ('ai_core', 'AIPromptVersion'):   'can_manage_ai',
+    ('ai_core', 'AIUsageLog'):        'can_manage_ai',
+    ('ai_core', 'AIAuditLog'):        'can_view_audit',
+    ('ai_core', 'AICostTracking'):    'can_manage_ai',
+    ('ai_core', 'AIFeedback'):        'can_manage_ai',
+    ('ai_core', 'AIStudentProfile'):  'can_manage_ai',
+    ('ai_core', 'AILearningPath'):    'can_manage_ai',
     ('tenants', 'Tenant'):            'can_manage_settings',
 }
 
@@ -651,6 +794,28 @@ admin.AdminSite.get_app_list = custom_get_app_list
 # Store original and replace
 original_index = admin.AdminSite.index
 admin.AdminSite.index = custom_admin_index
+
+# ── Custom admin URLs (AI Governance dashboards) ──────────────────────────
+_original_get_urls = admin.AdminSite.get_urls
+
+
+def custom_get_urls(self):
+    from django.urls import path
+    from ai_core import admin_views as ai_views
+    from ai_core.metrics_views import ai_metrics_view
+
+    urls = _original_get_urls(self)
+    custom = [
+        path('ai-dashboard/',   self.admin_view(ai_views.ai_dashboard),   name='ai_dashboard'),
+        path('ai-cost-report/', self.admin_view(ai_views.ai_cost_report), name='ai_cost_report'),
+        path('ai-health/',      self.admin_view(ai_views.ai_health),      name='ai_health'),
+        path('ai-metrics/',     ai_metrics_view,                          name='ai_metrics'),
+    ]
+    # Custom routes must come BEFORE the catch-all admin URLs.
+    return custom + urls
+
+
+admin.AdminSite.get_urls = custom_get_urls
 
 # Customize branding
 admin.site.site_header = 'ENABLE PROGRAM — Admin Console'
