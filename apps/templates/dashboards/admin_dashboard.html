@@ -549,9 +549,6 @@
         <a href="/staff/dashboard/" class="sb-link active">
           <i class="fas fa-th-large"></i> Dashboard
         </a>
-        <a href="/staff/analytics/" class="sb-link">
-          <i class="fas fa-chart-line"></i> Analytics
-        </a>
         <a href="/staff/monitoring/" class="sb-link">
           <i class="fas fa-desktop"></i> Monitoring Center
         </a>
@@ -658,15 +655,6 @@
         <a href="/staff/tenants/" class="sb-link">
           <i class="fas fa-building"></i> Tenants / Centers
         </a>
-        <a href="/staff/settings/" class="sb-link">
-          <i class="fas fa-cog"></i> Settings
-        </a>
-        <a href="/staff/audit/" class="sb-link">
-          <i class="fas fa-shield-alt"></i> Audit & Governance
-        </a>
-        <a href="/admin/" class="sb-link">
-          <i class="fas fa-tools"></i> Django Admin
-        </a>
       </div>
     </nav>
 
@@ -700,9 +688,6 @@
             {% if open_tickets %}<span class="notif-dot"></span>{% endif %}
           </button>
         </div>
-        <button class="tb-btn" title="Settings" onclick="window.location.href='/staff/settings/'">
-          <i class="fas fa-cog"></i>
-        </button>
         <div class="tb-user" style="position:relative;cursor:pointer;" onclick="var d=document.getElementById('profileDrop');d.style.display=d.style.display==='block'?'none':'block';">
           <div class="tb-avatar">{{ user_initials }}</div>
           <div class="tb-user-info">
@@ -711,8 +696,10 @@
           </div>
           <div id="profileDrop" style="display:none;position:absolute;top:56px;right:0;background:#fff;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,0.12);border:1px solid #e2e8f0;min-width:200px;z-index:999;overflow:hidden;">
             <a href="/staff/profile/" style="display:flex;align-items:center;gap:10px;padding:12px 18px;color:#334155;font-size:0.88rem;text-decoration:none;border-bottom:1px solid #f1f5f9;"><i class="fas fa-user" style="width:16px;color:#6366f1;"></i> My Profile</a>
-            <a href="/staff/settings/" style="display:flex;align-items:center;gap:10px;padding:12px 18px;color:#334155;font-size:0.88rem;text-decoration:none;border-bottom:1px solid #f1f5f9;"><i class="fas fa-cog" style="width:16px;color:#6366f1;"></i> Settings</a>
-            <a href="/staff/audit/" style="display:flex;align-items:center;gap:10px;padding:12px 18px;color:#334155;font-size:0.88rem;text-decoration:none;border-bottom:1px solid #f1f5f9;"><i class="fas fa-shield-alt" style="width:16px;color:#6366f1;"></i> Audit Log</a>
+            <a href="/staff/profile/?tab=password" style="display:flex;align-items:center;gap:10px;padding:12px 18px;color:#334155;font-size:0.88rem;text-decoration:none;border-bottom:1px solid #f1f5f9;"><i class="fas fa-key" style="width:16px;color:#6366f1;"></i> Change Password</a>
+            <a href="/staff/profile/?tab=preferences" style="display:flex;align-items:center;gap:10px;padding:12px 18px;color:#334155;font-size:0.88rem;text-decoration:none;border-bottom:1px solid #f1f5f9;"><i class="fas fa-clock" style="width:16px;color:#6366f1;"></i> Date / Time / Timezone</a>
+            <a href="/staff/profile/?tab=notifications" style="display:flex;align-items:center;gap:10px;padding:12px 18px;color:#334155;font-size:0.88rem;text-decoration:none;border-bottom:1px solid #f1f5f9;"><i class="fas fa-bell" style="width:16px;color:#6366f1;"></i> Notification Preferences</a>
+            <a href="/staff/profile/?tab=security" style="display:flex;align-items:center;gap:10px;padding:12px 18px;color:#334155;font-size:0.88rem;text-decoration:none;border-bottom:1px solid #f1f5f9;"><i class="fas fa-shield-alt" style="width:16px;color:#6366f1;"></i> Security &amp; MFA</a>
             <a href="/logout/" style="display:flex;align-items:center;gap:10px;padding:12px 18px;color:#ef4444;font-size:0.88rem;text-decoration:none;"><i class="fas fa-sign-out-alt" style="width:16px;"></i> Sign Out</a>
           </div>
         </div>
@@ -1004,10 +991,6 @@
               <a href="#announcements" class="qa-btn">
                 <i class="qi-red fas fa-bullhorn"></i>
                 <span>Announcement</span>
-              </a>
-              <a href="/admin/" class="qa-btn">
-                <i class="qi-teal fas fa-tools"></i>
-                <span>Django Admin</span>
               </a>
             </div>
           </div>

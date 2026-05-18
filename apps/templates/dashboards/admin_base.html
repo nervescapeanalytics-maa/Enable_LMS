@@ -362,9 +362,6 @@
         <a href="/staff/dashboard/" class="sb-link {% if active_page == 'dashboard' %}active{% endif %}">
           <i class="fas fa-th-large"></i> Dashboard
         </a>
-        <a href="/staff/analytics/" class="sb-link {% if active_page == 'analytics' %}active{% endif %}">
-          <i class="fas fa-chart-line"></i> Analytics
-        </a>
         <a href="/staff/monitoring/" class="sb-link {% if active_page == 'monitoring' %}active{% endif %}">
           <i class="fas fa-desktop"></i> Monitoring Center
         </a>
@@ -492,15 +489,6 @@
         <a href="/staff/tenants/" class="sb-link {% if active_page == 'tenants' %}active{% endif %}">
           <i class="fas fa-building"></i> Tenants / Centers
         </a>
-        <a href="/staff/settings/" class="sb-link {% if active_page == 'settings' %}active{% endif %}">
-          <i class="fas fa-cog"></i> Settings
-        </a>
-        <a href="/staff/audit/" class="sb-link {% if active_page == 'audit' %}active{% endif %}">
-          <i class="fas fa-history"></i> Legacy Audit
-        </a>
-        <a href="/admin/" class="sb-link" target="_blank">
-          <i class="fas fa-tools"></i> Django Admin
-        </a>
       </div>
     </nav>
 
@@ -564,11 +552,6 @@
           </div>
         </div>
 
-        <!-- Settings Gear -->
-        <a href="/staff/settings/" class="tb-btn" title="Settings">
-          <i class="fas fa-cog"></i>
-        </a>
-
         <!-- User Profile -->
         <div style="position:relative">
           <div class="tb-user" onclick="toggleDropdown('userDropdown')">
@@ -584,8 +567,10 @@
               <div class="ud-email">{{ user_email }}</div>
             </div>
             <a href="/staff/profile/" class="ud-link"><i class="fas fa-user"></i> My Profile</a>
-            <a href="/staff/settings/" class="ud-link"><i class="fas fa-cog"></i> Settings</a>
-            <a href="/staff/audit/" class="ud-link"><i class="fas fa-shield-alt"></i> Audit Log</a>
+            <a href="/staff/profile/?tab=password" class="ud-link"><i class="fas fa-key"></i> Change Password</a>
+            <a href="/staff/profile/?tab=preferences" class="ud-link"><i class="fas fa-clock"></i> Date / Time / Timezone</a>
+            <a href="/staff/profile/?tab=notifications" class="ud-link"><i class="fas fa-bell"></i> Notification Preferences</a>
+            <a href="/staff/profile/?tab=security" class="ud-link"><i class="fas fa-shield-alt"></i> Security &amp; MFA</a>
             <div class="ud-divider"></div>
             <a href="/logout/" class="ud-link danger"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
           </div>

@@ -560,9 +560,11 @@ class AdminDashboardView(View):
         today = now.date()
 
         # ═══════ KPI CARDS ═══════
-        # Students
-        total_students = Users.objects.count()
-        active_students = Users.objects.filter(is_active=True).count()
+        # Students — read from the canonical accounts.Student table
+        # (legacy academics.Users table is empty in production).
+        from accounts.models import Student as _Student
+        total_students = _Student.objects.count()
+        active_students = _Student.objects.filter(status='ACTIVE').count()
         inactive_students = total_students - active_students
 
         # Teachers
